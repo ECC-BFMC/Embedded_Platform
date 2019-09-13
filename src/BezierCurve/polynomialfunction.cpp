@@ -1,0 +1,1 @@
+#include <BezierCurve/PolynomialFunction.hpp>

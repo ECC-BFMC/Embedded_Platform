@@ -71,10 +71,10 @@ controllers::siso::CPidController<double> l_pidController2( 0.1150,0.81000,0.000
 controllers::CControllerSiso g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
 //! [Create PID controller]
 
-/// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
+/// Create the motion controller, which controls the robot states and the robot's moves based on the transmitted command over the serial interface. 
 CMotionController           g_motionController(g_period_Encoder, g_rpi, g_car,&g_controller);
 
-/// Map with the key and the callback functions.If the message key equals to one of the enumerated keys, than it will be applied the corresponsive function. 
+/// Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"MCTL",mbed::callback(CMotionController::staticSerialCallbackMove,&g_motionController)},
     {"BRAK",mbed::callback(CMotionController::staticSerialCallbackBrake,&g_motionController)},
@@ -83,7 +83,7 @@ serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"ENPB",mbed::callback(examples::sensors::CEncoderSender::staticSerialCallback,&g_encoderPublisher)},
 };
 
-/// Create the serial monitor object, which decodes the messages and transmites the responses.
+/// Create the serial monitor object, which decodes, redirects the messages and transmites the responses.
 serial::CSerialMonitor g_serialMonitor(g_rpi, g_serialMonitorSubscribers);
 
 /// List of the task, each task will be applied their own periodicity, defined by initializing the objects.
@@ -93,14 +93,14 @@ task::CTask* g_taskList[] = {
     &g_encoderPublisher
 }; 
 
-/// Create the task manager, which applies periodically the tasks.
+/// Create the task manager, which applies periodically the tasks. It needs the list of task and the time base in seconds. 
 task::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(task::CTask*), g_baseTick);
 
 
 /**
- * @brief Setup function for initializing the objects
+ * @brief Setup function for initializing some objects and transmiting a startup message through the serial. 
  * 
- * @return uint32_t 
+ * @return uint32_t Error level codes error's type.
  */
 uint32_t setup()
 {
@@ -120,9 +120,9 @@ uint32_t setup()
 }
 
 /**
- * @brief Loop function
+ * @brief Loop function has aim to apply repeatedly task
  * 
- * @return uint32_t 
+ * @return uint32_t Error level codes error's type.
  */
 uint32_t loop()
 {
@@ -131,9 +131,9 @@ uint32_t loop()
 }
 
 /**
- * @brief Main function
+ * @brief Main function applies the setup function and the loop function periodically. It runs automatically after the board started.
  * 
- * @return int 
+ * @return int Error level codes error's type.  
  */
 int main() 
 {

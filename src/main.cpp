@@ -7,7 +7,6 @@
   * @brief   Application entry point.
   ******************************************************************************
  */
-
 /* The mbed library */
 #include <mbed.h>
 /* Task manager */
@@ -26,13 +25,10 @@
 #include <Controllers/controller.hpp>
 /* Header file  for the sendor publisher functionality */
 #include <Examples/Sensors/sensorpublisher.hpp>
-/* Safety stop functionality */
-#include <SafetyStop/safetystopfunction.hpp>
 /* Quadrature encoder functionality */
 #include <include/Encoders/quadratureencodertask.hpp>
 /* Examples with the sensors publisher */
 #include <include/Examples/Sensors/sensortask.hpp>
-
 
 /// Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART comunication, the inputs have to be transmiter and receiver pins. 
 Serial          g_rpi(USBTX, USBRX,460800);

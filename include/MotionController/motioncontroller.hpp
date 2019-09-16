@@ -18,7 +18,6 @@
 #include <Move/move.hpp>
 #include <BezierMotionPlanner/bezierMotionplanner.hpp>
 #include <Controllers/controller.hpp>
-#include <SafetyStop/safetystopfunction.hpp>
 
 #include <rtos.h>
 
@@ -41,12 +40,7 @@
 class CMotionController 
 {
 public:
-    CMotionController(
-        float f_period_sec,
-        Serial& f_serialPort, 
-        Move& f_car,
-        CSafetyStopFunction* f_safetyStop,
-        controllers::CControllerSiso* f_control = NULL);
+
     CMotionController(
         float f_period_sec, 
         Serial& f_serialPort, 
@@ -126,8 +120,6 @@ private:
     Timeout                                 m_hbTimeOut;
     /* Reference to control object */
     controllers::CControllerSiso*           m_control;
-    /* Reference to safety stop function */
-    CSafetyStopFunction*                    m_safetyStop;
     /* Rtos  timer for periodically applying */
     RtosTimer                               m_timer;
 };

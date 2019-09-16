@@ -41,7 +41,6 @@ VPATH = $(SRCDIR)/
 
 PROJECT := Nucleo_mbedrobot
 
-
 # Project settings
 ###############################################################################
 # Objects and Paths
@@ -66,7 +65,6 @@ OBJECTS += src/Timer/timer.o
 OBJECTS += src/BezierCurve/polynomialfunction.o
 OBJECTS += src/BezierCurve/beziercurve.o
 OBJECTS += src/BezierMotionPlanner/beziermotionplanner.o
-OBJECTS += src/SafetyStop/safetystopfunction.o
 OBJECTS += src/CommandInterpreter/commandinterpreter.o	
 OBJECTS += src/Controllers/controller.o
 OBJECTS += src/Controllers/converters.o

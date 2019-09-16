@@ -19,38 +19,6 @@
  *  @param f_period_sec          period for controller execution in seconds
  *  @param f_serialPort          reference to serial communication object
  *  @param f_car                 reference to MOVE object
- *  @param f_safetyStop          reference to spline safery stop object
- *  @param f_control             reference to controller object
- */
-CMotionController::CMotionController(
-        float f_period_sec,
-        Serial& f_serialPort,
-        Move& f_car,
-        CSafetyStopFunction* f_safetyStop,
-        controllers::CControllerSiso* f_control) 
-    : m_serialPort(f_serialPort)
-    , m_car(f_car)
-    , m_speed()
-    , m_angle()
-    , m_period_sec(f_period_sec)
-    , m_isSplineActivated(false)
-    , m_ispidActivated(false)
-    , m_motionPlanner()
-    , m_hbTimeOut()
-    , m_control(f_control)
-    , m_safetyStop(f_safetyStop)
-    , m_timer(mbed::callback(CMotionController::staticCallbackRun,this))
-{
-}
-
-
-/** \brief  CMotionController Class constructor
- *
- *  Constructor method
- *
- *  @param f_period_sec          period for controller execution in seconds
- *  @param f_serialPort          reference to serial communication object
- *  @param f_car                 reference to MOVE object
  *  @param f_control             reference to controller object
  */
 CMotionController::CMotionController(
@@ -68,7 +36,6 @@ CMotionController::CMotionController(
     , m_motionPlanner()
     , m_hbTimeOut()
     , m_control(f_control)
-    , m_safetyStop(NULL)
     , m_timer(mbed::callback(CMotionController::staticCallbackRun,this))
 {
 }
@@ -230,16 +197,6 @@ void CMotionController::_run()
         }
     }
     
-    //safety stop function
-    /**
-     * @brief It's a part of safety stop functionilty. Check if it's actived or created.
-     * 
-     */
-    if ((m_state!=2)&&(m_safetyStop!=NULL && m_safetyStop->isSafetyStopActive(m_speed,m_angle)==true))
-    {
-        m_state = 2;
-    }
-
     switch(m_state)
     {
         // Move state

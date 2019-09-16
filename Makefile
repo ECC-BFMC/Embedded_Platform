@@ -62,7 +62,6 @@ OBJECTS += src/Examples/Sensors/sensortask.o
 OBJECTS += src/Examples/Filter/ekf_am.o
 OBJECTS += src/Examples/SystemModels/ackermannmodel.o
 OBJECTS += src/Timer/timer.o
-OBJECTS += src/CommandInterpreter/commandinterpreter.o	
 OBJECTS += src/Controllers/controller.o
 OBJECTS += src/Controllers/converters.o
 OBJECTS += src/Controllers/pidcontroller.o

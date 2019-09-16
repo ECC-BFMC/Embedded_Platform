@@ -64,17 +64,15 @@ controllers::CControllerSiso g_controller(g_quadratureEncoderTask,l_pidControlle
 /// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
 CMotionController           g_motionController(g_period_Encoder, g_rpi, g_car,&g_controller);
 
-/// Map with the key and the callback functions.If the message key equals to one of the enumerated keys, than it will be applied the corresponsive function. 
+/// Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"MCTL",mbed::callback(CMotionController::staticSerialCallbackMove,&g_motionController)},
     {"BRAK",mbed::callback(CMotionController::staticSerialCallbackBrake,&g_motionController)},
-    {"HBRA",mbed::callback(CMotionController::staticSerialCallbackHardBrake,&g_motionController)},
     {"PIDA",mbed::callback(CMotionController::staticSerialCallbackPID,&g_motionController)},
-    {"SPLN",mbed::callback(CMotionController::staticSerialCallbackSpline,&g_motionController)},
     {"ENPB",mbed::callback(examples::sensors::CEncoderSender::staticSerialCallback,&g_encoderPublisher)},
 };
 
-/// Create the serial monitor object, which decodes the messages and transmites the responses.
+/// Create the serial monitor object, which decodes, redirects the messages and transmites the responses.
 serial::CSerialMonitor g_serialMonitor(g_rpi, g_serialMonitorSubscribers);
 
 //! [Adding a resource]
@@ -86,17 +84,17 @@ task::CTask* g_taskList[] = {
 }; 
 //! [Adding a resource]
 
-/// Create the task manager, which applies periodically the tasks.
+/// Create the task manager, which applies periodically the tasks. It needs the list of task and the time base in seconds. 
 task::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(task::CTask*), g_baseTick);
 
 /**
- * @brief Setup function for initializing the objects
+ * @brief Setup function for initializing some objects and transmiting a startup message through the serial. 
  * 
- * @return uint32_t 
+ * @return uint32_t Error level codes error's type.
  */
 uint32_t setup()
 {
-    // g_rpi.baud(460800);  
+    g_rpi.baud(460800);  
     g_rpi.printf("\r\n\r\n");
     g_rpi.printf("#################\r\n");
     g_rpi.printf("#               #\r\n");
@@ -112,9 +110,9 @@ uint32_t setup()
 }
 
 /**
- * @brief Loop function
+ * @brief Loop function has aim to apply repeatedly task
  * 
- * @return uint32_t 
+ * @return uint32_t Error level codes error's type.
  */
 uint32_t loop()
 {
@@ -123,9 +121,9 @@ uint32_t loop()
 }
 
 /**
- * @brief Main function
+ * @brief Main function applies the setup function and the loop function periodically. It runs automatically after the board started.
  * 
- * @return int 
+ * @return int Error level codes error's type.  
  */
 int main() 
 {

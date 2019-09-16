@@ -73,8 +73,6 @@ OBJECTS += src/Encoders/encoder.o
 OBJECTS += src/Encoders/encoderFilter.o
 OBJECTS += src/Encoders/quadratureencoder.o
 OBJECTS += src/Encoders/quadratureencodertask.o
-OBJECTS += src/SHARP_IR_distance/DistanceSensors/distancesensors.o
-OBJECTS += src/SHARP_IR_distance/IR_DistanceSensorDriver/ir_distancesensordriver.o
 OBJECTS += src/main.o
 
 

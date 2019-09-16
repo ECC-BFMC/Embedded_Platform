@@ -16,7 +16,6 @@
 #include <mbed.h>
 #include <TaskManager/taskmanager.hpp>
 #include <Move/move.hpp>
-#include <BezierMotionPlanner/bezierMotionplanner.hpp>
 #include <Controllers/controller.hpp>
 
 #include <rtos.h>
@@ -56,8 +55,6 @@ public:
     static void staticSerialCallbackHardBrake(void* obj,char const * a, char * b) ;
     /* Serial callback method for PID activation command */
     static void staticSerialCallbackPID(void* obj,char const * a, char * b);
-    /* Static serial callback for spline command */
-    static void staticSerialCallbackSpline(void* obj,char const * a,char * b );
     /* Static callback function for run method */
     static void staticCallbackRun(void* obj);
     /* Start the Rtos timer for applying run */
@@ -84,8 +81,6 @@ private:
     void serialCallbackHardBrake(char const * a, char * b);
     /* PID serial callback */
     void serialCallbackPID(char const * a, char * b);
-    /* Spline serial callback */
-    void serialCallbackSpline(char const * a, char * b);
     
     
     /* Static function to convert from linear velocity ( centimeter per second ) of robot to angular velocity ( rotation per second ) of motor */
@@ -104,8 +99,6 @@ private:
     float m_angle;
     /* PEriod i nseconds */
     float   m_period_sec;
-    /* Spline activation state */
-    bool    m_isSplineActivated;
     /* State machine state */
     uint8_t m_state;
     /* PID activation state */
@@ -114,8 +107,6 @@ private:
     // 1-normal
     // 2-brake regeneration
     
-    /* motion planner object */
-    planner::CBezierMotionPlanner           m_motionPlanner;
     /* Timeout */
     Timeout                                 m_hbTimeOut;
     /* Reference to control object */

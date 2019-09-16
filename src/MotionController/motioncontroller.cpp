@@ -31,9 +31,7 @@ CMotionController::CMotionController(
     , m_speed()
     , m_angle()
     , m_period_sec(f_period_sec)
-    , m_isSplineActivated(false)
     , m_ispidActivated(false)
-    , m_motionPlanner()
     , m_hbTimeOut()
     , m_control(f_control)
     , m_timer(mbed::callback(CMotionController::staticCallbackRun,this))
@@ -100,18 +98,6 @@ void CMotionController::staticSerialCallbackPID(void* obj,char const * a, char *
     self->serialCallbackPID(a,b);
 }
 
-/**
- * @brief Static seriel callback for spline command
- * 
- * @param obj                      object with the serial callback method
- * @param a                        string to read data from
- * @param b                        string to write data to
- */
-void CMotionController::staticSerialCallbackSpline(void* obj, char const * a,char * b){
-    CMotionController* self = static_cast<CMotionController*>(obj);
-    self->serialCallbackSpline(a,b);
-}
-
 /** \brief  Reset method
  * 
  *  
@@ -167,36 +153,7 @@ void CMotionController::setState(int f_state){
  *  
  */
 void CMotionController::_run()
-{
-    if(m_isSplineActivated) 
-    {
-        if(m_motionPlanner.hasValidValue())
-        {
-            std::pair<float,float> motion=m_motionPlanner.getNextVelocity();  
-            float l_dir=m_motionPlanner.getForward()?1:-1;
-            if(m_ispidActivated)
-            {
-                m_speed=motion.first*l_dir;
-                m_angle=-motion.second;
-            }
-            else
-            {
-                //Pid isn't activated. It have to controllered with the robot speed value in meter per second.  
-                m_serialPort.printf("@SPLN:Err1;;\r\n");
-                m_state=2;
-                m_isSplineActivated=false;
-                m_speed=0.0;
-            }
-        }
-        else
-        {
-            m_serialPort.printf("@SPLN:Stop;;\r\n");
-            m_speed=0.0;
-            m_state=2;
-            m_isSplineActivated=false;
-        }
-    }
-    
+{   
     switch(m_state)
     {
         // Move state
@@ -273,7 +230,6 @@ void CMotionController::serialCallbackMove(char const * a, char * b)
 
         m_speed = l_speed;
         m_angle = l_angle; 
-        m_isSplineActivated=false;
         m_state=1;
         sprintf(b,"ack;;");
     }
@@ -301,8 +257,7 @@ void CMotionController::serialCallbackBrake(char const * a, char * b)
         m_angle = l_angle;
         // Brake state 
         m_state = 2;
-        // Deactivate Spline (Bezier) planner 
-        m_isSplineActivated=false;
+
         if( m_control!=NULL){
             m_control->setRef(0);
         }
@@ -334,8 +289,7 @@ void CMotionController::serialCallbackHardBrake(char const * a, char * b)
         m_car.Inverse(l_brake);
         m_hbTimeOut.attach(callback(this,&CMotionController::BrakeCallback),0.04);
         m_state = 0;
-        // Deactivate Spline (Bezier) planner 
-        m_isSplineActivated=false;
+
         sprintf(b,"ack;;");           
     }
     else
@@ -365,8 +319,6 @@ void CMotionController::serialCallbackPID(char const * a, char * b)
             m_ispidActivated=(l_isActivate>=1);
             // Change to brake state
             m_state = 2;
-            // Deactivate Spline (Bezier) planner 
-            m_isSplineActivated=false;
             sprintf(b,"ack;;");    
         }
         
@@ -375,37 +327,6 @@ void CMotionController::serialCallbackPID(char const * a, char * b)
         sprintf(b,"sintax error;;");
     }
 }
-
-/**
- * @brief Serial callback actions for bezier spline command
- * 
- * @param a                   string to read data from
- * @param b                   string to write data to
- */
-void CMotionController::serialCallbackSpline(char const * a, char * b){
-    float a_x,a_y,b_x,b_y,c_x,c_y,d_x,d_y,duration_sec;
-    int isForward=1;
-    int32_t nrData=sscanf(a,"%d;%f;%f;%f;%f;%f;%f;%f;%f;%f",
-                                    &isForward,
-                                    &a_x,
-                                    &a_y,
-                                    &b_x,
-                                    &b_y,
-                                    &c_x,
-                                    &c_y,
-                                    &d_x,
-                                    &d_y,
-                                    &duration_sec);
-    if(10==nrData && duration_sec>0 && (isForward==1 || isForward==0)){
-        m_motionPlanner.setMotionPlannerParameters(static_cast<bool>(isForward), std::complex<float>(a_x,a_y),std::complex<float>(b_x,b_y),std::complex<float>(c_x,c_y),std::complex<float>(d_x,d_y),duration_sec,m_period_sec);
-        m_isSplineActivated=true;
-        m_state=1;
-        sprintf(b,"ack;;");
-    }else{
-        sprintf(b,"sintax error;;");
-    }
-}
-
 
 /**
  * @brief Function to convert from linear velocity ( centimeter per second ) of robot to angular velocity ( rotation per second ) of motor.

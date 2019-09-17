@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2018
  * 
  */
-#include <Encoders/Quadratureencodertask.hpp>
+#include <encoders/Quadratureencodertask.hpp>
 
 
 namespace encoders{

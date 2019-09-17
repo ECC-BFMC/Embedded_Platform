@@ -10,5 +10,5 @@
   ******************************************************************************
  */
 
-#include <Examples/Sensors/sensorpublisher.hpp>
+#include <examples/sensors/sensorpublisher.hpp>
 

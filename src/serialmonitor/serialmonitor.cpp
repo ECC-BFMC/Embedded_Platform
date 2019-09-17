@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <SerialMonitor/serialmonitor.hpp>
+#include <serialmonitor/serialmonitor.hpp>
 
 
 namespace serial{

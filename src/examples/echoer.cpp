@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <Examples/echoer.hpp>
+#include <examples/echoer.hpp>
 
 namespace examples{
     /** \brief  Class constructor

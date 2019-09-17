@@ -14,9 +14,9 @@
 
 /* The mbed library */
 #include <mbed.h>
-#include <TaskManager/taskmanager.hpp>
-#include <Move/move.hpp>
-#include <Controllers/controller.hpp>
+#include <taskmanager/taskmanager.hpp>
+#include <move/move.hpp>
+#include <controllers/controller.hpp>
 
 #include <rtos.h>
 

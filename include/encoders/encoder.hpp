@@ -14,8 +14,8 @@
 #define MAG_ENCODER_HPP
 
 #include <mbed.h>
-#include<TaskManager/taskmanager.hpp>
-#include<Encoders/encoderinterface.hpp>
+#include<taskmanager/taskmanager.hpp>
+#include<encoders/encoderinterface.hpp>
 
 //!  CCounter class. 
 /*!

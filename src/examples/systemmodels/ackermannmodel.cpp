@@ -8,7 +8,7 @@
   ******************************************************************************
  */
 
-#include <Examples/SystemModels/ackermannmodel.hpp>
+#include <examples/systemmodels/ackermannmodel.hpp>
 
 /* Specify model type */
 using ackermannmodeltype = systemmodels::nlti::mimo::CDiscreteTimeSystemModel<double,2,10,5>;

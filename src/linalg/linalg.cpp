@@ -1,1 +1,1 @@
-#include <Linalg/linalg.h>
+#include <linalg/linalg.h>

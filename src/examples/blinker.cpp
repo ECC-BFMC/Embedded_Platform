@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <Examples/blinker.hpp>
+#include <examples/blinker.hpp>
 
 
 namespace examples{

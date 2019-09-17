@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <Encoders/encoder.hpp>
+#include <encoders/encoder.hpp>
 
 /** \brief  Constructor for the CCounter class
  *

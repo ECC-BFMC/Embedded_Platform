@@ -8,7 +8,7 @@
   *          functionality.
   ******************************************************************************
  */
-#include <Examples/Sensors/sensortask.hpp>
+#include <examples/sensors/sensortask.hpp>
 
 namespace examples
 {

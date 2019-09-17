@@ -2,8 +2,8 @@
 #define PID_CONTROLLER_H
 
 #include <cstdio>
-#include <Linalg/linalg.h>
-#include <SystemModels/systemmodels.hpp>
+#include <linalg/linalg.h>
+#include <systemmodels/systemmodels.hpp>
 #include <mbed.h>
 
 namespace controllers

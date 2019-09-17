@@ -45,30 +45,30 @@ PROJECT := Nucleo_mbedrobot
 ###############################################################################
 # Objects and Paths
 
-OBJECTS += src/Drivers/servo.o
-OBJECTS += src/Drivers/vnh.o
-OBJECTS += src/Linalg/linalg.o
-OBJECTS += src/Queue/queue.o
-OBJECTS += src/Filter/filter.o
-OBJECTS += src/SystemModels/systemmodels.o
-OBJECTS += src/TaskManager/taskmanager.o
-OBJECTS += src/SerialMonitor/serialmonitor.o
-OBJECTS += src/Move/move.o
-OBJECTS += src/MotionController/motioncontroller.o
-OBJECTS += src/Examples/echoer.o
-OBJECTS += src/Examples/blinker.o
-OBJECTS += src/Examples/Sensors/sensorpublisher.o
-OBJECTS += src/Examples/Sensors/sensortask.o
-OBJECTS += src/Examples/Filter/ekf_am.o
-OBJECTS += src/Examples/SystemModels/ackermannmodel.o
-OBJECTS += src/Timer/timer.o
-OBJECTS += src/Controllers/controller.o
-OBJECTS += src/Controllers/converters.o
-OBJECTS += src/Controllers/pidcontroller.o
-OBJECTS += src/Encoders/encoder.o
-OBJECTS += src/Encoders/encoderFilter.o
-OBJECTS += src/Encoders/quadratureencoder.o
-OBJECTS += src/Encoders/quadratureencodertask.o
+OBJECTS += src/drivers/servo.o
+OBJECTS += src/drivers/vnh.o
+OBJECTS += src/linalg/linalg.o
+OBJECTS += src/queue/queue.o
+OBJECTS += src/filter/filter.o
+OBJECTS += src/systemmodels/systemmodels.o
+OBJECTS += src/taskmanager/taskmanager.o
+OBJECTS += src/serialmonitor/serialmonitor.o
+OBJECTS += src/move/move.o
+OBJECTS += src/motioncontroller/motioncontroller.o
+OBJECTS += src/examples/echoer.o
+OBJECTS += src/examples/blinker.o
+OBJECTS += src/examples/sensors/sensorpublisher.o
+OBJECTS += src/examples/sensors/sensortask.o
+OBJECTS += src/examples/filter/ekf_am.o
+OBJECTS += src/examples/systemmodels/ackermannmodel.o
+OBJECTS += src/timer/timer.o
+OBJECTS += src/controllers/controller.o
+OBJECTS += src/controllers/converters.o
+OBJECTS += src/controllers/pidcontroller.o
+OBJECTS += src/encoders/encoder.o
+OBJECTS += src/encoders/encoderFilter.o
+OBJECTS += src/encoders/quadratureencoder.o
+OBJECTS += src/encoders/quadratureencodertask.o
 OBJECTS += src/main.o
 
 

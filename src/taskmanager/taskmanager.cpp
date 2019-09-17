@@ -8,7 +8,7 @@
   ******************************************************************************
  */
 
-#include <TaskManager/taskmanager.hpp>
+#include <taskmanager/taskmanager.hpp>
 
 namespace task{
 

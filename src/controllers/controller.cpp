@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <Controllers/controller.hpp>
+#include <controllers/controller.hpp>
 
 namespace controllers{
     /**

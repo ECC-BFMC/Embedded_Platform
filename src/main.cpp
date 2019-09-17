@@ -10,25 +10,25 @@
 /* The mbed library */
 #include <mbed.h>
 /* Task manager */
-#include<TaskManager/taskmanager.hpp>
+#include <taskmanager/taskmanager.hpp>
 /* Header file for the MOVE functionality */
-#include <Move/move.hpp>
+#include <move/move.hpp>
 /* Header file for the blinker functionality */
-#include <Examples/blinker.hpp>
+#include <examples/blinker.hpp>
 /* Header file for the serial communication functionality */
-#include <SerialMonitor/serialmonitor.hpp>
+#include <serialmonitor/serialmonitor.hpp>
 /* Header file for the motion controller functionality */
-#include <MotionController/motioncontroller.hpp>
+#include <motioncontroller/motioncontroller.hpp>
 /* Header file for the sensor task functionality */
-#include <Examples/Sensors/sensortask.hpp>
+#include <examples/sensors/sensortask.hpp>
 /* Header file  for the controller functionality */
-#include <Controllers/controller.hpp>
+#include <controllers/controller.hpp>
 /* Header file  for the sendor publisher functionality */
-#include <Examples/Sensors/sensorpublisher.hpp>
+#include <examples/sensors/sensorpublisher.hpp>
 /* Quadrature encoder functionality */
-#include <include/Encoders/quadratureencodertask.hpp>
+#include <encoders/quadratureencodertask.hpp>
 /* Examples with the sensors publisher */
-#include <include/Examples/Sensors/sensortask.hpp>
+#include <examples/sensors/sensortask.hpp>
 
 /// Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART comunication, the inputs have to be transmiter and receiver pins. 
 Serial          g_rpi(USBTX, USBRX,460800);

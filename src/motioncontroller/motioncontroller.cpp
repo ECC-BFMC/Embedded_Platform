@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <MotionController/motioncontroller.hpp>
+#include <motioncontroller/motioncontroller.hpp>
 
 
 /** \brief  CMotionController Class constructor

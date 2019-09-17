@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <Encoders/encoderFilter.hpp>
+#include <encoders/encoderFilter.hpp>
 
 /** \brief  Constructor for the CEncoderFilter class
  *

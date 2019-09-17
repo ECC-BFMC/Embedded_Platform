@@ -11,9 +11,9 @@
 #ifndef QUADRATURE_ENCODER_TASK_HPP
 #define QUADRATURE_ENCODER_TASK_HPP
 
-#include <Encoders/encoderinterface.hpp>
-#include <Encoders/QuadratureEncoder.hpp>
-#include <Filter/Filter.hpp>
+#include <encoders/encoderinterface.hpp>
+#include <encoders/QuadratureEncoder.hpp>
+#include <filter/Filter.hpp>
 
 #include <rtos.h>
 

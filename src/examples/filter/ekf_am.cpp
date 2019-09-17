@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <Examples/Filter/ekf_am.hpp>
+#include <examples/filter/ekf_am.hpp>
 
 /** \brief  Constructor for the CEKF_AM class
  *

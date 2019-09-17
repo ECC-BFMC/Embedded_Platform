@@ -13,8 +13,8 @@
 #ifndef EKF_AM_HPP
 #define EKF_AM_HPP
 
-#include <Filter/filter.hpp>
-#include <Examples/SystemModels/ackermannmodel.hpp>
+#include <filter/filter.hpp>
+#include <examples/systemmodels/ackermannmodel.hpp>
 
 namespace examples
 {

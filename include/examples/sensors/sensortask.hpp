@@ -15,13 +15,13 @@
 
 /* Standard C library for basic mathematical operations */
 #include <math.h>
-#include<TaskManager/taskmanager.hpp>
-#include <Drivers/vnh.hpp>
-#include <SerialMonitor/serialmonitor.hpp>
-#include <Controllers/controller.hpp>
-#include <SystemModels/systemmodels.hpp>
+#include<taskmanager/taskmanager.hpp>
+#include <drivers/vnh.hpp>
+#include <serialmonitor/serialmonitor.hpp>
+#include <controllers/controller.hpp>
+#include <systemmodels/systemmodels.hpp>
 
-#include <Encoders/encoderinterface.hpp>
+#include <encoders/encoderinterface.hpp>
 
 namespace examples
 {

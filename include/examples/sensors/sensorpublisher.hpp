@@ -20,7 +20,7 @@
 #include <array>
 /* String types, character traits and a set of converting functions */
 #include <string>
-#include<TaskManager/taskmanager.hpp>
+#include<taskmanager/taskmanager.hpp>
 
 
 namespace examples{

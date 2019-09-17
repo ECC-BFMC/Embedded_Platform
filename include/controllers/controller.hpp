@@ -14,10 +14,10 @@
 #ifndef CONTROLLER_HPP
 #define CONTROLLER_HPP
 #include<cmath>
-#include<Controllers/pidcontroller.hpp>
+#include<controllers/pidcontroller.hpp>
 
-#include <Encoders/encoderinterface.hpp>
-#include <Controllers/converters.hpp>
+#include <encoders/encoderinterface.hpp>
+#include <controllers/converters.hpp>
 
 #include <mbed.h>
 

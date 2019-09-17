@@ -13,8 +13,8 @@
 #ifndef MOVE_HPP
 #define MOVE_HPP
 
-#include <Drivers/servo.hpp>
-#include <Drivers/vnh.hpp>
+#include <drivers/servo.hpp>
+#include <drivers/vnh.hpp>
 
 /**
  * @brief  Move class

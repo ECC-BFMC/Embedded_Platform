@@ -13,7 +13,7 @@
 #ifndef ACKERMANN_TYPES_HPP
 #define ACKERMANN_TYPES_HPP
 
-#include <Linalg/linalg.h>
+#include <linalg/linalg.h>
 
 namespace examples
 {

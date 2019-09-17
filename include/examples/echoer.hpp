@@ -15,7 +15,7 @@
 
 /* The mbed library */
 #include <mbed.h>
-#include <TaskManager/taskmanager.hpp>
+#include <taskmanager/taskmanager.hpp>
 
 
 namespace examples{

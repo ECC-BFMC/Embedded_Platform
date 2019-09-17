@@ -13,8 +13,8 @@
 #ifndef FILTER_HPP
 #define FILTER_HPP
 
-#include <Linalg/linalg.h>
-#include <SystemModels/systemmodels.hpp>
+#include <linalg/linalg.h>
+#include <systemmodels/systemmodels.hpp>
 
 namespace filter
 {

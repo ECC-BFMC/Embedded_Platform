@@ -12,8 +12,8 @@
 /* Include guard */
 #ifndef ENCODER_FILTER_HPP
 #define ENCODER_FILTER_HPP
-#include <Encoders/encoder.hpp>
-#include <Filter/filter.hpp>
+#include <encoders/encoder.hpp>
+#include <filter/filter.hpp>
 
 //!  CEncoderFilter class. 
 /*!

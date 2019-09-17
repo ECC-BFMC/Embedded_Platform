@@ -19,8 +19,8 @@
 #include <array>
 /* Function objects */
 #include <functional>
-#include<TaskManager/taskmanager.hpp>
-#include <Queue/queue.hpp>
+#include<taskmanager/taskmanager.hpp>
+#include <queue/queue.hpp>
 
 
 namespace serial{

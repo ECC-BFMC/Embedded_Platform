@@ -14,8 +14,8 @@
 #define ACKERMANN_MODEL_HPP
 
 #include <math.h>
-#include <SystemModels/systemmodels.hpp>
-#include <Examples/SystemModels/ackermanntypes.hpp>
+#include <systemmodels/systemmodels.hpp>
+#include <examples/systemmodels/ackermanntypes.hpp>
 
 /* Definition of PI value */
 #ifndef M_PI

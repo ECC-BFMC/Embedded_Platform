@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    SystemModels/systemmodels.hpp
+  * @file    systemmodels/systemmodels.hpp
   * @author  RBRO/PJ-IU
   * @version V1.0.0
   * @date    day-month-2017
@@ -12,7 +12,7 @@
 #ifndef SYSTEM_MODELS_HPP
 #define SYSTEM_MODELS_HPP
 
-#include <Linalg/linalg.h>
+#include <linalg/linalg.h>
 
 // Discrete System Models
 namespace systemmodels{

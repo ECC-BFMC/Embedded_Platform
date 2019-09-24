@@ -1,6 +1,6 @@
 /**
- * @file quadratureencoder.hpp
- * @author RBRO/PJ-IU
+ * @file quadratureencodertask.hpp
+ * @author  RBRO/PJ-IU
  * @brief 
  * @version 0.1
  * @date 2018-10-23
@@ -8,56 +8,57 @@
  * @copyright Copyright (c) 2018
  * 
  */
+#ifndef QUADRATURE_ENCODER_TASK_HPP
+#define QUADRATURE_ENCODER_TASK_HPP
 
-#ifndef Quadrature_ENCODER_HPP
-#define Quadrature_ENCODER_HPP
+#include <encoders/encoderinterfaces.hpp>
+#include <encoders/quadraturecounter.hpp>
+#include <filter/Filter.hpp>
 
-#include <mbed.h>
+#include <rtos.h>
 
 namespace encoders{
-/**
- * @brief  It an interface for accessing the encoder position. It can be used to get and to reset the position of the encoder.
- * 
- */
-class CQuadratureEncoder_TIMX{
-    public:
-      virtual int16_t getCount() = 0;
-      virtual void reset() = 0;
-};
 
 /**
- * @brief It's a singleton class for receiving and decoding the Quadrature signal by using the timer TIM4. It can get the direction of the rotation.
+ * @brief It implements a periodic task, which get the value from the counter and reset it to zero.
  * 
  */
-class CQuadratureEncoder_TIM4:public CQuadratureEncoder_TIMX{
-    /**
-     * @brief It uses to destroy the singleton class.
-     * 
-     */
-    class CQuadratureEncoder_TIM4_Destroyer{
+class CQuadratureEncoder:public IEncoderGetter{
     public:
-        CQuadratureEncoder_TIM4_Destroyer(){}
-        ~CQuadratureEncoder_TIM4_Destroyer();
-        void SetSingleton(CQuadratureEncoder_TIM4* s);
-    private:
-         CQuadratureEncoder_TIM4* m_singleton;
-    };
-
-  public:
-    static CQuadratureEncoder_TIM4 *Instance();
-    int16_t getCount();
-    void reset();
-    virtual ~CQuadratureEncoder_TIM4() {}
+      CQuadratureEncoder(float,drivers::IQuadratureCounter_TIMX*,uint16_t);
+      void startTimer();
   protected:
-    CQuadratureEncoder_TIM4() {}
-   
-  private:
-    void initialize();
-    static CQuadratureEncoder_TIM4* m_instance;
-    static CQuadratureEncoder_TIM4_Destroyer m_destroyer;
+    virtual void _run();
+    virtual int16_t getCount();
+    virtual float getSpeedRps();
+    virtual bool isAbs(){return false;}
+  protected:
+      ::drivers::IQuadratureCounter_TIMX *m_quadraturecounter;
+      int16_t           m_encoderCnt;
+      const float       m_taskperiod_s;
+      const uint16_t    m_resolution;
+      RtosTimer m_timer;
 };
 
-};// namepsace drivers
+/**
+ * @brief It implements the same functionality than CQuadratureEncoderTask class, but in additional it can filter the values. 
+ * 
+ */
+class CQuadratureEncoderWithFilter: public CQuadratureEncoder, public IEncoderNonFilteredGetter{
+    public:
+      CQuadratureEncoderWithFilter(float,drivers::IQuadratureCounter_TIMX *, uint16_t,filter::CFilterFunction<float>&);
+      
+      virtual int16_t getCount();
+      virtual float getSpeedRps();
+      virtual int16_t  getNonFilteredCount();
+      virtual float getNonFilteredSpeedRps();
+    protected:
+      virtual void _run();
+      double m_encoderCntFiltered;
+      filter::CFilterFunction<float>& m_filter;
 
+};
+
+}; // namespace encoders
 
 #endif

@@ -1,5 +1,5 @@
 /**
- * @file quadratureencoder.cpp
+ * @file quadratureencodertask.cpp
  * @author RBRO/PJ-IU
  * @brief 
  * @version 0.1
@@ -8,104 +8,133 @@
  * @copyright Copyright (c) 2018
  * 
  */
-#include <encoders/Quadratureencoder.hpp>
+#include <encoders/quadratureencoder.hpp>
 
 
 namespace encoders{
 
 
 
-CQuadratureEncoder_TIM4 *CQuadratureEncoder_TIM4::m_instance = 0;
-CQuadratureEncoder_TIM4::CQuadratureEncoder_TIM4_Destroyer CQuadratureEncoder_TIM4::m_destroyer;
-
-
 /**
- * @brief Setter function.
+ * @brief Construct a new CQuadratureEncoderTask::CQuadratureEncoderTask object
  * 
- * @param s singleton object address
+ * @param f_period_sec Period of the task
+ * @param f_Quadratureencoder The counter object
+ * @param f_resolution The resolution of the rotation encoder. (Cpr count per revolution)
  */
-void CQuadratureEncoder_TIM4::CQuadratureEncoder_TIM4_Destroyer::SetSingleton(CQuadratureEncoder_TIM4* s){
-    m_singleton = s;
-}  
-
-/**
- * @brief Destroy the cQuadratureencoder tim4::cQuadratureencoder tim4 destroyer::cQuadratureencoder tim4 destroyer object
- * 
- */
-CQuadratureEncoder_TIM4::CQuadratureEncoder_TIM4_Destroyer::~CQuadratureEncoder_TIM4_Destroyer(){
-    delete m_singleton;
+CQuadratureEncoder::CQuadratureEncoder(   float                           f_period_sec
+                                                ,drivers::IQuadratureCounter_TIMX*        f_quadraturecounter
+                                                ,uint16_t                        f_resolution)
+                                                :m_quadraturecounter(f_quadraturecounter)
+                                                ,m_taskperiod_s(f_period_sec)
+                                                ,m_resolution(f_resolution)
+                                                ,m_timer(mbed::callback(this,&CQuadratureEncoder::_run))
+{
 }
 
 
 /**
- * @brief Constructor function. It verifies the existance of the singleton object and creates it.
+ * @brief Start the RosTimer to periodically apply the _run function. 
  * 
- * @return The address of the singleton object
  */
-CQuadratureEncoder_TIM4* CQuadratureEncoder_TIM4::Instance(){
-    if(!CQuadratureEncoder_TIM4::m_instance){
-        CQuadratureEncoder_TIM4::m_instance = new CQuadratureEncoder_TIM4;
-        m_instance->initialize();
-        CQuadratureEncoder_TIM4::m_destroyer.SetSingleton(m_instance);
-    }
-    return CQuadratureEncoder_TIM4::m_instance;
+void CQuadratureEncoder::startTimer(){
+    m_timer.start(static_cast<int>(m_taskperiod_s*1000));
 }
 
 
 /**
- * @brief Initialize the parameter of the object.
+ * @brief The private run function, which will be applied periodically. 
  * 
  */
-void CQuadratureEncoder_TIM4::initialize(){
-    //PB6 PB7 aka D10 MORPHO_PB7
-    // Enable clock for GPIOA
-   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+void CQuadratureEncoder::_run(){
+    m_encoderCnt = m_quadraturecounter->getCount();
+    m_quadraturecounter->reset();
+}
 
-   //stm32f4xx.h
-   GPIOB->MODER |= GPIO_MODER_MODER6_1 | GPIO_MODER_MODER7_1;         //PB6 & PB7 as Alternate Function   /*!< GPIO port mode register,               Address offset: 0x00      */
-   GPIOB->OTYPER |= GPIO_OTYPER_OT_6 | GPIO_OTYPER_OT_7;              //PB6 & PB7 as Inputs               /*!< GPIO port output type register,        Address offset: 0x04      */
-   GPIOB->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6 | GPIO_OSPEEDER_OSPEEDR7; //Low speed                         /*!< GPIO port output speed register,       Address offset: 0x08      */
-   GPIOB->PUPDR |= GPIO_PUPDR_PUPDR6_1 | GPIO_PUPDR_PUPDR7_1;         //Pull Down                         /*!< GPIO port pull-up/pull-down register,  Address offset: 0x0C      */
-   GPIOB->AFR[0] |= 0x22000000;                                       //AF02 for PB6 & PB7                /*!< GPIO alternate function registers,     Address offset: 0x20-0x24 */
-   GPIOB->AFR[1] |= 0x00000000;                                       //nibbles here refer to gpio8..15   /*!< GPIO alternate function registers,     Address offset: 0x20-0x24 */
-
-   // configure TIM4 as Encoder input
-   // Enable clock for TIM4
-   // __TIM4_CLK_ENABLE();
-   RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
-
-   TIM4->CR1 = 0x0001;                // CEN(Counter ENable)='1'     < TIM control register 1
-   TIM4->SMCR = TIM_ENCODERMODE_TI12; //               < TIM slave mode control register
-   //TIM_ENCODERMODE_TI1 input 1 edges trigger count
-   //TIM_ENCODERMODE_TI2 input 2 edges trigger count
-   //TIM_ENCODERMODE_TI12 all edges trigger count
-   TIM4->CCMR1 = 0xF1F1; // CC1S='01' CC2S='01'         < TIM capture/compare mode register 1
-   //0xF nibble sets up filter
-   TIM4->CCMR2 = 0x0000;                       //                             < TIM capture/compare mode register 2
-   TIM4->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E; //     < TIM capture/compare enable register
-   TIM4->PSC = 0x0000;                         // Prescaler = (0+1)           < TIM prescaler
-   TIM4->ARR = 0xffff;                         // reload at 0xfffffff         < TIM auto-reload register
-
-   TIM4->CNT = 0x0000; //reset the counter before we use it
+/**
+ * @brief Getter function for counted impluses in the last period.
+ * 
+ * @return int16_t - counted impulses
+ */
+int16_t CQuadratureEncoder::getCount(){
+    return m_encoderCnt;
 }
 /**
- * @brief Get the position of encoder. 
+ * @brief Getter function for the rotation speed (rotation per second)
+ * 
+ * @return float - rotation speed (rotation per second)
+ */
+
+float CQuadratureEncoder::getSpeedRps(){
+    return static_cast<float>(m_encoderCnt)/ m_resolution / m_taskperiod_s;
+}
+
+/**
+ * @brief Construct a new CQuadratureEncoderWithFilterTask::CQuadratureEncoderWithFilterTask object
+ * 
+ * @param f_period_sec Period of the task
+ * @param f_Quadratureencoder The counter object
+ * @param f_resolution The resolution of the rotation encoder. (Cpr count per revolution)
+ * @param f_filter The reference to the filter. 
+ */
+CQuadratureEncoderWithFilter::CQuadratureEncoderWithFilter(   float                           f_period_sec
+                                                                    ,drivers::IQuadratureCounter_TIMX*        f_quadraturecounter
+                                                                    ,uint16_t                       f_resolution
+                                                                    ,filter::CFilterFunction<float>&       f_filter)
+                                                                    :CQuadratureEncoder(f_period_sec,f_quadraturecounter,f_resolution)
+                                                                    ,m_filter(f_filter)
+                                                                    {
+}
+
+/**
+ * @brief Private run method for getting the value from the counter, reseting it.  In the last step, it filters the measured values. 
+ * This method is applied automatically and periodically by the rtos timer, if it was started by the method 'startTimer'.
  * 
  */
-int16_t CQuadratureEncoder_TIM4::getCount(){
-    if(m_instance){
-        return TIM4->CNT;
-    }
-    return 0xffff;
+void CQuadratureEncoderWithFilter::_run(){
+    CQuadratureEncoder::_run();
+    float temp = m_encoderCnt;
+    m_encoderCntFiltered = static_cast<int16_t>(m_filter(temp));
+
 }
+
 /**
- * @brief Reset the value of the counter to zero value.
+ * @brief Getter function for the last filtered value.
+ * 
+ * @return int16_t - filtered counted impulses 
  */
-void CQuadratureEncoder_TIM4::reset(){
-    if(m_instance){
-        TIM4->CNT = 0;
-    }
+int16_t CQuadratureEncoderWithFilter::getCount(){
+    return m_encoderCntFiltered;
+}
+
+/**
+ * @brief Getter function for the last filtered rotation speed (rotation per second). 
+ * 
+ * @return float - filtered rotation speed in rps 
+ */
+float CQuadratureEncoderWithFilter::getSpeedRps(){
+    return static_cast<double>(m_encoderCntFiltered)/m_resolution / m_taskperiod_s;
+
+}
+
+/**
+ * @brief Getter function for the last non-filtered value. 
+ *
+ * @return int16_t - non-filtered counted impulses  
+ */
+int16_t CQuadratureEncoderWithFilter::getNonFilteredCount(){
+    return m_encoderCntFiltered;
+}
+
+/**
+ * @brief Getter function for the last non-filtered rotation speed. 
+ *
+ * @return float - non-filtered rotation speed in rps  
+ */
+float CQuadratureEncoderWithFilter::getNonFilteredSpeedRps(){
+    return static_cast<double>(m_encoderCntFiltered)/m_resolution / m_taskperiod_s;
+
 }
 
 
-}; // namespace drivers
+}; // namespace encoders 

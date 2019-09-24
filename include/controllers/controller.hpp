@@ -16,7 +16,7 @@
 #include<cmath>
 #include<controllers/pidcontroller.hpp>
 
-#include <encoders/encoderinterface.hpp>
+#include <encoders/encoderinterfaces.hpp>
 #include <controllers/converters.hpp>
 
 #include <mbed.h>

@@ -26,7 +26,7 @@
 /* Header file  for the sendor publisher functionality */
 #include <examples/sensors/sensorpublisher.hpp>
 /* Quadrature encoder functionality */
-#include <encoders/quadratureencodertask.hpp>
+#include <encoders/quadratureencoder.hpp>
 /* Examples with the sensors publisher */
 #include <examples/sensors/sensortask.hpp>
 
@@ -49,7 +49,7 @@ float           g_period_Encoder = 0.001;
 filter::lti::siso::CIIRFilter<float,1,2> g_encoderFilter(linalg::CRowVector<float,1>({ -0.77777778})
                                                         ,linalg::CRowVector<float,2>({0.11111111,0.11111111}));
 /// Create a quadrature encoder object with a filter. It periodically measueres the rotary speed of the motor and applies the given filter. 
-encoders::CQuadratureEncoderWithFilterTask g_quadratureEncoderTask(g_period_Encoder,encoders::CQuadratureEncoder_TIM4::Instance(),2048,g_encoderFilter);
+encoders::CQuadratureEncoderWithFilter g_quadratureEncoderTask(g_period_Encoder,drivers::CQuadratureCounter_TIM4::Instance(),2048,g_encoderFilter);
 
 ///Create an encoder publisher object to transmite the rotary speed of the dc motor. 
 examples::sensors::CEncoderSender         g_encoderPublisher(0.01/g_baseTick,g_quadratureEncoderTask,g_rpi);

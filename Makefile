@@ -65,8 +65,8 @@ OBJECTS += src/timer/timer.o
 OBJECTS += src/controllers/controller.o
 OBJECTS += src/controllers/converters.o
 OBJECTS += src/controllers/pidcontroller.o
+OBJECTS += src/encoders/quadraturecounter.o
 OBJECTS += src/encoders/quadratureencoder.o
-OBJECTS += src/encoders/quadratureencodertask.o
 OBJECTS += src/main.o
 
 

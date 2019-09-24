@@ -21,7 +21,7 @@
 #include <controllers/controller.hpp>
 #include <systemmodels/systemmodels.hpp>
 
-#include <encoders/encoderinterface.hpp>
+#include <encoders/encoderinterfaces.hpp>
 
 namespace examples
 {

@@ -45,7 +45,7 @@ PROJECT := Nucleo_mbedrobot
 ###############################################################################
 # Objects and Paths
 
-OBJECTS += src/drivers/servo.o
+OBJECTS += src/drivers/steeringmotor.o
 OBJECTS += src/drivers/vnh.o
 OBJECTS += src/linalg/linalg.o
 OBJECTS += src/queue/queue.o

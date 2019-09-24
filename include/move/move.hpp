@@ -13,7 +13,7 @@
 #ifndef MOVE_HPP
 #define MOVE_HPP
 
-#include <drivers/servo.hpp>
+#include <drivers/steeringmotor.hpp>
 #include <drivers/vnh.hpp>
 
 /**
@@ -45,7 +45,7 @@ public:
             
 private:
     /* Servo pbject */
-    drivers::SERVO       servo;
+    drivers::CSteeringMotor       servo;
     /* Bridge object */
     drivers::VNH         vnh;
 };

@@ -18,20 +18,20 @@
 
 namespace drivers{
     /**
-     * @brief It is used for implementing SERVO functionality.
+     * @brief It is used to control the servo motor, which is connected to the steering wheels. The steering angle can be accessed through 'setAngle' method. 
      * 
      */
-    class SERVO
+    class CSteeringMotor 
     {
     public:
         /* Constructor */
-        SERVO(PinName _pwm);
+        CSteeringMotor(PinName _pwm);
         /* Destructor */
-        ~SERVO();
+        ~CSteeringMotor();
         /* Set angle */
-        void SetAngle(float angle); //-25 to 25 degr
+        void setAngle(float angle); //-25 to 25 degr
     private:
-        /* convert angle to duty cycle */
+        /* convert angle degree to duty cycle for pwm signal */
         float conversion(float angle); //angle to duty cycle
         /* PWM value */
         PwmOut pwm;

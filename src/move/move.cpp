@@ -52,7 +52,7 @@ Move::~Move()
 void Move::Steer(float angle)
 {
     if ((angle <= 23) && (angle >= -23))
-        servo.SetAngle(angle);
+        servo.setAngle(angle);
 };
 
 /** \brief  Move method

@@ -17,12 +17,12 @@ namespace drivers{
      *
      *  @param _pwm               pin connected to servo motor
      */
-    CSteeringMotor::CSteeringMotor(PinName _pwm)
-        :pwm(_pwm)
+    CSteeringMotor::CSteeringMotor(PinName f_pwm)
+        :m_pwm(f_pwm)
     {
-        pwm.period_ms(20); 
+        m_pwm.period_ms(20); 
         // Set position to zero   
-        pwm.write(0.07525);
+        m_pwm.write(0.07525);
     };
 
     /** @brief  CSteeringMotor class destructor
@@ -37,9 +37,9 @@ namespace drivers{
      *
      *  @param angle      angle degree, where the positive value means right direction and negative value the left direction. 
      */
-    void CSteeringMotor::setAngle(float angle)
+    void CSteeringMotor::setAngle(float f_angle)
     {
-        pwm.write(conversion(angle));
+        m_pwm.write(conversion(f_angle));
     };
 
     /** @brief  Conversion method between angle and pwm signal

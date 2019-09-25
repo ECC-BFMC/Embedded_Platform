@@ -10,8 +10,8 @@
  */
 
 /* Include guard */
-#ifndef SERVO_HPP
-#define SERVO_HPP
+#ifndef STEERINGMOTOR_HPP
+#define STEERINGMOTOR_HPP
 
 #include <mbed.h>
 
@@ -25,18 +25,16 @@ namespace drivers{
     {
     public:
         /* Constructor */
-        CSteeringMotor(PinName _pwm);
+        CSteeringMotor(PinName f_pwm);
         /* Destructor */
         ~CSteeringMotor();
         /* Set angle */
-        void setAngle(float angle); //-25 to 25 degr
+        void setAngle(float f_angle); //-25 to 25 degr
     private:
         /* convert angle degree to duty cycle for pwm signal */
-        float conversion(float angle); //angle to duty cycle
-        /* PWM value */
-        PwmOut pwm;
-        /* Current angle */
-        float current_angle;
+        float conversion(float f_angle); //angle to duty cycle
+        /* PWM output pin */
+        PwmOut m_pwm;
     };
 }; // namespace drivers
 

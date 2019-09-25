@@ -63,7 +63,7 @@ void Move::Steer(float angle)
 void Move::Speed(float speed)
 {
     speed /=100;
-    vnh.Run(speed);
+    vnh.setSpeed(speed);
 };
 
 /** \brief  Brake method
@@ -73,7 +73,7 @@ void Move::Speed(float speed)
  */
 void Move::Brake()
 {
-    vnh.Brake();
+    vnh.brake();
 }
 
 /** \brief  Hard brake method
@@ -84,7 +84,7 @@ void Move::Brake()
 void Move::Inverse(float f_speed)
 {
     f_speed /=100;
-    vnh.Inverse(f_speed);
+    vnh.inverseDirection(f_speed);
 }
 
 /** \brief  Car testing method
@@ -128,7 +128,7 @@ void Move::ResetCar()
  *  
  *  @return    reference to VNH object
  */
-drivers::VNH& Move::getVNH() 
+drivers::CMotorDriverVnh& Move::getVNH() 
 { 
     return vnh; 
 }

@@ -14,7 +14,7 @@
 #define MOVE_HPP
 
 #include <drivers/steeringmotor.hpp>
-#include <drivers/vnh.hpp>
+#include <drivers/dcmotor.hpp>
 
 /**
  * @brief  Move class
@@ -41,13 +41,13 @@ public:
     /* Reset */
     void ResetCar();
     /* Return bridge object */
-    drivers::VNH& getVNH();
+    drivers::CMotorDriverVnh& getVNH();
             
 private:
     /* Servo pbject */
     drivers::CSteeringMotor       servo;
     /* Bridge object */
-    drivers::VNH         vnh;
+    drivers::CMotorDriverVnh      vnh;
 };
 
 #endif

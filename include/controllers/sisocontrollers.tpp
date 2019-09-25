@@ -1,22 +1,30 @@
-/** @brief  Class constructor
+#ifndef SISO_CONTROLLERS_TPP
+#define SISO_CONTROLLERS_TPP
+
+
+#ifndef SISO_CONTROLLERS_H
+#error __FILE__ should only be included from sisocontrollers.hpp.
+#endif // SISO_CONTROLLERS_H
+
+/** @brief CPidController class constructor
   *
-  * Constructor method
+  * Construct a new discrete pid controller, it requires the pid parameters to calculate the discrete transferfunction. 
   *
   * @param f_kp                proportional factor
   * @param f_ki                integral factor
   * @param f_kd                derivative factor
   * @param f_tf                derivative time filter constant
-  * @param f_dt                sample time
+  * @param f_dt                sampling time
   */
 template<class T>
-CPidController<T>::CPidController(T              f_kp
-                                                   ,T              f_ki
-                                                   ,T              f_kd
-                                                   ,T              f_tf
-                                                   ,T              f_dt)
+CPidController<T>::CPidController( T              f_kp
+                                  ,T              f_ki
+                                  ,T              f_kd
+                                  ,T              f_tf
+                                  ,T              f_dt)
     :m_pidTf()
-    ,m_dt(f_dt)
 {    
+    // Calculate the coefficients for the discrete transferfunction based an Euler backward discretisation method. 
     linalg::CMatrix<T,1,3> l_numPid({ (f_kd+f_tf*f_kp)/f_tf , (f_tf*f_dt*f_ki+f_dt*f_kp-2*f_tf*f_kp-2*f_kd)/f_tf , (f_kd+f_tf*f_kp+f_dt*f_dt*f_ki-f_dt*f_tf*f_ki-f_dt*f_kp)/f_tf});
     linalg::CMatrix<T,1,3> l_denPid({ 1.0,-(2*f_tf-f_dt)/f_tf,(f_tf-f_dt)/f_tf });
 
@@ -24,18 +32,28 @@ CPidController<T>::CPidController(T              f_kp
     m_pidTf.setDen(l_denPid.transpose());
 }
 
-// template<class T>
-// CPidController<T>::CPidController(  CPidSystemmodelType             f_pid
-//                                     ,T                              f_dt)
-//                                     :m_pidTf(f_pid)
-//                                     ,m_dt(f_dt){
 
-// }
+/**
+ * @brief CPidController class constructor
+ * 
+ * Construct a new discrete pid controller based the given discrete transferfunction. 
+ *  
+ * @param f_pid               discrete transferfunction
+ * @param f_dt                sampling time
+ */
+template<class T>
+CPidController<T>::CPidController(  CPidSystemmodelType             f_pid
+                                    ,T                              f_dt)
+                                    :m_pidTf(f_pid)
+                                    ,m_dt(f_dt){
+}
 
 
-/** @brief  Operator
+/** @brief  Control signal generator
   *
-  * @param f_input             input function
+  *   It calculate the control signal based on the given input error. It has to be applied in each period. 
+  * 
+  * @param f_input             input error
   * \return                    control value
   */
 template<class T>
@@ -44,9 +62,9 @@ T CPidController<T>::calculateControl(const T& f_input)
     return m_pidTf(f_input);
 }
 
-/** @brief  Serial callback method
+/** @brief  Static serial callback method
   *
-  * Serial callback attaching serial callback to controller object
+  * It applies the serial callback function of the given input object. 
   *
   * @param  obj                 PID controller object
   * @param  a                   string to read data from
@@ -91,7 +109,7 @@ void CPidController<T>::setController(
     m_pidTf.setDen(l_denPid.transpose());
 }
 
-/** @brief  Serial callback method setting controller to values received
+/** @brief  Serial callback method  for setting controller to values received. The first string has to contains the parameters (in order proportional, inter)
   *
   *
   * @param  a                   string to read data from
@@ -112,3 +130,5 @@ void CPidController<T>::serialCallback(char const * a, char * b)
         sprintf(b,"sintax error;;");
     }
 }
+
+#endif

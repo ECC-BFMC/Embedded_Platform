@@ -14,7 +14,7 @@
 #ifndef CONTROLLER_HPP
 #define CONTROLLER_HPP
 #include<cmath>
-#include<controllers/pidcontroller.hpp>
+#include<controllers/sisocontrollers.hpp>
 
 #include <encoders/encoderinterfaces.hpp>
 #include <controllers/converters.hpp>

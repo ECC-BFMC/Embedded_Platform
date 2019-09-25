@@ -1,5 +1,5 @@
-#ifndef PID_CONTROLLER_H
-#define PID_CONTROLLER_H
+#ifndef SISO_CONTROLLERS_H
+#define SISO_CONTROLLERS_H
 
 #include <cstdio>
 #include <linalg/linalg.h>
@@ -12,7 +12,7 @@ namespace controllers
     {
         
         /**
-         * @brief General interface class for the controller
+         * @brief General interface class for the controller with single input and single output
          * 
          * @tparam T type of the variables (float, double)
          */
@@ -32,7 +32,7 @@ namespace controllers
         class CPidController:public IController<T>
         {
             public:
-                /* Discrete transfer function type */
+                /* Discrete transferfunction type */
                 using CPidSystemmodelType = systemmodels::lti::siso::CDiscreteTransferFucntion<T,3,3>;
                 
                 /* Constructor */
@@ -43,37 +43,32 @@ namespace controllers
                               ,T              f_dt);
                 CPidController(CPidSystemmodelType f_pid,T f_dt);
 
-                /* Overloaded operator */
+                /* Calculate the control signal based the input error. */
                 T calculateControl(const T& f_input);
                 /* Serial callback */
                 static void staticSerialCallback(void* obj,char const * a, char * b);
-                /* Initialization */
+                /* Serial callback implementation */
+                void serialCallback(char const * a, char * b);
+
+                /* Set to zero the previous values in the transferfunction  */
                 void clear();
             private:
-                #ifdef CONTROL_TEST_HPP
-                    FRIEND_TEST(PidControlTest,Initialization);
-                    FRIEND_TEST(PidControlTest,Setter);
-                #endif 
-                /* Controller setting */
+                /* Set the controller's parameters. */
                 void setController(T              f_kp
                                   ,T              f_ki
                                   ,T              f_kd
                                   ,T              f_tf);
-                /* Serial callback implementation */
-                void serialCallback(char const * a, char * b);
 
-                
-
-                /* Discrete transfer function */
+                /* Discrete transferfunction */
                 CPidSystemmodelType     m_pidTf;
 
 
-                /* delta-time term */
+                /* Sampling time */
                 T                 m_dt;
 
         };
         /* Include function definitions */
-        #include "PidController.inl"
+        #include "sisocontrollers.tpp"
     }; // namespace siso
 }; // namespace controllers   
 

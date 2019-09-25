@@ -16,7 +16,7 @@
 #include <mbed.h>
 #include <taskmanager/taskmanager.hpp>
 #include <move/move.hpp>
-#include <controllers/controller.hpp>
+#include <controllers/motorcontroller.hpp>
 
 #include <rtos.h>
 

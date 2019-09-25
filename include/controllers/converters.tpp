@@ -1,4 +1,10 @@
+#ifndef CONVERTERS_TPP
+#define CONVERTERS_TPP
 
+
+#ifndef CONVERTERS_H
+#error __FILE__ should only be included from converters.hpp.
+#endif // CONVERTERS_H
 
 /**
  * @brief Construct a new CConverterPolynom<NOrd>::CConverterPolynom object
@@ -75,3 +81,5 @@ float CConverterSpline<NrBreak, NOrd>::splineValue( CCoeffContainerType f_coeff,
     }
     return l_res;
 }
+
+#endif 

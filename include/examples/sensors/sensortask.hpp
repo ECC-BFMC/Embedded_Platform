@@ -18,7 +18,7 @@
 #include<taskmanager/taskmanager.hpp>
 #include <drivers/dcmotor.hpp>
 #include <serialmonitor/serialmonitor.hpp>
-#include <controllers/controller.hpp>
+#include <controllers/motorcontroller.hpp>
 #include <systemmodels/systemmodels.hpp>
 
 #include <encoders/encoderinterfaces.hpp>

@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <controllers/controller.hpp>
+#include <controllers/motorcontroller.hpp>
 
 namespace controllers{
     /**

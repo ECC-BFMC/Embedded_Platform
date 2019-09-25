@@ -46,7 +46,7 @@ PROJECT := Nucleo_mbedrobot
 # Objects and Paths
 
 OBJECTS += src/drivers/steeringmotor.o
-OBJECTS += src/drivers/vnh.o
+OBJECTS += src/drivers/dcmotor.o
 OBJECTS += src/linalg/linalg.o
 OBJECTS += src/queue/queue.o
 OBJECTS += src/filter/filter.o
@@ -62,9 +62,9 @@ OBJECTS += src/examples/sensors/sensortask.o
 OBJECTS += src/examples/filter/ekf_am.o
 OBJECTS += src/examples/systemmodels/ackermannmodel.o
 OBJECTS += src/timer/timer.o
-OBJECTS += src/controllers/controller.o
+OBJECTS += src/controllers/motorcontroller.o
 OBJECTS += src/controllers/converters.o
-OBJECTS += src/controllers/pidcontroller.o
+OBJECTS += src/controllers/sisocontrollers.o
 OBJECTS += src/encoders/quadraturecounter.o
 OBJECTS += src/encoders/quadratureencoder.o
 OBJECTS += src/main.o

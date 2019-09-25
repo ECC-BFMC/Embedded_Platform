@@ -22,7 +22,7 @@
 /* Header file for the sensor task functionality */
 #include <examples/sensors/sensortask.hpp>
 /* Header file  for the controller functionality */
-#include <controllers/controller.hpp>
+#include <controllers/motorcontroller.hpp>
 /* Header file  for the sendor publisher functionality */
 #include <examples/sensors/sensorpublisher.hpp>
 /* Quadrature encoder functionality */

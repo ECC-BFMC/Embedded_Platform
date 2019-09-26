@@ -110,6 +110,116 @@ void systemmodels::lti::siso::CDiscreteTransferFucntion<T,NNum,NDen>::shiftMemor
     }
 }
 
+
+/******************************************************************************/
+/** @brief  CSSModel Class constructor
+ *
+ *  Constructor method
+ *
+ *  @param f_stateTransitionMatrix
+ *  @param f_inputMatrix
+ *  @param f_measurementMatrix
+ */
+template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
+systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
+        const CStateTransitionType& f_stateTransitionMatrix,
+        const CInputMatrixType& f_inputMatrix,
+        const CMeasurementMatrixType& f_measurementMatrix) 
+    : m_stateVector()
+    , m_stateTransitionMatrix(f_stateTransitionMatrix)
+    , m_inputMatrix(f_inputMatrix)
+    , m_measurementMatrix(f_measurementMatrix)
+    , m_directTransferMatrix()
+{
+    // do nothing
+}
+
+/** @brief  CSSModel Class constructor
+ *
+ *  Constructor method
+ *
+ *  @param f_stateTransitionMatrix
+ *  @param f_inputMatrix
+ *  @param f_measurementMatrix
+ *  @param f_directTransferMatrix
+ */
+template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
+systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
+        const CStateTransitionType& f_stateTransitionMatrix,
+        const CInputMatrixType& f_inputMatrix,
+        const CMeasurementMatrixType& f_measurementMatrix,
+        const CDirectTransferMatrixType& f_directTransferMatrix) 
+    : m_stateVector()
+    , m_stateTransitionMatrix(f_stateTransitionMatrix)
+    , m_inputMatrix(f_inputMatrix)
+    , m_measurementMatrix(f_measurementMatrix)
+    , m_directTransferMatrix(f_directTransferMatrix)
+{
+    // do nothing
+}
+
+/** @brief  CSSModel Class constructor
+ *
+ *  Constructor method
+ *
+ *  @param f_stateTransitionMatrix
+ *  @param f_inputMatrix
+ *  @param f_measurementMatrix
+ *  @param f_directTransferMatrix
+ *  @param f_state
+ */
+template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
+systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
+        const CStateTransitionType& f_stateTransitionMatrix,
+        const CInputMatrixType& f_inputMatrix,
+        const CMeasurementMatrixType& f_measurementMatrix,
+        const CDirectTransferMatrixType& f_directTransferMatrix,
+        const CStateType& f_state) 
+    : m_stateVector(f_state)
+    , m_stateTransitionMatrix(f_stateTransitionMatrix)
+    , m_inputMatrix(f_inputMatrix)
+    , m_measurementMatrix(f_measurementMatrix)
+    , m_directTransferMatrix(f_directTransferMatrix)
+{
+    // do nothing
+}
+
+/** @brief  Operator to apply the filtering
+  *
+  * @param f_inputVector        the input data
+  * @return                     the output data from the system model (output vector)
+  */
+template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
+linalg::CColVector<T,NC> systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::operator()(const CControlType& f_inputVector)
+{
+    updateState(f_inputVector);
+
+    return getOutput(f_inputVector);
+}
+
+/** @brief  Update state method
+  *
+  * @param f_inputVector        the input data
+  * @return                         None
+  */
+template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
+void systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::updateState(const CControlType& f_inputVector)
+{
+    m_stateVector = m_stateTransitionMatrix * m_stateVector + m_inputMatrix * f_inputVector;
+}
+
+/** @brief  Get output
+  *
+  * @param f_inputVector        the input data
+  * @return                         the output data from the system model (output vector)
+  */
+template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
+linalg::CColVector<T,NC> systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::getOutput(const CControlType& f_inputVector)
+{
+    return m_measurementMatrix * m_stateVector + m_directTransferMatrix * f_inputVector;
+}
+
+
 /******************************************************************************/
 /** \brief  CDiscreteTimeSystemModel class constructor
  *

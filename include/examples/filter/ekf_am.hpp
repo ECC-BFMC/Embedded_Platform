@@ -13,7 +13,7 @@
 #ifndef EKF_AM_HPP
 #define EKF_AM_HPP
 
-#include <filter/filter.hpp>
+#include <filter/kalmanfilters.hpp>
 #include <examples/systemmodels/ackermannmodel.hpp>
 
 namespace examples
@@ -22,7 +22,7 @@ namespace examples
     {
         /* Extended Kalman Filter */
         template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-        using CEKF  =   ::filter::ltv::mimo::CEKF<T,NA,NB,NC>;
+        using CEKF  =   ::filter::nlti::mimo::CEKF<T,NA,NB,NC>;
         //!  CEKF_AM class. 
         /*!
         * It inherits class CEKF. 

@@ -46,7 +46,7 @@ class CQuadratureEncoder:public IEncoderGetter{
  */
 class CQuadratureEncoderWithFilter: public CQuadratureEncoder, public IEncoderNonFilteredGetter{
     public:
-      CQuadratureEncoderWithFilter(float,drivers::IQuadratureCounter_TIMX *, uint16_t,filter::CFilterFunction<float>&);
+      CQuadratureEncoderWithFilter(float,drivers::IQuadratureCounter_TIMX *, uint16_t,filter::IFilter<float>&);
       
       virtual int16_t getCount();
       virtual float getSpeedRps();
@@ -55,7 +55,7 @@ class CQuadratureEncoderWithFilter: public CQuadratureEncoder, public IEncoderNo
     protected:
       virtual void _run();
       double m_encoderCntFiltered;
-      filter::CFilterFunction<float>& m_filter;
+      filter::IFilter<float>& m_filter;
 
 };
 

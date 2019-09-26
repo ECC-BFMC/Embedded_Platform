@@ -68,22 +68,22 @@ namespace examples
                     // }
             };
 
-            class CInput:public linalg::CMatrix<double,2,1>
+            class CControl:public linalg::CMatrix<double,2,1>
             {
                 public:
-                    CInput():linalg::CMatrix<double,2,1>(){}
-                    CInput(const linalg::CMatrix<double,2,1>& f_matrix):linalg::CMatrix<double,2,1>(f_matrix){} 
+                    CControl():linalg::CMatrix<double,2,1>(){}
+                    CControl(const linalg::CMatrix<double,2,1>& f_matrix):linalg::CMatrix<double,2,1>(f_matrix){} 
                     double& v(){return m_data[0][0];}
                     const double& v()const{return m_data[0][0];}
                     double& alpha(){return m_data[1][0];}
                     const double& alpha()const{return m_data[1][0];}
             };
 
-            class COutput:public linalg::CMatrix<double,5,1>
+            class CObservation:public linalg::CMatrix<double,5,1>
             {
                 public:
-                    COutput():linalg::CMatrix<double,5,1>(){}
-                    COutput(const linalg::CMatrix<double,5,1>& f_matrix):linalg::CMatrix<double,5,1>(f_matrix){}
+                    CObservation():linalg::CMatrix<double,5,1>(){}
+                    CObservation(const linalg::CMatrix<double,5,1>& f_matrix):linalg::CMatrix<double,5,1>(f_matrix){}
                     double& x_ddot(){return m_data[0][0];}
                     const double& x_ddot() const{return m_data[0][0];}
                     double& y_ddot(){return m_data[1][0];}

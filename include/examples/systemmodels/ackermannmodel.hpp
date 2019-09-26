@@ -16,6 +16,7 @@
 #include <math.h>
 #include <systemmodels/systemmodels.hpp>
 #include <examples/systemmodels/ackermanntypes.hpp>
+#include <filter/kalmanfilters.hpp>
 
 /* Definition of PI value */
 #ifndef M_PI
@@ -38,7 +39,7 @@ namespace examples
             using CSystemModelType      = ::systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>;
             /* Jacobian matrix*/
             template<class T,uint32_t NA,uint32_t NB,uint32_t NC>
-            using CJacobianMatricesType = ::systemmodels::nlti::mimo::CJacobianMatrices<T,NA,NB,NC>;
+            using IJacobianMatricesType = ::filter::nlti::mimo::IJacobianMatrices<T,NA,NB,NC>;
             //!  CAckermannModel class. 
             /*!
             * It inherits class CSystemModelType. 
@@ -66,10 +67,10 @@ namespace examples
                                     ,const double            f_R
                                     ,const double            f_L);
                     /* Update method */
-                    CStatesType update(const CInputType&       f_input);
+                    CStatesType update(const CControlType&       f_input);
                     
                     /* Calculate output method */
-                    COutputType calculateOutput(const CInputType&  f_input);
+                    CObservationType calculateOutput(const CControlType&  f_input);
                 private:
                     /* gamma=Meter/Rotation */
                     const double m_gamma;
@@ -83,7 +84,7 @@ namespace examples
             /*!
             * It inherits class CJacobianMatricesType. 
             */
-            class CJMAckermannModel:public CJacobianMatricesType<double,2,10,5>
+            class CJMAckermannModel:public IJacobianMatricesType<double,2,10,5>
             {
                 public:
                     CJMAckermannModel   (double          f_dt
@@ -108,7 +109,7 @@ namespace examples
 
 
                     CJMObservationType getJMObservation(    const CStatesType&       f_states
-                                                            ,const CInputType&       f_input){
+                                                            ,const CControlType&       f_input){
                         return m_ObservationMatrix;
                     }
                 
@@ -132,12 +133,12 @@ namespace examples
 
                 public:
                     CJMTransitionType getJMTransition(       const CStatesType&       f_states
-                                                            ,const CInputType&       f_input){
+                                                            ,const CControlType&       f_input){
 
                         CJMTransitionType l_data(CJMTransitionType::zeros());
                         setJacobianStateMatrixWithOne(l_data);
                         CState l_states(f_states);
-                        CInput l_input(f_input);
+                        CControl l_input(f_input);
 
                         //Setting values in the jacobian matrix
                         l_data[0][2]=m_dt;

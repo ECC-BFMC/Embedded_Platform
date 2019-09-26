@@ -92,10 +92,10 @@ examples::systemmodels::ackermannmodel::CAckermannModel::CAckermannModel(
  */
 ackermannmodeltype::CStatesType 
     examples::systemmodels::ackermannmodel::CAckermannModel::update(
-      const CInputType&       f_input)
+      const CControlType&       f_input)
 {
     CState l_states=m_states;
-    CInput l_input=f_input;
+    CControl l_input=f_input;
     l_states.x()+=m_dt*l_states.x_dot();
     l_states.y()+=m_dt*l_states.y_dot();
 
@@ -123,13 +123,13 @@ ackermannmodeltype::CStatesType
  *  \param[in] f_input        reference to input type object
  *  \return    systemoutputs
  */
-ackermannmodeltype::COutputType 
+ackermannmodeltype::CObservationType 
     examples::systemmodels::ackermannmodel::CAckermannModel::calculateOutput(
-      const CInputType&  f_input)
+      const CControlType&  f_input)
 {
     CState l_states=m_states;
-    // CInput l_input=f_input;
-    COutput l_outputs(COutputType::zeros());
+    // CControl l_input=f_input;
+    CObservation l_outputs(CObservationType::zeros());
     l_outputs.x_ddot()=l_states.x_dot()-l_states.x_dot_prev();
     l_outputs.y_ddot()=l_states.y_dot()-l_states.y_dot_prev();
     l_outputs.teta_rad_dot()=l_states.teta_rad_dot();

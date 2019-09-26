@@ -80,7 +80,7 @@ float CQuadratureEncoder::getSpeedRps(){
 CQuadratureEncoderWithFilter::CQuadratureEncoderWithFilter(   float                           f_period_sec
                                                                     ,drivers::IQuadratureCounter_TIMX*        f_quadraturecounter
                                                                     ,uint16_t                       f_resolution
-                                                                    ,filter::CFilterFunction<float>&       f_filter)
+                                                                    ,filter::IFilter<float>&       f_filter)
                                                                     :CQuadratureEncoder(f_period_sec,f_quadraturecounter,f_resolution)
                                                                     ,m_filter(f_filter)
                                                                     {

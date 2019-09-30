@@ -55,6 +55,6 @@ private:
     volatile unsigned int  m_size;
 };
 
-#include "queue.inl"
+#include "queue.tpp"
 
 #endif

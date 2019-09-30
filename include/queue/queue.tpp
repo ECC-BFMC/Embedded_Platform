@@ -1,13 +1,21 @@
 /**
-  ******************************************************************************
-  * @file    Queue.inl
-  * @author  RBRO/PJ-IU
-  * @version V1.0.0
-  * @date    day-month-year
-  * @brief   This file contains the class definition for the queue
-  *          functionality. Inlin eimplementation.
-  ******************************************************************************
+ * @file queue.tpp
+ * @author RBRO/PJ-IU
+ * @brief This file contains the class definition for the queue
+  *          functionality.
+ * @version V1.0.0
+ * @date 2019-09-27
+ * 
  */
+
+#ifndef QUEUE_TPP
+#define QUEUE_TPP
+
+#ifndef QUEUE_HPP
+#error __FILE__ should only be included from queue.hpp.
+#endif
+
+
 
 /** @brief  Queue Class constructor
  *
@@ -151,3 +159,5 @@ inline void CQueue<T,N>::empty()
     m_end = N-1;
     m_size = 0;
 }
+
+#endif // QUEUE_TPP

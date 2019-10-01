@@ -16,7 +16,7 @@
 /* Header file for the blinker functionality */
 #include <examples/blinker.hpp>
 /* Header file for the serial communication functionality */
-#include <serialmonitor/serialmonitor.hpp>
+#include <serial/serialmonitor.hpp>
 /* Header file for the motion controller functionality */
 #include <motioncontroller/motioncontroller.hpp>
 /* Header file for the sensor task functionality */
@@ -63,7 +63,7 @@ controllers::CConverterSpline<2,1> l_volt2pwmConverter({-0.0007836798991808444,0
 /// Create a discrete transfer function, which respresents a discrete PID controller.
 
 //! [Create PID controller]
-systemmodels::lti::siso::CDiscreteTransferFucntion<double,3,3> g_motorPIDTF(linalg::CRowVector<double, 3>({ 0.12058,-0.23751,0.11695}).transpose(),linalg::CRowVector<double, 3>({ 1.00000, -1.97531  ,0.97531}).transpose());
+systemmodels::lti::siso::CDiscreteTransferFunction<double,3,3> g_motorPIDTF(linalg::CRowVector<double, 3>({ 0.12058,-0.23751,0.11695}).transpose(),linalg::CRowVector<double, 3>({ 1.00000, -1.97531  ,0.97531}).transpose());
 controllers::siso::CPidController<double> l_pidController(g_motorPIDTF,g_period_Encoder);
 
 controllers::siso::CPidController<double> l_pidController2( 0.1150,0.81000,0.000222,0.04,g_period_Encoder);

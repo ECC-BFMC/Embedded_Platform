@@ -17,7 +17,7 @@
 /* Header file for the blinker functionality */
 #include <examples/blinker.hpp>
 /* Header file for the serial communication functionality */
-#include <serialmonitor/serialmonitor.hpp>
+#include <serial/serialmonitor.hpp>
 /* Header file for the motion controller functionality */
 #include <motioncontroller/motioncontroller.hpp>
 /* Header file for the sensor task functionality */

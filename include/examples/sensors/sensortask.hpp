@@ -48,7 +48,7 @@ namespace examples
                 /* Reference to serial object */
                 Serial&                                                       m_serial;
                 /* Transfer function */
-                systemmodels::lti::siso::CDiscreteTransferFucntion<float,3,3> m_tf;
+                systemmodels::lti::siso::CDiscreteTransferFunction<float,3,3> m_tf;
         };
 
         //!  CEncoderSender class. 

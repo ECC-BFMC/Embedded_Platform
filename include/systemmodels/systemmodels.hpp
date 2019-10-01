@@ -20,82 +20,81 @@ namespace systemmodels{
     namespace lti{
         namespace siso{
            /**
-            * @brief Discrete transfer function
+            * @brief Transfer function in z-domain. 
             * 
-            * @tparam T The type of the variable 
-            * @tparam NNum The order of the polynomial
-            * @tparam NDen The order of the polynomial
+            * The transfer function express by z^{-1} and is represented by ratio of two polynomials. 
+            * 
+            * @tparam T The type of the coefficients
+            * @tparam NNum The order of the polynomial in nominator 
+            * @tparam NDen The order of the polynomial in denominator
             */
             template <class T,uint32_t NNum,uint32_t NDen>
-            class CDiscreteTransferFucntion{
+            class CDiscreteTransferFunction{
                 public:
-                    using CDenType          =   linalg::CMatrix<T,NDen,1>;
-                    using CDenModType       =   linalg::CMatrix<T,NDen-1,1>;
-                    using CNumType          =   linalg::CMatrix<T,NNum,1>;
-                    // using CNumModType       =   linalg::CMatrix<T,NNum-1,1>;
-                    using CInputMem         =   linalg::CMatrix<T,1,NNum>;
-                    using COutputMem        =   linalg::CMatrix<T,1,NDen-1>;
+                    using CDenType          =   linalg::CMatrix<T,NDen,1>; // Type of the full denominator coefficients
+                    using CDenModType       =   linalg::CMatrix<T,NDen-1,1>; // Type of the denominator coefficients without the first coefficient
+                    using CNumType          =   linalg::CMatrix<T,NNum,1>; // Type of the full nominator coefficients
+                    
+                    using CInputMem         =   linalg::CMatrix<T,1,NNum>; // Type of previous input value memory
+                    using COutputMem        =   linalg::CMatrix<T,1,NDen-1>; // Type of previous output value memory
                     /* Constructor */
-                    CDiscreteTransferFucntion();
+                    CDiscreteTransferFunction();
 
-                    CDiscreteTransferFucntion(const CNumType& f_num,const CDenType& f_den);
+                    CDiscreteTransferFunction(const CNumType& f_num,const CDenType& f_den);
 
                     /* Clear memory */
                     void clearMemmory();
                     /* Shift memory */
                     template<uint32_t N>
                     void shiftMemory(linalg::CMatrix<T,1,N>& f_mem);
-                    /* Operator */
+                    /* Applying the transfer function on the next signal value */
                     T operator()(const T& f_input);
-                    /* Set num */
+                    /* Setting the nominator coefficients */
                     void setNum(const CNumType& f_num);
-                    /* Set den */
+                    /* Setting the denominator coefficients */
                     void setDen(const CDenType& f_den);
 
+                    /* Getting the numerator coefficients */
                     const CNumType& getNum();
+                    /* Getting the denominator coefficients without the first coefficient*/
                     const CDenModType& getDen();
+                    /* Getting the first denominator coefficients. General normalized to 1 */
                     float getDenCurrent();
-                    /* Get output */
+                    /* Getting the last calculated output */
                     T getOutput();
 
                 private:
-                
-                    #ifdef SYSTEMMODEL_TEST_HPP
-                        FRIEND_TEST(CDiscreteTransferFucntionTest,Reset);
-                    #endif
-
-                    /* nominator type */
+                    /* nominator coefficients */
                     CNumType    m_num;
-                    // CDenType       m_den;
-                    /* denominator type */
+                    /* denominator coefficients */
                     CDenModType    m_den;
-                    T              m_denCoef;
+                    T              m_denCoef; // The first coefficient in polynomials, it mustn't be zero value. 
                     /* input memory */
                     CInputMem      m_memInput;
                     /* output memory */
                     COutputMem     m_memOutput;
-            }; // class CDiscreteTransferFucntion
+            }; // class CDiscreteTransferFunction
         }; // namespace siso
         namespace mimo{
             /**
              * @brief Class for State Space Model
              * 
-             * @tparam T 
-             * @tparam NA 
-             * @tparam NB 
-             * @tparam NC 
+             * @tparam T        type of the variables, 
+             * @tparam NA       number of states variable
+             * @tparam NB       number of control variable
+             * @tparam NC       number of observation variable  
              */
             template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
             class CSSModel
             {
                 public:
-                    using CStateType = linalg::CColVector<T,NA>; // X
-                    using CStateTransitionType = linalg::CMatrix<T,NA,NA>; // A
-                    using CControlType = linalg::CColVector<T,NB>; // U
-                    using CMeasurementType = linalg::CColVector<T,NC>; // Y
-                    using CInputMatrixType = linalg::CMatrix<T,NA,NB>; // B
-                    using CMeasurementMatrixType = linalg::CMatrix<T,NC,NA>; // C
-                    using CDirectTransferMatrixType = linalg::CMatrix<T,NC,NB>; // D
+                    using CStateType = linalg::CColVector<T,NA>; // X - state variable type
+                    using CStateTransitionType = linalg::CMatrix<T,NA,NA>; // A state-state trans. model type
+                    using CControlType = linalg::CColVector<T,NB>; // U - control variable type
+                    using CMeasurementType = linalg::CColVector<T,NC>; // Y - observation (measurement) variable type
+                    using CInputMatrixType = linalg::CMatrix<T,NA,NB>; // B - control-state trans. model type
+                    using CMeasurementMatrixType = linalg::CMatrix<T,NC,NA>; // C - state-observation trans. model type
+                    using CDirectTransferMatrixType = linalg::CMatrix<T,NC,NB>; // D - control-observation trans. model type
                     /* Constructor */
                     CSSModel(
                         const CStateTransitionType& f_stateTransitionMatrix,
@@ -134,7 +133,7 @@ namespace systemmodels{
                     CStateTransitionType m_stateTransitionMatrix;
                     /* input matrix */
                     CInputMatrixType m_inputMatrix;
-                    /* measurement matrix */
+                    /* measurement (observation) matrix */
                     CMeasurementMatrixType m_measurementMatrix;
                     /* direct transfer matrix */
                     CDirectTransferMatrixType m_directTransferMatrix;
@@ -147,7 +146,7 @@ namespace systemmodels{
         namespace mimo{
             // Discrete time system model of a system nonlinear time invariant with multi-input and multi-output
             //  T       -variable type
-            //  NA      -number of inputs
+            //  NA      -number of contreol
             //  NB      -number of states
             //  NC      -number of outputs
             template <class T,uint32_t NA, uint32_t NB,uint32_t NC>

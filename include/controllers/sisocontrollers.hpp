@@ -33,7 +33,7 @@ namespace controllers
         {
             public:
                 /* Discrete transferfunction type */
-                using CPidSystemmodelType = systemmodels::lti::siso::CDiscreteTransferFucntion<T,3,3>;
+                using CPidSystemmodelType = systemmodels::lti::siso::CDiscreteTransferFunction<T,3,3>;
                 
                 /* Constructor */
                 CPidController(T              f_kp

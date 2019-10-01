@@ -26,8 +26,15 @@
 namespace serial{
 
    /**
-    * @brief It is used for implementing serial communciation.
+    * @brief Class Serial Monitor
     * 
+    * It has aim to decode the messages received from the other device and redirectionate to other functions the content of message. 
+    * For decode it has a predefined structure with a header (key) part and a content part. The key has to be four character, the content is defined by user.
+    * The message received has to start with '#' special character, the responses have the same key and start with "@" character. The special characters notice the direction of the message.
+    * Examples of messages:
+    *   '#KEY1:MESSAGECONTENT;;\r\n'
+    *   '@KEY1:RESPONSECONTANT;;\r\n'
+    * The key differs for each functionalities, so for each callback function.
     */
     class CSerialMonitor : public task::CTask
     {
@@ -39,10 +46,6 @@ namespace serial{
         CSerialMonitor(Serial& f_serialPort
                     ,CSerialSubscriberMap f_serialSubscriberMap);
     private:
-        /* Rx callback */
-        static void RxCallback(void *thisPointer);
-        /* Tx callback */
-        static void TxCallback(void *thisPointer);
         /* Rx callback actions */
         void serialRxCallback();
         /* Tx callback actions */

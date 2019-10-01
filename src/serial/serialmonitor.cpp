@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <serialmonitor/serialmonitor.hpp>
+#include <serial/serialmonitor.hpp>
 
 
 namespace serial{
@@ -18,7 +18,7 @@ namespace serial{
      *
      *
      *  @param f_serialPort               reference to serial object
-     *  @param f_serialSubscriberMap      sensor mounteed on left front part
+     *  @param f_serialSubscriberMap      map with the key and the callback functions
      */
     CSerialMonitor::CSerialMonitor(Serial& f_serialPort
                     ,CSerialSubscriberMap f_serialSubscriberMap)
@@ -30,31 +30,9 @@ namespace serial{
             , m_parseIt(m_parseBuffer.begin())
             , m_serialSubscriberMap(f_serialSubscriberMap) 
             {
-                m_serialPort.attach(mbed::callback(&CSerialMonitor::RxCallback, this), Serial::RxIrq);
-                m_serialPort.attach(mbed::callback(&CSerialMonitor::TxCallback, this), Serial::TxIrq);
+                m_serialPort.attach(mbed::callback(this,&CSerialMonitor::serialRxCallback), Serial::RxIrq); 
+                m_serialPort.attach(mbed::callback(this,&CSerialMonitor::serialTxCallback), Serial::TxIrq); 
             }
-
-    /** @brief  Rx callback
-     *
-     *  @param thisPointer         the object pointer
-     *  
-     */
-    void CSerialMonitor::RxCallback(void *thisPointer)
-    {
-        CSerialMonitor* self = static_cast<CSerialMonitor*>(thisPointer);
-        self->serialRxCallback(); 
-    }
-
-    /** @brief  Tx callback
-     *
-     *  @param thisPointer         the object pointer
-     *  
-     */
-    void CSerialMonitor::TxCallback(void *thisPointer)
-    {
-        CSerialMonitor* self = static_cast<CSerialMonitor*>(thisPointer);
-        self->serialTxCallback(); 
-    }
 
     /** @brief  Rx callback actions
      *
@@ -87,18 +65,18 @@ namespace serial{
         return;
     }
 
-    /** @brief  Run method
+    /** @brief  Monitoring function
      * 
-     *  @param  None
-     *  @param None
+     * It has role to monitor the received messaged, it applies periodically to read the buffer content and to decode it. 
+     * Each validted messages are redirectionated to the callback function, by appling these. The callback function requires two input as pointers,
+     *  one for message's content and one for response's content. After the appling the callback function, it will send the response to the other device.
      */
     void CSerialMonitor::_run()
     {
         if ((!m_RxBuffer.isEmpty()))
         {
-            char l_c = m_RxBuffer.pop();
-            // m_serialPort.printf("%c",l_c);
-            if ('#' == l_c)
+            char l_c = m_RxBuffer.pop(); // Read the next character from buffer
+            if ('#' == l_c) // Message starting special character
             {
                 m_parseIt = m_parseBuffer.begin();
                 m_parseIt[0] = l_c;
@@ -107,26 +85,26 @@ namespace serial{
             }
             if (m_parseIt != m_parseBuffer.end())
             {
-                if (l_c == '\n')
+                if (l_c == '\n') // Message ending character
                 {
-                    if ((';' == m_parseIt[-3]) && (';' == m_parseIt[-2]) && ('\r' == m_parseIt[-1]))
+                    if ((';' == m_parseIt[-3]) && (';' == m_parseIt[-2]) && ('\r' == m_parseIt[-1])) // Check the message ending
                     {
                         char l_msgID[5];
                         char l_msg[256];
 
-                        uint32_t res = sscanf(m_parseBuffer.data(),"#%4s:%s;;",l_msgID,l_msg);
-                        if (res == 2)
+                        uint32_t res = sscanf(m_parseBuffer.data(),"#%4s:%s;;",l_msgID,l_msg); //Parse the message to key and content
+                        if (res == 2) // Check the parsing
                         {
-                            auto l_pair = m_serialSubscriberMap.find(l_msgID);
-                            if (l_pair != m_serialSubscriberMap.end())
+                            auto l_pair = m_serialSubscriberMap.find(l_msgID); // Search the key and callback function pair
+                            if (l_pair != m_serialSubscriberMap.end()) // Check the existence of key 
                             {
-                                char l_resp[256] = "no response given";
+                                char l_resp[256] = "no response given"; // Initial response message
                                 string s(l_resp);
-                                l_pair->second(l_msg,l_resp);
-                                m_serialPort.printf("@%s:%s\r\n",l_msgID,l_resp);
+                                l_pair->second(l_msg,l_resp); // Apply the attached function
+                                m_serialPort.printf("@%s:%s\r\n",l_msgID,l_resp); // Create the response message
                             }
                         }
-                        m_parseIt = m_parseBuffer.begin();
+                        m_parseIt = m_parseBuffer.begin(); //Go to begining of parse buffer.
                     }
                 }
                 m_parseIt[0] = l_c;

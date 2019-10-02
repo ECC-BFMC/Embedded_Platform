@@ -146,7 +146,7 @@ namespace systemmodels{
         namespace mimo{
             // Discrete time system model of a system nonlinear time invariant with multi-input and multi-output
             //  T       -variable type
-            //  NA      -number of contreol
+            //  NA      -number of control
             //  NB      -number of states
             //  NC      -number of outputs
             template <class T,uint32_t NA, uint32_t NB,uint32_t NC>
@@ -190,6 +190,6 @@ namespace systemmodels{
     }; //namespace nlti
 }; // namespace systemmodels
 
-#include "systemmodels.inl"
+#include "systemmodels.tpp"
 
 #endif

@@ -15,7 +15,7 @@ namespace task{
     /******************************************************************************/
     /** \brief  CTask class constructor
      *
-     *  Constructor method
+     *  It initializes the period and other private value of the task. 
      *
      *  @param f_period      execution period
      */
@@ -28,9 +28,6 @@ namespace task{
 
     /** \brief  CTask class destructor
      *
-     *  Destructor method
-     *
-     *  
      */
     CTask::~CTask() 
     {
@@ -38,8 +35,7 @@ namespace task{
 
     /** \brief  Run method
      *
-     *  Destructor method
-     *
+     *  It applies the '_run' method, which implements the task's functionality. It has to override in the derived class.  
      *  
      *  
      */
@@ -57,36 +53,23 @@ namespace task{
      *
      *  Constructor method
      *
-     *  @param f_taskList      task list
-     *  @param f_taskCount     task count
+     *  @param f_taskList      list of tasks
+     *  @param f_taskCount     number of tasks
      *  @param f_baseFreq      base frequency
      */
     CTaskManager::CTaskManager(task::CTask** f_taskList, uint32_t f_taskCount, float f_baseFreq)
         : m_taskList(f_taskList)
         , m_taskCount(f_taskCount) 
     {
-        m_ticker.attach(mbed::callback(&task::CTaskManager::callback, this), f_baseFreq);
+        m_ticker.attach(mbed::callback(this,&task::CTaskManager::timerCallback), f_baseFreq);
     }
 
     /** \brief  CTaskManager class destructor
-     *
-     *  Destructor method
-     *
      *  
      */
     CTaskManager::~CTaskManager() 
     {
         m_ticker.detach();
-    }
-
-    /** \brief  Callback method
-     *
-     *  @param thisPointer       The object pointer
-     */
-    void CTaskManager::callback(void *thisPointer)
-    {
-        task::CTaskManager* self = static_cast<task::CTaskManager*>(thisPointer);
-        self->timerCallback(); 
     }
 
 }; // namespace task

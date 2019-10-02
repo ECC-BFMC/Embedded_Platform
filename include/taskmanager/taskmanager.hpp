@@ -16,7 +16,7 @@
 
 namespace task{
    /**
-    * @brief It is used for implementing the task functionality.
+    * @brief It has aim to the task functionality. The tasks will be applied periodically by the task manager, the period is defined in the contructor. 
     * 
     */
     class CTask
@@ -44,7 +44,7 @@ namespace task{
             m_triggered = true;
         }
     protected:
-        /* _run methof */
+        /* main app. logic - It's a pure function for application logic and has to override in the derivered class to implement the appl. */
         virtual void _run() = 0;
         /* period */
         const uint32_t m_period;
@@ -55,8 +55,9 @@ namespace task{
     };
 
    /**
-    * @brief It is used for implementing the task manager functionality.
-    * 
+    * @brief It has aim to implement the task manager functionality. It controls and applies periodically each task. 
+    * It has two main part, a ticker and the mainCallback method. The ticker method applies automatically 'timerCallback' method of each Task, as 
+    * numerate se
     */
     class CTaskManager
     {
@@ -74,7 +75,7 @@ namespace task{
             }
         }
         /* Timer callback */
-        inline void timerCallback()
+        void timerCallback()
         {
             for(uint32_t i = 0; i < m_taskCount; i++)
             {
@@ -82,13 +83,11 @@ namespace task{
             }
         }
     private:
-        /* Callback */
-        static void callback(void *thisPointer);
         /* task list */
         CTask** m_taskList;
         /* task count */
         uint32_t m_taskCount;
-        /* ticker */ /* A Ticker is used to call a function at a recurring interval */
+        /* ticker */ 
         Ticker m_ticker;
     };
 

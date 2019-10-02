@@ -6,7 +6,16 @@
 #include <array>
 
 namespace linalg
-{
+{   
+
+    /**
+     * @brief CMatrix has aim to implement matrix's functionality. It's a templated class, where the templates defines the type and the size of the matrix. 
+     * For the (m x n) -dimensions matrix the row and colum index starts with 0 value and ends with m and n, respectively. 
+     * 
+     * @tparam T        variable type of the matrix 
+     * @tparam M        number of row in the matrix
+     * @tparam N        number of column in the matrix 
+     */
     template <class T, uint32_t M, uint32_t N>
     class CMatrix
     {
@@ -467,6 +476,6 @@ namespace linalg
     using CRowVector = CMatrix<T,1,N>;
 };
 
-#include "linalg.inl"
+#include "linalg.tpp"
 
 #endif // LINALG_H

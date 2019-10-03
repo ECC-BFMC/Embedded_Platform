@@ -32,7 +32,6 @@ namespace drivers{
      * @brief It is used to control the servo motor, which is connected to the steering wheels. The steering angle can be accessed through 'setAngle' method. 
      * 
      */
-    class ISteeringCommand{
     class CSteeringMotor: public ISteeringCommand
     {
     public:

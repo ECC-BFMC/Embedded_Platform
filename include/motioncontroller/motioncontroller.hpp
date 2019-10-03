@@ -14,11 +14,17 @@
 
 /* The mbed library */
 #include <mbed.h>
+#include <rtos.h>
+
 #include <taskmanager/taskmanager.hpp>
+#include <drivers/dcmotor.hpp>
+#include <drivers/steeringmotor.hpp>
+
 #include <move/move.hpp>
+
 #include <controllers/motorcontroller.hpp>
 
-#include <rtos.h>
+
 
 /**
  * @brief Limit of the pwm command [percentage]
@@ -26,16 +32,16 @@
  */
 #define MCTL_PWM_COMMAND_LIMIT 75
 /**
- * @brief Limit of the velocity command [Centimeter per second]
+ * @brief Limit of the linear velocity command [meter per second]
  * 
  */
-#define MCTL_SPEED_COMMAND_LIMIT 100
+#define MCTL_SPEED_COMMAND_LIMIT 1.5
 
-//!  CMotionController class. 
-/*!
- *  It inherits class task::CTask. 
- *  It is used for executing move commands.
- * */
+/**
+ * @brief CMotionController targets to implement the main state machine to control
+ *  movement of robot and provide the interfaces to control functionality, like braking and moving. 
+ * 
+ */
 class CMotionController 
 {
 public:
@@ -43,22 +49,20 @@ public:
     CMotionController(
         float f_period_sec, 
         Serial& f_serialPort, 
-        Move& f_car,
+        drivers::IMotorCommand&                 f_motorControl,
+        drivers::ISteeringCommand&              f_steeringControl,
         controllers::CControllerSiso*           f_control = NULL);
     
 
-    /* Serial callback method for Move command */
-    static void staticSerialCallbackMove(void* obj,char const * a, char * b);
-    /* Serial callback method for BRAKE command */
-    static void staticSerialCallbackBrake(void* obj,char const * a, char * b);
-    /* Serial callback method for hard BRAKE command */
-    static void staticSerialCallbackHardBrake(void* obj,char const * a, char * b) ;
-    /* Serial callback method for PID activation command */
-    static void staticSerialCallbackPID(void* obj,char const * a, char * b);
-    /* Static callback function for run method */
-    static void staticCallbackRun(void* obj);
-    /* Start the Rtos timer for applying run */
+    /* Start the Rtos timer for applying "_run" method  */
     void startRtosTimer();
+
+    /* Serial callback method for moving */ 
+    void serialCallbackMove(char const * a, char * b);
+    /* Serial callback method for braking */
+    void serialCallbackBrake(char const * a, char * b);
+    /* Serial callback method for activating pid */
+    void serialCallbackPID(char const * a, char * b);
 
     /* Reset method */
     void reset();
@@ -66,33 +70,29 @@ public:
     float getSpeed();
     /* Get angle method */
     float getAngle();
-    /* BRAKE callback method */
+    /* Callback for changing the state to brake.*/
     void BrakeCallback();
     /* Set state method */
     void setState(int f_state);
 private:
-    /* Run method */
+    /* Contains the state machine, which control the lower level drivers (motor and steering) based the current state. */
     virtual void _run();
-    /* Serial callback implementation */ 
-    void serialCallbackMove(char const * a, char * b);
-    /* BRAKE serial callback */
-    void serialCallbackBrake(char const * a, char * b);
-    /* Hard BRAKE serial callback */
+    
+    /* Serial callback for a hard braking */
     void serialCallbackHardBrake(char const * a, char * b);
-    /* PID serial callback */
-    void serialCallbackPID(char const * a, char * b);
+    
     
     
     /* Static function to convert from linear velocity ( centimeter per second ) of robot to angular velocity ( rotation per second ) of motor */
     static float Mps2Rps(float f_vel_cmps);
-    // /* Velocity to PWM function */
-    // static float VEL2PWM(float vel);
 
 private:
     /* reference to Serial object */
     Serial& m_serialPort;
-    /* reference to MOVE object */
-    Move& m_car;
+    /* Motor control interface */
+    drivers::IMotorCommand&                 m_motorControl;
+    /* Steering wheel control interface */
+    drivers::ISteeringCommand&              m_steeringControl;
     /* Speed */
     float m_speed;
     /* Angle */
@@ -107,9 +107,9 @@ private:
     // 1-normal
     // 2-brake regeneration
     
-    /* Timeout */
+    /* Timeout for a hard braking with deactivated pid.  */
     Timeout                                 m_hbTimeOut;
-    /* Reference to control object */
+    /* Speed Control for dc motor */
     controllers::CControllerSiso*           m_control;
     /* Rtos  timer for periodically applying */
     RtosTimer                               m_timer;

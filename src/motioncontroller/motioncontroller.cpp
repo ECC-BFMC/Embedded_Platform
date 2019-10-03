@@ -13,8 +13,7 @@
 
 
 /** \brief  CMotionController Class constructor
- *
- *  Constructor method
+ *    
  *
  *  @param f_period_sec          period for controller execution in seconds
  *  @param f_serialPort          reference to serial communication object
@@ -24,84 +23,24 @@
 CMotionController::CMotionController(
         float f_period_sec,
         Serial& f_serialPort,
-        Move& f_car,
+        drivers::IMotorCommand&                 f_motorControl,
+        drivers::ISteeringCommand&              f_steeringControl,
         controllers::CControllerSiso*           f_control) 
     : m_serialPort(f_serialPort)
-    , m_car(f_car)
+    , m_motorControl(f_motorControl)
+    , m_steeringControl(f_steeringControl)
     , m_speed()
     , m_angle()
     , m_period_sec(f_period_sec)
     , m_ispidActivated(false)
     , m_hbTimeOut()
     , m_control(f_control)
-    , m_timer(mbed::callback(CMotionController::staticCallbackRun,this))
+    , m_timer(mbed::callback(this,&CMotionController::_run))
 {
 }
 
-/** \brief  Serial callback method
-  *
-  * Serial callback attaching serial callback to controller object
-  *
-  * @param  obj                 PID controller object
-  * @param  a                   string to read data from
-  * @param b                   string to write data to
-  * 
-  */
-void CMotionController::staticSerialCallbackMove(void* obj,char const * a, char * b)
-{
-    CMotionController* self = static_cast<CMotionController*>(obj);
-    self->serialCallbackMove(a,b);
-}
-
-/** \brief  Serial callback method for BRAKE command
-  *
-  * Serial callback attaching serial callback to controller object
-  *
-  * @param  obj                 PID controller object
-  * @param  a                   string to read data from
-  * @param b                   string to write data to
-  * 
-  */
-void CMotionController::staticSerialCallbackBrake(void* obj,char const * a, char * b)
-{
-    CMotionController* self = static_cast<CMotionController*>(obj);
-    self->serialCallbackBrake(a,b);
-}
-
-/** \brief  Serial callback method for hard BRAKE command
-  *
-  * Serial callback attaching serial callback to controller object
-  *
-  * @param  obj                 PID controller object
-  * @param  a                   string to read data from
-  * @param b                   string to write data to
-  * 
-  */
-void CMotionController::staticSerialCallbackHardBrake(void* obj,char const * a, char * b) 
-{
-    CMotionController* self = static_cast<CMotionController*>(obj);
-    self->serialCallbackHardBrake(a,b);
-}
-
-/** \brief  Serial callback method for PID activation command
-  *
-  * Serial callback attaching serial callback to controller object
-  *
-  * @param  obj                 PID controller object
-  * @param  a                   string to read data from
-  * @param b                   string to write data to
-  * 
-  */
-void CMotionController::staticSerialCallbackPID(void* obj,char const * a, char * b) 
-{
-    CMotionController* self = static_cast<CMotionController*>(obj);
-    self->serialCallbackPID(a,b);
-}
-
-/** \brief  Reset method
+/** \brief  Set the speed and the angle to zero value
  * 
- *  
- *  
  */
 void CMotionController::reset()
 {   
@@ -109,20 +48,19 @@ void CMotionController::reset()
     m_angle = 0;
 }
 
-/** \brief  Get speed method
+/** \brief  Get last speed command
  * 
- *  
- *  \return     Speed
+ *  \return speed command value. (duty cycle of pwm or speed of robot in mps)
  */
 float CMotionController::getSpeed() 
 {
     return m_speed;
 }
 
-/** \brief  Get angle method
+/** \brief  Get last steering angle command.
  * 
  *  
- *  \return     Angle
+ *  \return steering angle in degree
  */
 float CMotionController::getAngle() 
 {
@@ -131,73 +69,78 @@ float CMotionController::getAngle()
 
 /** \brief  BrakeCallback method
  * 
- *  
+ *  It changes the controller state to brake from default state. It's applied to deactivated hard braking.
  *  
  */
 void CMotionController::BrakeCallback(){
-    m_state=2;
+    if( m_state == 0){
+        m_state=2;
+    }
 }
 
-/** \brief  Set state method
+/** \brief  Set state of the controller
  * 
- *  @param  f_state
+ *  @param  f_state state of controller express in integer value between 0 and 2
  *  
  */
 void CMotionController::setState(int f_state){
     m_state = f_state;
 }
 
-/** \brief  Method called each f_period
- * 
- *  
- *  
+/** \brief  _Run method contains the main application logic, where it controls the lower lever drivers (dc motor and steering) based the given command and state.
+ * It has three state: 
+ *  - 0 - default state -> it doesn't apply any control signal on the drivers.
+ *  - 1 - move state -> control the motor rotation speed by giving direct a PWM signal or by a pid controller
+ *                   -> and control the steering angle
+ *  - 2 - brake state -> apply a dynamic braking on the motor and control the steering angle.          
  */
 void CMotionController::_run()
 {   
     switch(m_state)
     {
-        // Move state
+        // Move state - control the dc motor rotation speed and the steering angle. 
         case 1:
-            m_car.Steer(m_angle);
-            if(m_ispidActivated && m_control!=NULL)
+            m_steeringControl.setAngle(m_angle); // control the steering angle 
+            if(m_ispidActivated && m_control!=NULL) // Check the pid controller 
             {
-                m_control->setRef(CMotionController::Mps2Rps( m_speed ));
-                // Calculate control signal
+                m_control->setRef(CMotionController::Mps2Rps( m_speed )); // Set the reference of dc motor speed
+                // Calculate control signal 
                 int8_t l_isCorrect = m_control->control(); 
                 // Check the state of the control method
                 if( l_isCorrect == -1 )
                 {
-                    // In this case the encoder is working fine and measure too high speed, than it changes to the braking state.  
+                    // In this case the encoder is working fine and measures too high speed rotation, than it changes to the braking state.  
                     m_serialPort.printf("@PIDA:Too high speed and the encoder working;;\r\n");
-                    m_car.Brake();
+                    m_motorControl.brake();
                     m_control->clear();
                     m_state = 2;
                 }
                 else if (l_isCorrect == -2 )
                 {
-                    // In this case the encoder fails and measures 0 rps, but the control signal had high values. 
-                    // This part protects the robot to run with high speed, when the encoder doesn't measure correctly.
+                    // In this case the encoder fails and measures 0 rps, but the control signal had a series high values. 
+                    // This part protects the robot to run with high speed, when the encoder doesn't measure correctly or it's broker.
                     m_serialPort.printf("@PIDA:Encoder error;;\r\n");
-                    m_car.Brake();
+                    m_motorControl.brake();
                     m_control->clear();
                     m_state = 2;
                 }
-                else
+                else // It's all right and can control the robot. 
                 {
-                    m_car.Speed(m_control->get()*100.0);//Y
+                    m_motorControl.setSpeed(m_control->get());
                 }
                 
             }
-            else
+            else // The pid controller is deactivated and the dc motor is controlled by user control signal by giving duty cycle of PWM. 
             {
-                m_car.Speed(m_speed);
+                m_motorControl.setSpeed(m_speed/100.0);
             }
             break;
+
         // Brake state
         case 2:
-            m_car.Steer(m_angle);
-            m_car.Brake();
-            if( m_control!=NULL){
+            m_steeringControl.setAngle(m_angle); // Setting the steering angle
+            m_motorControl.brake(); // dc motor dynamic braking. 
+            if( m_control!=NULL){ 
                 m_control->clear();
             }
             break;
@@ -205,12 +148,14 @@ void CMotionController::_run()
     
 }
 
-/** \brief  Serial callback actions for MOVE command
+/** \brief  Serial callback method for move command
   *
-  * Serial callback method setting controller to values received
+  * Serial callback method setting controller to values received like steering angle and dc motor control values. 
+  * In the case of pid activated,  the dc motor control values has to be express in meter per second, otherwise represent the duty cycle of PWM signal in percent. 
+  * The steering angle has to express in degree, where the positive values marks the right direction and the negative values noticed the left turning direction.
   *
-  * @param  a                   string to read data from
-  * @param b                   string to write data to
+  * @param a                   string to read data 
+  * @param b                   string to write data 
   * 
   */
 void CMotionController::serialCallbackMove(char const * a, char * b)
@@ -239,12 +184,12 @@ void CMotionController::serialCallbackMove(char const * a, char * b)
     }
 }
 
-/** \brief  Serial callback actions for BRAKE command
+/** \brief  Serial callback actions for brake command
   *
-  * Serial callback method setting controller to values received
+  * This method aims to change the state of controller to brake and sets the steering angle to the received value. 
   *
-  * @param  a                  string to read data from
-  * @param b                   string to write data to
+  * @param a                   string to read data 
+  * @param b                   string to write data
   * 
   */
 void CMotionController::serialCallbackBrake(char const * a, char * b)
@@ -261,7 +206,6 @@ void CMotionController::serialCallbackBrake(char const * a, char * b)
         if( m_control!=NULL){
             m_control->setRef(0);
         }
-        
         sprintf(b,"ack;;");           
     }
     else
@@ -270,12 +214,13 @@ void CMotionController::serialCallbackBrake(char const * a, char * b)
     }
 }
 
-/** \brief  Serial callback actions for hard BRAKE command
+/** \brief  Serial callback actions for hard brake command
   *
-  * Serial callback method setting controller to values received
+  * It can be used to activate a inverse current braking mechanism, the inverse current applies a short period of time. 
+  * The period is defined through attaching the "BrakeCallback" method. 
   *
-  * @param  a                  string to read data from
-  * @param b                   string to write data to
+  * @param a                   string to read data 
+  * @param b                   string to write data
   * 
   */
 void CMotionController::serialCallbackHardBrake(char const * a, char * b)
@@ -286,8 +231,8 @@ void CMotionController::serialCallbackHardBrake(char const * a, char * b)
     {
         m_speed=0;
         m_angle = l_angle; 
-        m_car.Inverse(l_brake);
-        m_hbTimeOut.attach(callback(this,&CMotionController::BrakeCallback),0.04);
+        m_motorControl.inverseDirection(l_brake);
+        m_hbTimeOut.attach(callback(this,&CMotionController::BrakeCallback),0.04); // Attaching a callback function for changing state to brake. 
         m_state = 0;
 
         sprintf(b,"ack;;");           
@@ -300,10 +245,11 @@ void CMotionController::serialCallbackHardBrake(char const * a, char * b)
 
 /** \brief  Serial callback actions for hard PID activation command
   *
-  * Serial callback method setting controller to values received
+  * This function provides an interface to activate or deactivate the Pid controller. When the input string contains non-zero value, then it activates the pid functionality and the robot's linear velocity will be controlled in meter per second.
+  * When the value is zero, the user directly transmite the duty cycle of pwm signal to control the motor rotation speed. If the controller wasn't deffined for the motioncontroller object, this functionality cannot be activated. 
   *
-  * @param  a                   string to read data from
-  * @param b                   string to write data to
+  * @param a                   string to read data 
+  * @param b                   string to write data
   * 
   */
 void CMotionController::serialCallbackPID(char const * a, char * b)
@@ -329,24 +275,14 @@ void CMotionController::serialCallbackPID(char const * a, char * b)
 }
 
 /**
- * @brief Function to convert from linear velocity ( centimeter per second ) of robot to angular velocity ( rotation per second ) of motor.
+ * @brief Function to convert from linear velocity ( meter per second ) of robot to angular velocity ( rotation per second ) of motor.
  * 
- * @param f_vel_mps linear velocity
- * @return float angular velocity
+ * @param f_vel_mps linear velocity of robot
+ * @return float angular velocity of motor
  */
 float CMotionController::Mps2Rps(float f_vel_mps){
     return f_vel_mps * 150.0;
 }
-
-/**
- * @brief Static callback function for run method
- * 
- * @param obj pointer for the object
- */
-void CMotionController::staticCallbackRun(void* obj){
-    CMotionController* self = static_cast<CMotionController*>(obj);
-    self->_run();
-}  
 
 /**
  * @brief Start RtosTimer, which periodically apply the run method. The period of the task is defined in the contructor.

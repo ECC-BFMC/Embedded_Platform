@@ -17,11 +17,23 @@
 
 
 namespace drivers{
+
+    /**
+     * @brief Interface to control the steering angle
+     * 
+     */
+    class ISteeringCommand{
+        public:
+            virtual void setAngle(float f_angle) = 0 ;
+    };
+
+
     /**
      * @brief It is used to control the servo motor, which is connected to the steering wheels. The steering angle can be accessed through 'setAngle' method. 
      * 
      */
-    class CSteeringMotor 
+    class ISteeringCommand{
+    class CSteeringMotor: public ISteeringCommand
     {
     public:
         /* Constructor */

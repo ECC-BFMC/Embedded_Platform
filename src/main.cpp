@@ -11,8 +11,6 @@
 #include <mbed.h>
 /* Task manager */
 #include <taskmanager/taskmanager.hpp>
-/* Header file for the MOVE functionality */
-#include <move/move.hpp>
 /* Header file for the blinker functionality */
 #include <examples/blinker.hpp>
 /* Header file for the serial communication functionality */

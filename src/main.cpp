@@ -31,12 +31,14 @@
 #include <examples/sensors/sensortask.hpp>
 
 /// Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART comunication, the inputs have to be transmiter and receiver pins. 
-Serial          g_rpi(USBTX, USBRX,460800);
+Serial          g_rpi(USBTX, USBRX);
 /** @brief 
  * This object is used to control the direction and the rotation speed of the wheel. The fist input respresents the pin for the servo motor, it must to generate a PWM signal. 
  * The second input  is the pin for generating PWM signal for the DC-Motor driver. The third and fourth inputs give the direction of the DC Motor, they are digital pins. The last input parameter represent an analog input pin, to measure the electric current.
  */
-Move            g_car(D9, D3, D2, D4, A0);
+drivers::CMotorDriverVnh g_motorVnhDriver(D3, D2, D4, A0);
+drivers::CSteeringMotor g_steeringDriver(D9);
+
 /// Base sample time for the task manager. The measurement unit of base sample time is second.
 const float     g_baseTick = 0.0001; // seconds
 /// It's a task for blinking periodically the built-in led on the Nucleo board.
@@ -62,13 +64,13 @@ controllers::siso::CPidController<double> l_pidController( 0.1150,0.81000,0.0002
 /// Create a controller object based on the predefined PID controller and the quadrature encoder
 controllers::CControllerSiso g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
 /// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
-CMotionController           g_motionController(g_period_Encoder, g_rpi, g_car,&g_controller);
+CMotionController           g_motionController(g_period_Encoder, g_rpi, g_motorVnhDriver,g_steeringDriver,&g_controller);
 
 /// Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
-    {"MCTL",mbed::callback(CMotionController::staticSerialCallbackMove,&g_motionController)},
-    {"BRAK",mbed::callback(CMotionController::staticSerialCallbackBrake,&g_motionController)},
-    {"PIDA",mbed::callback(CMotionController::staticSerialCallbackPID,&g_motionController)},
+    {"MCTL",mbed::callback(&g_motionController,&CMotionController::serialCallbackMove)},
+    {"BRAK",mbed::callback(&g_motionController,&CMotionController::serialCallbackBrake)},
+    {"PIDA",mbed::callback(&g_motionController,&CMotionController::serialCallbackPID)},
     {"ENPB",mbed::callback(examples::sensors::CEncoderSender::staticSerialCallback,&g_encoderPublisher)},
 };
 
@@ -94,7 +96,7 @@ task::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(task::CTa
  */
 uint32_t setup()
 {
-    g_rpi.baud(460800);  
+    g_rpi.baud(256000);  
     g_rpi.printf("\r\n\r\n");
     g_rpi.printf("#################\r\n");
     g_rpi.printf("#               #\r\n");

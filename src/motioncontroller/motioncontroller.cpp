@@ -104,10 +104,10 @@ void CMotionController::_run()
             if(m_ispidActivated && m_control!=NULL) // Check the pid controller 
             {
                 m_control->setRef(CMotionController::Mps2Rps( m_speed )); // Set the reference of dc motor speed
-                // Calculate control signal 
+                // Calculate control signal and return the controller state. 
                 int8_t l_isCorrect = m_control->control(); 
-                // Check the state of the control method
-                if( l_isCorrect == -1 )
+                // Check the state of the control method 
+                if( l_isCorrect == -1 ) // High consecutive control signal 
                 {
                     // In this case the encoder is working fine and measures too high speed rotation, than it changes to the braking state.  
                     m_serialPort.printf("@PIDA:Too high speed and the encoder working;;\r\n");
@@ -115,7 +115,7 @@ void CMotionController::_run()
                     m_control->clear();
                     m_state = 2;
                 }
-                else if (l_isCorrect == -2 )
+                else if (l_isCorrect == -2 ) // High consecutive control signal without observation value. 
                 {
                     // In this case the encoder fails and measures 0 rps, but the control signal had a series high values. 
                     // This part protects the robot to run with high speed, when the encoder doesn't measure correctly or it's broker.
@@ -165,11 +165,16 @@ void CMotionController::serialCallbackMove(char const * a, char * b)
     uint32_t l_res = sscanf(a,"%f;%f",&l_speed,&l_angle);
     if (2 == l_res)
     {
-        if( !m_ispidActivated && std::abs(l_speed) > MCTL_PWM_COMMAND_LIMIT ){
-            sprintf(b,"Command is too high;;");
+        if( !m_ispidActivated && !m_motorControl.inRange(l_speed)){ // Check the received control value
+            sprintf(b,"The speed command is too high;;");
             return;
-        }if( m_ispidActivated && std::abs(l_speed) > MCTL_SPEED_COMMAND_LIMIT ){
-            sprintf(b,"Command is too high;;");
+        }
+        if( m_ispidActivated && !m_control->inRange(CMotionController::Mps2Rps(l_speed))){ //Check the received reference value
+            sprintf(b,"The speed reference is too high;;");
+            return;
+        }
+        if( !m_steeringControl.inRange(l_angle)){ // Check the received steering angle
+            sprintf(b,"The steering angle command is too high;;");
             return;
         }
 
@@ -198,6 +203,10 @@ void CMotionController::serialCallbackBrake(char const * a, char * b)
     uint32_t l_res = sscanf(a,"%f",&l_angle);
     if(1 == l_res)
     {
+        if( !m_steeringControl.inRange(l_angle)){
+            sprintf(b,"The steering angle command is too high;;");
+            return;
+        }
         m_speed = 0;
         m_angle = l_angle;
         // Brake state 
@@ -229,6 +238,10 @@ void CMotionController::serialCallbackHardBrake(char const * a, char * b)
     uint32_t l_res = sscanf(a,"%f;%f",&l_brake,&l_angle);
     if(2 == l_res && m_state!=0)
     {
+        if( !m_steeringControl.inRange(l_angle)){
+            sprintf(b,"The steering angle command is too high;;");
+            return;
+        }
         m_speed=0;
         m_angle = l_angle; 
         m_motorControl.inverseDirection(l_brake);

@@ -25,6 +25,7 @@ namespace drivers{
     class ISteeringCommand{
         public:
             virtual void setAngle(float f_angle) = 0 ;
+            virtual bool inRange(float f_angle) = 0 ;
     };
 
 
@@ -37,15 +38,22 @@ namespace drivers{
     public:
         /* Constructor */
         CSteeringMotor(PinName f_pwm);
+        /* Constructor */
+        CSteeringMotor(PinName f_pwm,float f_inf_limit,float f_sup_limit);
         /* Destructor */
         ~CSteeringMotor();
         /* Set angle */
-        void setAngle(float f_angle); //-25 to 25 degr
+        void setAngle(float f_angle); 
+        bool inRange(float f_angle);
     private:
         /* convert angle degree to duty cycle for pwm signal */
         float conversion(float f_angle); //angle to duty cycle
         /* PWM output pin */
         PwmOut m_pwm;
+
+        /* Range */
+        const float m_inf_limit;
+        const float m_sup_limit;
     };
 }; // namespace drivers
 

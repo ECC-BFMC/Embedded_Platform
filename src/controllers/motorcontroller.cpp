@@ -21,7 +21,9 @@ namespace controllers{
      */
     CControllerSiso::CControllerSiso(encoders::IEncoderGetter&          f_encoder
                             ,ControllerType<double>&                    f_pid
-                            ,controllers::IConverter*                       f_converter)
+                            ,controllers::IConverter*                   f_converter
+                            ,float                                      f_inf_ref
+                            ,float                                      f_sup_ref)
         :m_encoder(f_encoder)
         ,m_pid(f_pid)
         ,m_converter(f_converter)
@@ -32,6 +34,8 @@ namespace controllers{
         ,m_ref_abs_inf(10.0)
         ,m_mes_abs_inf(30.0)
         ,m_mes_abs_sup(300.0)
+        ,m_inf_ref(f_inf_ref)
+        ,m_sup_ref(f_sup_ref)
     {
     }
 
@@ -92,21 +96,21 @@ namespace controllers{
         float  l_ref;
 
         // Check the measured value and the superior limit for avoid over control state.
-        // In this case deactivete the controller. 
+        // In this case deactivate the controller. 
         if(std::abs(l_MesRps) > m_mes_abs_sup){
             m_RefRps = 0.0;
             m_u = 0.0;
             return -1;
         }
         // Check the inferior limits of reference signal and measured signal for standing state.
-        // Inactivate the controller
+        // Inactivate the controller to not brake the robot, when it stopped. 
         if(std::abs(m_RefRps) < m_ref_abs_inf && std::abs(l_MesRps) < m_mes_abs_inf ){
             m_u = 0.0;
             m_error = 0.0;
             return 1; 
         }
 
-        // Check measured value is oriantated or absolute
+        // Check measured value is orientated or absolute
         if ( l_isAbs ){
             l_ref = std::abs(m_RefRps);
         } else{ 
@@ -166,6 +170,10 @@ namespace controllers{
         }
 
         return l_pwm;
+    }
+
+    bool CControllerSiso::inRange(double f_RefRps){
+        return m_inf_ref<=f_RefRps && f_RefRps<=m_sup_ref;
     }
 
 }; //  namespace controllers

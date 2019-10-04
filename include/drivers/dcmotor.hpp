@@ -37,6 +37,7 @@ namespace drivers{
             virtual void setSpeed(float f_pwm) = 0;
             virtual void brake() = 0;
             virtual void inverseDirection(float f_pwm) = 0;
+            virtual bool inRange(float f_pwm) =0;
     };
 
     /**
@@ -51,6 +52,8 @@ namespace drivers{
     public:
         /* Constructor */
         CMotorDriverVnh(PinName, PinName, PinName, PinName);
+        /* Constructor */
+        CMotorDriverVnh(PinName, PinName, PinName, PinName,float,float);
         /* Destructor */
         ~CMotorDriverVnh();
         /* Run */
@@ -61,6 +64,8 @@ namespace drivers{
         void inverseDirection(float f_pwm);
         /* Get current */
         float getCurrent();
+        /* Check the allowed range */
+        bool inRange(float f_pwm);
         
     private:
         /* PWM output pin */
@@ -71,6 +76,9 @@ namespace drivers{
         DigitalOut  m_inb;
         /* Measured current value by driver */
         AnalogIn    m_current_in;
+
+        const float m_inf_limit;
+        const float m_sup_limit;
     };
 
 

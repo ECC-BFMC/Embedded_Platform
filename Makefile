@@ -53,7 +53,6 @@ OBJECTS += src/filter/filter.o
 OBJECTS += src/systemmodels/systemmodels.o
 OBJECTS += src/taskmanager/taskmanager.o
 OBJECTS += src/serial/serialmonitor.o
-OBJECTS += src/move/move.o
 OBJECTS += src/motioncontroller/motioncontroller.o
 OBJECTS += src/examples/echoer.o
 OBJECTS += src/examples/blinker.o

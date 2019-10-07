@@ -21,7 +21,7 @@
 namespace examples{
 
    /**
-    * @brief It is used for toggling an LED.
+    * @brief It is used for toggling a LED.
     * 
     */
     class CBlinker : public task::CTask

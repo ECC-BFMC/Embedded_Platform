@@ -25,7 +25,7 @@ namespace examples{
     {
     }
 
-    /** \brief  Method called each f_period
+    /** \brief  Periodically applied method. It sends a simple message to other device. 
      * 
      */
     void CEchoer::_run()

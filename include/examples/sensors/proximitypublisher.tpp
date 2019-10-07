@@ -1,12 +1,20 @@
+
+#ifndef PROXIMITY_PUBLISHER_TPP
+#define PROXIMITY_PUBLISHER_TPP
+
+#ifndef PROXIMITY_PUBLISHER_HPP
+#error __FILE__ should only be included from proximitypublisher.hpp
+#endif //PROXIMITY_PUBLISHER_HPP
+
 namespace examples{
     namespace sensors{
         /** \brief  Constructor for the CEncoderFilter class
          *
-         *  Constructor method
+         *  It initializes the member parameters. The publisher initially is deactivated. 
          *
-         *  @param f_period       period value 
-         *  @param f_sensors      sensor array 
-         *  @param f_serial       reference to the serial object
+         *  @param f_period       period for sending the measured values
+         *  @param f_sensors      array of proximity sensors  
+         *  @param f_serial       the serial object
          */
         template <class C_Sensor,uint Nr_Senrsor> 
         ProximityPublisher<C_Sensor,Nr_Senrsor>::ProximityPublisher(uint32_t        f_period
@@ -19,28 +27,13 @@ namespace examples{
         {
         }
 
-        /** \brief  Serial callback method
-         *
-         * Serial callback attaching serial callback to controller object
-         *
-         * @param  obj                 PID controller object
-         * @param  a                   string to read data from
-         * @param b                   string to write data to
+        /** \brief  Serial callback method to activate or deactivate the publisher.
          * 
-         */
-        template <class C_Sensor,uint Nr_Senrsor> 
-        void ProximityPublisher<C_Sensor,Nr_Senrsor>::staticSerialCallback(void* obj,char const * a, char * b)
-        {
-            ProximityPublisher* self = static_cast<ProximityPublisher*>(obj);
-            self->serialCallback(a,b);
-        }
-
-        /** \brief  Serial callback actions 
+         * If the message contains a a number higher or equal to 1 then it activates the publisher, 
+         * otherwise it deactivated the publisher and doesn't send the message. 
          *
-         * Serial callback
-         *
-         * @param  a                   string to read data from
-         * @param b                   string to write data to
+         * @param a                   input received string 
+         * @param b                   output  string 
          * 
          */
         template <class C_Sensor,uint Nr_Senrsor> 
@@ -55,9 +48,9 @@ namespace examples{
             }
         }
 
-        /** \brief  Method called each f_period
+        /** \brief  Periodically applied sending method.
          * 
-         *  
+         *  It the case of deactivated publisher, it does nothing. 
          *  
          */
         template <class C_Sensor,uint Nr_Senrsor> 
@@ -75,3 +68,5 @@ namespace examples{
         }
     }; // namespace sensors
 }; // namespace examples
+
+#endif // PROXIMITY_PUBLISHER

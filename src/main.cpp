@@ -18,15 +18,14 @@
 /* Header file for the motion controller functionality */
 #include <motioncontroller/motioncontroller.hpp>
 /* Header file for the sensor task functionality */
-#include <examples/sensors/sensortask.hpp>
+#include <examples/sensors/encoderpublisher.hpp>
 /* Header file  for the controller functionality */
 #include <controllers/motorcontroller.hpp>
 /* Header file  for the sendor publisher functionality */
-#include <examples/sensors/sensorpublisher.hpp>
+#include <examples/sensors/proximitypublisher.hpp>
 /* Quadrature encoder functionality */
 #include <encoders/quadratureencoder.hpp>
-/* Examples with the sensors publisher */
-#include <examples/sensors/sensortask.hpp>
+
 
 /// Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART comunication, the inputs have to be transmiter and receiver pins. 
 Serial          g_rpi(USBTX, USBRX);
@@ -52,7 +51,7 @@ filter::lti::siso::CIIRFilter<float,1,2> g_encoderFilter(linalg::CRowVector<floa
 encoders::CQuadratureEncoderWithFilter g_quadratureEncoderTask(g_period_Encoder,drivers::CQuadratureCounter_TIM4::Instance(),2048,g_encoderFilter);
 
 ///Create an encoder publisher object to transmite the rotary speed of the dc motor. 
-examples::sensors::CEncoderSender         g_encoderPublisher(0.01/g_baseTick,g_quadratureEncoderTask,g_rpi);
+examples::sensors::CEncoderPublisher   g_encoderPublisher(0.01/g_baseTick,g_quadratureEncoderTask,g_rpi);
 
 //Create an object to convert volt to pwm for motor driver
 /// Create a splines based converter object to convert the volt signal to pwm signal
@@ -69,7 +68,7 @@ serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"MCTL",mbed::callback(&g_motionController,&CMotionController::serialCallbackMove)},
     {"BRAK",mbed::callback(&g_motionController,&CMotionController::serialCallbackBrake)},
     {"PIDA",mbed::callback(&g_motionController,&CMotionController::serialCallbackPID)},
-    {"ENPB",mbed::callback(examples::sensors::CEncoderSender::staticSerialCallback,&g_encoderPublisher)},
+    {"ENPB",mbed::callback(&g_encoderPublisher,&examples::sensors::CEncoderPublisher::serialCallback)},
 };
 
 /// Create the serial monitor object, which decodes, redirects the messages and transmites the responses.

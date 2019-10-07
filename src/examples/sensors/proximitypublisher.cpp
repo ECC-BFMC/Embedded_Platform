@@ -10,5 +10,5 @@
   ******************************************************************************
  */
 
-#include <examples/sensors/sensorpublisher.hpp>
+#include <examples/sensors/proximitypublisher.hpp>
 

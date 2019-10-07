@@ -11,8 +11,8 @@
  */
 
 /* Include guard */
-#ifndef SENSOR_PUBLISHER_HPP
-#define SENSOR_PUBLISHER_HPP
+#ifndef PROXIMITY_PUBLISHER_HPP
+#define PROXIMITY_PUBLISHER_HPP
 
 /* The mbed library */
 #include <mbed.h>
@@ -26,10 +26,14 @@
 namespace examples{
     namespace sensors
     {
-        //!  ProximityPublisher class. 
-        /*!
-        * It inherits class task::CTask. 
-        * It is used for publishing proximity sensor values.
+
+       /**
+        * @brief ProximityPublisher class a periodically task for publishing proximity sensor values.
+        * The object of sensors has to contain a 'getValue' method to access the measured values. The publisher
+        * can send the values of a multiple sensors based the given array of sensors. 
+        * 
+        * @tparam C_Sensor      Type of proximity sensors
+        * @tparam Nr_Senrsor    Number of sensors 
         */
         template <class C_Sensor,uint Nr_Senrsor> 
         class ProximityPublisher:public task::CTask
@@ -39,13 +43,12 @@ namespace examples{
                 using SensorArrayT = std::array<C_Sensor*,Nr_Senrsor>;
                 /* Constructor */
                 ProximityPublisher(uint32_t,SensorArrayT,Serial&);
-                /* Serial callback attached to object */
-                static void staticSerialCallback(void* obj,char const * a, char * b);
+                /* Serial callback */
+                void serialCallback(char const * a, char * b);
             protected:
                 /* Run method */
                 void _run();
-                /* Serial callback */
-                void serialCallback(char const * a, char * b);
+                
             private:
                 /* Sensor array */
                 SensorArrayT            m_sensors;
@@ -57,5 +60,5 @@ namespace examples{
     }; // namespace sensors
 }; // namespace examples
 
-#include "sensorpublisher.inl"
-#endif
+#include "proximitypublisher.tpp"
+#endif //PROXIMITY_PUBLISHER_HPP

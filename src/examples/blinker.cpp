@@ -15,10 +15,10 @@
 namespace examples{
     /** \brief  Class constructor
      *
-     *  Constructor method
+     *  It initializes the task and the state of the led. 
      *
-     *  \param f_period       LED toggling reading period
-     *  \param f_led          Digital output line to which the LED is connected     
+     *  \param f_period       Toggling period of LED
+     *  \param f_led          Digital output line to LED
      */
     CBlinker::CBlinker(uint32_t f_period, DigitalOut f_led) 
         : task::CTask(f_period)
@@ -27,7 +27,7 @@ namespace examples{
         m_led = 1;
     }
 
-    /** \brief  Method called each f_period
+    /** \brief  Periodically applied method to change the LED state
      * 
      */
     void CBlinker::_run()

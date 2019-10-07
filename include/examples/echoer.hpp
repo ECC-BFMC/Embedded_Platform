@@ -20,7 +20,7 @@
 
 namespace examples{
    /**
-    * @brief It is used for echoing messages over UART.
+    * @brief It is used for sending a simple messages over UART.
     * 
     */
     class CEchoer : public task::CTask

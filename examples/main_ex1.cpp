@@ -68,7 +68,7 @@ controllers::siso::CPidController<double> l_pidController(g_motorPIDTF,g_period_
 
 controllers::siso::CPidController<double> l_pidController2( 0.1150,0.81000,0.000222,0.04,g_period_Encoder);
 
-controllers::CControllerSiso g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
+controllers::CMotorController g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
 //! [Create PID controller]
 
 /// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 

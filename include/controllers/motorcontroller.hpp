@@ -24,11 +24,11 @@
 namespace controllers
 {
 
-   /** CControllerSiso class
+   /** CMotorController class
     * @brief It implements a controller with a single input and a single output. It needs an encoder getter interface to get the measured values, a controller to calculate the control signal. It can be completed with a converter to convert the measaurment unit of the control signal. 
     * 
     */
-    class CControllerSiso
+    class CMotorController
     {
         /* PID controller declaration*/
         template <class T>
@@ -36,7 +36,7 @@ namespace controllers
 
         public:
             /* Construnctor */
-            CControllerSiso(encoders::IEncoderGetter&               f_encoder
+            CMotorController(encoders::IEncoderGetter&               f_encoder
                             ,ControllerType<double>&                f_pid
                             ,controllers::IConverter*               f_converter=NULL
                             ,float                                  f_inf_ref = -225

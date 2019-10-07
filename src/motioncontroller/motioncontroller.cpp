@@ -25,7 +25,7 @@ CMotionController::CMotionController(
         Serial& f_serialPort,
         drivers::IMotorCommand&                 f_motorControl,
         drivers::ISteeringCommand&              f_steeringControl,
-        controllers::CControllerSiso*           f_control) 
+        controllers::CMotorController*           f_control) 
     : m_serialPort(f_serialPort)
     , m_motorControl(f_motorControl)
     , m_steeringControl(f_steeringControl)

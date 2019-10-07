@@ -59,7 +59,7 @@ controllers::CConverterSpline<2,1> l_volt2pwmConverter({-0.22166,0.22166},{std::
 //  controllers::siso::CPidController<double> l_pidController(g_motorPIDTF,g_period_Encoder);
 controllers::siso::CPidController<double> l_pidController( 0.1150,0.81000,0.000222,0.04,g_period_Encoder);
 /// Create a controller object based on the predefined PID controller and the quadrature encoder
-controllers::CControllerSiso g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
+controllers::CMotorController g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
 /// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
 CMotionController           g_motionController(g_period_Encoder, g_rpi, g_motorVnhDriver,g_steeringDriver,&g_controller);
 

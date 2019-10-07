@@ -13,13 +13,13 @@
 
 namespace controllers{
     /**
-     * @brief Construct a new CControllerSiso::CControllerSiso object
+     * @brief Construct a new CMotorController::CMotorController object
      * 
      * @param f_encoder Reference to the encoder getter interface.
      * @param f_pid     Reference to the controller interface.
      * @param f_converter [Optional] Pointer to the converter interface. 
      */
-    CControllerSiso::CControllerSiso(encoders::IEncoderGetter&          f_encoder
+    CMotorController::CMotorController(encoders::IEncoderGetter&          f_encoder
                             ,ControllerType<double>&                    f_pid
                             ,controllers::IConverter*                   f_converter
                             ,float                                      f_inf_ref
@@ -44,7 +44,7 @@ namespace controllers{
      * 
      * @param f_RefRps The value of the reference signal
      */
-    void CControllerSiso::setRef(double f_RefRps)
+    void CMotorController::setRef(double f_RefRps)
     {
         m_RefRps=f_RefRps;
     }
@@ -52,7 +52,7 @@ namespace controllers{
     /** \brief  Get the value of reference signal.
      *
      */
-    double CControllerSiso::getRef()
+    double CMotorController::getRef()
     {
         return m_RefRps;
     }
@@ -60,7 +60,7 @@ namespace controllers{
     /** @brief  Get the value of the control signal calculated last time.
      * 
      */
-    double CControllerSiso::get()
+    double CMotorController::get()
     {
         return m_u;
     }
@@ -68,7 +68,7 @@ namespace controllers{
     /** @brief  Get the value of the error between the measured and reference signal. 
      *
      */
-    double CControllerSiso::getError()
+    double CMotorController::getError()
     {
         return m_error;
     }
@@ -76,7 +76,7 @@ namespace controllers{
     /** @brief  Clear the memory of the controller. 
      *
      */
-    void CControllerSiso::clear()
+    void CMotorController::clear()
     {
         m_pid.clear();
     }
@@ -88,7 +88,7 @@ namespace controllers{
      * @return true control works fine
      * @return false appeared an error
      */
-    int8_t CControllerSiso::control()
+    int8_t CMotorController::control()
     {
         // Mesurment speed value
         float  l_MesRps = m_encoder.getSpeedRps();
@@ -149,7 +149,7 @@ namespace controllers{
      * @param f_u                  Input control signal
      * @return                     Converted control signal
      */
-    double CControllerSiso::converter(double f_u)
+    double CMotorController::converter(double f_u)
     {
         double l_pwm=f_u;
         // Convert the control signal from V to PWM
@@ -172,7 +172,7 @@ namespace controllers{
         return l_pwm;
     }
 
-    bool CControllerSiso::inRange(double f_RefRps){
+    bool CMotorController::inRange(double f_RefRps){
         return m_inf_ref<=f_RefRps && f_RefRps<=m_sup_ref;
     }
 

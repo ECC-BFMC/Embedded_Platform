@@ -49,7 +49,7 @@ public:
         Serial& f_serialPort, 
         drivers::IMotorCommand&                 f_motorControl,
         drivers::ISteeringCommand&              f_steeringControl,
-        controllers::CControllerSiso*           f_control = NULL);
+        controllers::CMotorController*           f_control = NULL);
     
 
     /* Start the Rtos timer for applying "_run" method  */
@@ -108,7 +108,7 @@ private:
     /* Timeout for a hard braking with deactivated pid.  */
     Timeout                                 m_hbTimeOut;
     /* Speed Control for dc motor */
-    controllers::CControllerSiso*           m_control;
+    controllers::CMotorController*           m_control;
     /* Rtos  timer for periodically applying */
     RtosTimer                               m_timer;
 };

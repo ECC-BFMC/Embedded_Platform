@@ -13,21 +13,21 @@
 //!  [Include mbed]
 //!  [List of included files]
 /* Task manager */
-#include<taskmanager/taskmanager.hpp>
+#include<utils/taskmanager/taskmanager.hpp>
 /* Header file for the MOVE functionality */
 #include <move/move.hpp>
 /* Header file for the blinker functionality */
-#include <examples/blinker.hpp>
+#include <utils/examples/blinker.hpp>
 /* Header file for the serial communication functionality */
-#include <serial/serialmonitor.hpp>
+#include <utils/serial/serialmonitor.hpp>
 /* Header file for the motion controller functionality */
 #include <motioncontroller/motioncontroller.hpp>
 /* Header file for the sensor task functionality */
-#include <examples/sensors/sensortask.hpp>
+#include <utils/examples/sensors/sensortask.hpp>
 /* Header file  for the controller functionality */
-#include <controllers/controller.hpp>
+#include <signal/controllers/controller.hpp>
 /* Header file  for the sendor publisher functionality */
-#include <examples/sensors/sensorpublisher.hpp>
+#include <utils/examples/sensors/sensorpublisher.hpp>
 /* Safety stop functionality */
 #include <SafetyStop/safetystopfunction.hpp>
 /* Quadrature encoder functionality */

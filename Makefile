@@ -45,27 +45,30 @@ PROJECT := Nucleo_mbedrobot
 ###############################################################################
 # Objects and Paths
 
-OBJECTS += src/drivers/steeringmotor.o
-OBJECTS += src/drivers/dcmotor.o
-OBJECTS += src/linalg/linalg.o
-OBJECTS += src/queue/queue.o
-OBJECTS += src/filter/filter.o
-OBJECTS += src/systemmodels/systemmodels.o
-OBJECTS += src/taskmanager/taskmanager.o
-OBJECTS += src/serial/serialmonitor.o
-OBJECTS += src/motioncontroller/motioncontroller.o
-OBJECTS += src/examples/echoer.o
-OBJECTS += src/examples/blinker.o
-OBJECTS += src/examples/sensors/proximitypublisher.o
-OBJECTS += src/examples/sensors/encoderpublisher.o
-OBJECTS += src/examples/filter/ekf_am.o
-OBJECTS += src/examples/systemmodels/ackermannmodel.o
-OBJECTS += src/timer/timer.o
-OBJECTS += src/controllers/motorcontroller.o
-OBJECTS += src/controllers/converters.o
-OBJECTS += src/controllers/sisocontrollers.o
-OBJECTS += src/encoders/quadraturecounter.o
-OBJECTS += src/encoders/quadratureencoder.o
+OBJECTS += src/utils/linalg/linalg.o
+OBJECTS += src/utils/queue/queue.o
+OBJECTS += src/utils/taskmanager/taskmanager.o
+OBJECTS += src/utils/serial/serialmonitor.o
+OBJECTS += src/utils/examples/echoer.o
+OBJECTS += src/utils/examples/blinker.o
+OBJECTS += src/utils/examples/sensors/proximitypublisher.o
+OBJECTS += src/utils/examples/sensors/encoderpublisher.o
+OBJECTS += src/utils/examples/filter/ekf_am.o
+OBJECTS += src/utils/examples/systemmodels/ackermannmodel.o
+OBJECTS += src/utils/timer/timer.o
+
+OBJECTS += src/hardware/drivers/steeringmotor.o
+OBJECTS += src/hardware/drivers/dcmotor.o
+OBJECTS += src/hardware/encoders/quadraturecounter.o
+OBJECTS += src/hardware/encoders/quadratureencoder.o
+
+OBJECTS += src/signal/filter/filter.o
+OBJECTS += src/signal/systemmodels/systemmodels.o
+OBJECTS += src/signal/controllers/motorcontroller.o
+OBJECTS += src/signal/controllers/converters.o
+OBJECTS += src/signal/controllers/sisocontrollers.o
+
+OBJECTS += src/brain/robotstatemachine.o
 OBJECTS += src/main.o
 
 

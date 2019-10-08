@@ -10,21 +10,21 @@
 /* The mbed library */
 #include <mbed.h>
 /* Task manager */
-#include <taskmanager/taskmanager.hpp>
+#include <utils/taskmanager/taskmanager.hpp>
 /* Header file for the blinker functionality */
-#include <examples/blinker.hpp>
+#include <utils/examples/blinker.hpp>
 /* Header file for the serial communication functionality */
-#include <serial/serialmonitor.hpp>
+#include <utils/serial/serialmonitor.hpp>
 /* Header file for the motion controller functionality */
-#include <motioncontroller/motioncontroller.hpp>
+#include <brain/robotstatemachine.hpp>
 /* Header file for the sensor task functionality */
-#include <examples/sensors/encoderpublisher.hpp>
+#include <utils/examples/sensors/encoderpublisher.hpp>
 /* Header file  for the controller functionality */
-#include <controllers/motorcontroller.hpp>
+#include <signal/controllers/motorcontroller.hpp>
 /* Header file  for the sendor publisher functionality */
-#include <examples/sensors/proximitypublisher.hpp>
+#include <utils/examples/sensors/proximitypublisher.hpp>
 /* Quadrature encoder functionality */
-#include <encoders/quadratureencoder.hpp>
+#include <hardware/encoders/quadratureencoder.hpp>
 
 
 /// Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART comunication, the inputs have to be transmiter and receiver pins. 
@@ -61,13 +61,13 @@ controllers::siso::CPidController<double> l_pidController( 0.1150,0.81000,0.0002
 /// Create a controller object based on the predefined PID controller and the quadrature encoder
 controllers::CMotorController g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
 /// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
-CMotionController           g_motionController(g_period_Encoder, g_rpi, g_motorVnhDriver,g_steeringDriver,&g_controller);
+brain::CRobotStateMachine           g_robotstatemachine(g_period_Encoder, g_rpi, g_motorVnhDriver,g_steeringDriver,&g_controller);
 
 /// Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
-    {"MCTL",mbed::callback(&g_motionController,&CMotionController::serialCallbackMove)},
-    {"BRAK",mbed::callback(&g_motionController,&CMotionController::serialCallbackBrake)},
-    {"PIDA",mbed::callback(&g_motionController,&CMotionController::serialCallbackPID)},
+    {"MCTL",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackMove)},
+    {"BRAK",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackBrake)},
+    {"PIDA",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackPID)},
     {"ENPB",mbed::callback(&g_encoderPublisher,&examples::sensors::CEncoderPublisher::serialCallback)},
 };
 
@@ -104,7 +104,7 @@ uint32_t setup()
     /// Start the Rtos timer for the quadrature encoder    
     g_quadratureEncoderTask.startTimer();
     /// Start the Rtos timer for the motion controller
-    g_motionController.startRtosTimer();
+    g_robotstatemachine.startRtosTimer();
     return 0;    
 }
 

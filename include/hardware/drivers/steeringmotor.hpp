@@ -16,7 +16,7 @@
 #include <mbed.h>
 
 
-namespace drivers{
+namespace hardware::drivers{
 
     /**
      * @brief Interface to control the steering angle
@@ -55,7 +55,7 @@ namespace drivers{
         const float m_inf_limit;
         const float m_sup_limit;
     };
-}; // namespace drivers
+}; // namespace hardware::drivers
 
 
 #endif

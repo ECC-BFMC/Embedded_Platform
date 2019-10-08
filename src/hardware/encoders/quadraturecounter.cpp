@@ -11,7 +11,7 @@
 #include <hardware/encoders/quadraturecounter.hpp>
 
 
-namespace drivers{
+namespace hardware::drivers{
 
 
 
@@ -110,4 +110,4 @@ void CQuadratureCounter_TIM4::reset(){
 }
 
 
-}; // namespace drivers
+}; // namespace hardware::drivers

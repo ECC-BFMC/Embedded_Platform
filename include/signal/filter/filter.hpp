@@ -16,7 +16,7 @@
 #include <utils/linalg/linalg.h>
 #include <signal/systemmodels/systemmodels.hpp>
 
-namespace filter
+namespace signal::filter
 {
     /**
      * @brief The filter interface
@@ -47,15 +47,15 @@ namespace filter
             {
                 public:
                     /* Constructor */
-                    CIIRFilter(const linalg::CRowVector<T,NA>& f_A,const linalg::CRowVector<T,NB>& f_B);
+                    CIIRFilter(const utils::linalg::CRowVector<T,NA>& f_A,const utils::linalg::CRowVector<T,NB>& f_B);
                     /* Operator */
                     T operator()(T& f_u);
                 private:
                     CIIRFilter(){}
-                    linalg::CRowVector<T,NA> m_A;
-                    linalg::CRowVector<T,NB> m_B;
-                    linalg::CColVector<T,NA> m_Y;
-                    linalg::CColVector<T,NB> m_U;
+                    utils::linalg::CRowVector<T,NA> m_A;
+                    utils::linalg::CRowVector<T,NB> m_B;
+                    utils::linalg::CColVector<T,NA> m_Y;
+                    utils::linalg::CColVector<T,NB> m_U;
             }; // class CIIRFilter
 
             /**
@@ -69,13 +69,13 @@ namespace filter
             {
                 public:
                     /* Constructor */
-                    CFIRFilter(const linalg::CRowVector<T,NB>& f_B);
+                    CFIRFilter(const utils::linalg::CRowVector<T,NB>& f_B);
                     /* Operator */
                     T operator()(T& f_u);
                 private:
                     CFIRFilter() {}
-                    linalg::CRowVector<T,NB> m_B;
-                    linalg::CColVector<T,NB> m_U;
+                    utils::linalg::CRowVector<T,NB> m_B;
+                    utils::linalg::CColVector<T,NB> m_U;
             }; // class CFIRFilter
 
             /**
@@ -94,7 +94,7 @@ namespace filter
                     virtual T operator()(T& f_u);
                 private:
                     T m_B;
-                    linalg::CColVector<T,NB> m_U;
+                    utils::linalg::CColVector<T,NB> m_U;
             }; // class CMeanFilter
         }; // namespace siso
     }; // namespace linear
@@ -139,7 +139,7 @@ namespace filter
             }; // class CMedianFilter
         }; // namespace siso
     }; // namespace nonlinear 
-}; // namespace filter
+}; // namespace singal::filter
 
 #include "filter.tpp"
 

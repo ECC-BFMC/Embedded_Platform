@@ -18,7 +18,7 @@
 /* Functions to compute common mathematical operations and transformations */
 #include <cmath>
 
-namespace drivers{
+namespace hardware::drivers{
     /**
      * @brief Current getter interface
      * 
@@ -82,7 +82,7 @@ namespace drivers{
     };
 
 
-}; // namespace drivers
+}; // namespace hardware::drivers
 
 
 #endif

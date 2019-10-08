@@ -14,6 +14,10 @@
 #define QUEUE_HPP
 
 
+namespace utils{
+    
+
+
 /**
  * @brief It is used for executing queue container.
  * 
@@ -56,5 +60,7 @@ private:
 };
 
 #include "queue.tpp"
+
+}; // namespace utils
 
 #endif

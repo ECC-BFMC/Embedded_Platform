@@ -12,7 +12,7 @@
 #include <hardware/drivers/steeringmotor.hpp>
 
 
-namespace drivers{
+namespace hardware::drivers{
     /** @brief  CSteeringMotor class constructor, it  initializes the pwm parameters and set the steering in zero position.
      *
      *  @param _pwm               pin connected to servo motor
@@ -73,4 +73,4 @@ namespace drivers{
     bool CSteeringMotor::inRange(float f_angle){
         return m_inf_limit<=f_angle && f_angle<=m_sup_limit;
     };
-}; // namespace drivers
+}; // namespace hardware::drivers

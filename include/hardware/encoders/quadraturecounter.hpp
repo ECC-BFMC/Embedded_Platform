@@ -14,7 +14,7 @@
 
 #include <mbed.h>
 
-namespace drivers{
+namespace hardware::drivers{
   /**
    * @brief  An interface to access the main functionality of timer for decoding a quadrature encoder. It's used to get and to reset the measured position of the encoder.
    * 
@@ -59,7 +59,7 @@ namespace drivers{
       static CQuadratureCounter_TIM4_Destroyer m_destroyer;
   }; //class CQuadratureCounter_TIM4
 
-};// namespace drivers
+};// namespace hardware::drivers
 
 
 #endif

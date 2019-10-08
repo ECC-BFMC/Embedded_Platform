@@ -26,9 +26,9 @@ namespace brain{
     CRobotStateMachine::CRobotStateMachine(
             float f_period_sec,
             Serial& f_serialPort,
-            drivers::IMotorCommand&                 f_motorControl,
-            drivers::ISteeringCommand&              f_steeringControl,
-            controllers::CMotorController*           f_control) 
+            hardware::drivers::IMotorCommand&                 f_motorControl,
+            hardware::drivers::ISteeringCommand&              f_steeringControl,
+            signal::controllers::CMotorController*           f_control) 
         : m_serialPort(f_serialPort)
         , m_motorControl(f_motorControl)
         , m_steeringControl(f_steeringControl)

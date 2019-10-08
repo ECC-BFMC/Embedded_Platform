@@ -10,7 +10,7 @@
 
 #include <utils/taskmanager/taskmanager.hpp>
 
-namespace task{
+namespace utils::task{
 
     /******************************************************************************/
     /** \brief  CTask class constructor
@@ -57,11 +57,11 @@ namespace task{
      *  @param f_taskCount     number of tasks
      *  @param f_baseFreq      base frequency
      */
-    CTaskManager::CTaskManager(task::CTask** f_taskList, uint32_t f_taskCount, float f_baseFreq)
+    CTaskManager::CTaskManager(utils::task::CTask** f_taskList, uint32_t f_taskCount, float f_baseFreq)
         : m_taskList(f_taskList)
         , m_taskCount(f_taskCount) 
     {
-        m_ticker.attach(mbed::callback(this,&task::CTaskManager::timerCallback), f_baseFreq);
+        m_ticker.attach(mbed::callback(this,&utils::task::CTaskManager::timerCallback), f_baseFreq);
     }
 
     /** \brief  CTaskManager class destructor
@@ -72,4 +72,4 @@ namespace task{
         m_ticker.detach();
     }
 
-}; // namespace task
+}; // namespace utils::task

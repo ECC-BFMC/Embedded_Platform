@@ -12,7 +12,7 @@
 #include <utils/serial/serialmonitor.hpp>
 
 
-namespace serial{
+namespace utils::serial{
 
     /** @brief  CSerialMonitor class constructor
      *
@@ -22,7 +22,7 @@ namespace serial{
      */
     CSerialMonitor::CSerialMonitor(Serial& f_serialPort
                     ,CSerialSubscriberMap f_serialSubscriberMap)
-            :task::CTask(0)
+            :utils::task::CTask(0)
             , m_serialPort(f_serialPort)
             , m_RxBuffer()
             , m_TxBuffer()

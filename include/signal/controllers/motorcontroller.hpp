@@ -21,6 +21,8 @@
 
 #include <mbed.h>
 
+namespace signal
+{
 namespace controllers
 {
 
@@ -36,9 +38,9 @@ namespace controllers
 
         public:
             /* Construnctor */
-            CMotorController(encoders::IEncoderGetter&               f_encoder
+            CMotorController(hardware::encoders::IEncoderGetter&               f_encoder
                             ,ControllerType<double>&                f_pid
-                            ,controllers::IConverter*               f_converter=NULL
+                            ,signal::controllers::IConverter*               f_converter=NULL
                             ,float                                  f_inf_ref = -225
                             ,float                                  f_sup_ref = 225);
             /* Set controller reference value */
@@ -61,7 +63,7 @@ namespace controllers
             double converter(double f_u);
 
             /* Enconder object reference */
-            encoders::IEncoderGetter&               m_encoder;
+            hardware::encoders::IEncoderGetter&               m_encoder;
             /* PID object reference */
             ControllerType<double>&                 m_pid;
             /* Controller reference */
@@ -71,7 +73,7 @@ namespace controllers
             /* Error */
             double                                  m_error;
             /* Converter */
-            controllers::IConverter*                m_converter;
+            signal::controllers::IConverter*                m_converter;
             uint8_t                                 m_nrHighPwm;
             /* Maximum High PWM Signal */
             const uint8_t                           m_maxNrHighPwm;
@@ -92,5 +94,7 @@ namespace controllers
 
     };
 }; // namespace controllers
+
+}; // namespace signal
 
 #endif

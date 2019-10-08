@@ -15,7 +15,7 @@
 #include <utils/linalg/linalg.h>
 
 // Discrete System Models
-namespace systemmodels{
+namespace signal::systemmodels{
     //Linear time variant models
     namespace lti{
         namespace siso{
@@ -31,12 +31,12 @@ namespace systemmodels{
             template <class T,uint32_t NNum,uint32_t NDen>
             class CDiscreteTransferFunction{
                 public:
-                    using CDenType          =   linalg::CMatrix<T,NDen,1>; // Type of the full denominator coefficients
-                    using CDenModType       =   linalg::CMatrix<T,NDen-1,1>; // Type of the denominator coefficients without the first coefficient
-                    using CNumType          =   linalg::CMatrix<T,NNum,1>; // Type of the full nominator coefficients
+                    using CDenType          =   utils::linalg::CMatrix<T,NDen,1>; // Type of the full denominator coefficients
+                    using CDenModType       =   utils::linalg::CMatrix<T,NDen-1,1>; // Type of the denominator coefficients without the first coefficient
+                    using CNumType          =   utils::linalg::CMatrix<T,NNum,1>; // Type of the full nominator coefficients
                     
-                    using CInputMem         =   linalg::CMatrix<T,1,NNum>; // Type of previous input value memory
-                    using COutputMem        =   linalg::CMatrix<T,1,NDen-1>; // Type of previous output value memory
+                    using CInputMem         =   utils::linalg::CMatrix<T,1,NNum>; // Type of previous input value memory
+                    using COutputMem        =   utils::linalg::CMatrix<T,1,NDen-1>; // Type of previous output value memory
                     /* Constructor */
                     CDiscreteTransferFunction();
 
@@ -46,7 +46,7 @@ namespace systemmodels{
                     void clearMemmory();
                     /* Shift memory */
                     template<uint32_t N>
-                    void shiftMemory(linalg::CMatrix<T,1,N>& f_mem);
+                    void shiftMemory(utils::linalg::CMatrix<T,1,N>& f_mem);
                     /* Applying the transfer function on the next signal value */
                     T operator()(const T& f_input);
                     /* Setting the nominator coefficients */
@@ -88,13 +88,13 @@ namespace systemmodels{
             class CSSModel
             {
                 public:
-                    using CStateType = linalg::CColVector<T,NA>; // X - state variable type
-                    using CStateTransitionType = linalg::CMatrix<T,NA,NA>; // A state-state trans. model type
-                    using CControlType = linalg::CColVector<T,NB>; // U - control variable type
-                    using CMeasurementType = linalg::CColVector<T,NC>; // Y - observation (measurement) variable type
-                    using CInputMatrixType = linalg::CMatrix<T,NA,NB>; // B - control-state trans. model type
-                    using CMeasurementMatrixType = linalg::CMatrix<T,NC,NA>; // C - state-observation trans. model type
-                    using CDirectTransferMatrixType = linalg::CMatrix<T,NC,NB>; // D - control-observation trans. model type
+                    using CStateType = utils::linalg::CColVector<T,NA>; // X - state variable type
+                    using CStateTransitionType = utils::linalg::CMatrix<T,NA,NA>; // A state-state trans. model type
+                    using CControlType = utils::linalg::CColVector<T,NB>; // U - control variable type
+                    using CMeasurementType = utils::linalg::CColVector<T,NC>; // Y - observation (measurement) variable type
+                    using CInputMatrixType = utils::linalg::CMatrix<T,NA,NB>; // B - control-state trans. model type
+                    using CMeasurementMatrixType = utils::linalg::CMatrix<T,NC,NA>; // C - state-observation trans. model type
+                    using CDirectTransferMatrixType = utils::linalg::CMatrix<T,NC,NB>; // D - control-observation trans. model type
                     /* Constructor */
                     CSSModel(
                         const CStateTransitionType& f_stateTransitionMatrix,
@@ -152,9 +152,9 @@ namespace systemmodels{
             template <class T,uint32_t NA, uint32_t NB,uint32_t NC>
             class CDiscreteTimeSystemModel{
                 public:
-                    using CStatesType           =   linalg::CMatrix<T,NB,1>;
-                    using CControlType            =   linalg::CMatrix<T,NA,1>;
-                    using CObservationType           =   linalg::CMatrix<T,NC,1>;
+                    using CStatesType           =   utils::linalg::CMatrix<T,NB,1>;
+                    using CControlType            =   utils::linalg::CMatrix<T,NA,1>;
+                    using CObservationType           =   utils::linalg::CMatrix<T,NC,1>;
                     /* Constructor */
                     CDiscreteTimeSystemModel(const double           f_dt);//:m_states(),m_dt(f_dt){}
                     /* Constructor */
@@ -188,7 +188,7 @@ namespace systemmodels{
 
         }; //namespace mimo
     }; //namespace nlti
-}; // namespace systemmodels
+}; // namespace signal::systemmodels
 
 #include "systemmodels.tpp"
 

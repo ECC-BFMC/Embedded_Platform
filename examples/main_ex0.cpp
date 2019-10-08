@@ -56,7 +56,7 @@ CMotionController           g_motionController(0.001, g_rpi, g_car);
 
 /// Map with the key and the callback functions.If the message key equals to one of the enumerated keys, than it will be applied the corresponsive function. 
 //! [List of messages]
-serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
+utils::serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"MCTL",mbed::callback(CMotionController::staticSerialCallbackMove,&g_motionController)},
     {"BRAK",mbed::callback(CMotionController::staticSerialCallbackBrake,&g_motionController)},
     {"HBRA",mbed::callback(CMotionController::staticSerialCallbackHardBrake,&g_motionController)},
@@ -65,18 +65,18 @@ serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
 };
 
 /// Create the serial monitor object, which decodes the messages and transmites the responses.
-serial::CSerialMonitor g_serialMonitor(g_rpi, g_serialMonitorSubscribers);
+utils::serial::CSerialMonitor g_serialMonitor(g_rpi, g_serialMonitorSubscribers);
 //! [List of messages]
 
 /// List of the task, each task will be applied their own periodicity, defined by initializing the objects.
 //! [List of task]
-task::CTask* g_taskList[] = {
+utils::task::CTask* g_taskList[] = {
     &g_blinker,
     &g_serialMonitor
 }; 
 
 /// Create the task manager, which applies periodically the tasks.
-task::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(task::CTask*), g_baseTick);
+utils::task::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(utils::task::CTask*), g_baseTick);
 //! [List of task]
 
 /**

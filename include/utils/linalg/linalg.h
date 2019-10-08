@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <array>
 
-namespace linalg
+namespace utils::linalg
 {   
 
     /**
@@ -474,7 +474,7 @@ namespace linalg
 
     template <class T, uint32_t N>
     using CRowVector = CMatrix<T,1,N>;
-};
+}; // namespace utils::linalg
 
 #include "linalg.tpp"
 

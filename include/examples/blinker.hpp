@@ -24,7 +24,7 @@ namespace examples{
     * @brief It is used for toggling a LED.
     * 
     */
-    class CBlinker : public task::CTask
+    class CBlinker : public utils::task::CTask
     {
         public:
             /* Construnctor */

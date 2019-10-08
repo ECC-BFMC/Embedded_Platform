@@ -23,7 +23,7 @@ namespace examples{
     * @brief It is used for sending a simple messages over UART.
     * 
     */
-    class CEchoer : public task::CTask
+    class CEchoer : public utils::task::CTask
     {
         public:
             /* Construnctor */

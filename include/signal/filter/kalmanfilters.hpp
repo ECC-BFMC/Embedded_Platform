@@ -15,7 +15,7 @@
 #include <utils/linalg/linalg.h>
 #include <signal/systemmodels/systemmodels.hpp>
 
-namespace filter{
+namespace signal::filter{
     namespace lti{
         namespace mimo{
             
@@ -32,18 +32,18 @@ namespace filter{
             {
             public:
                 // Definning the types.
-                using CStateType                    = linalg::CVector<T, NA>;  // State column matrix 
-                using CControlType                  = linalg::CVector<T, NB>;  // Control column matrix 
-                using CObservationType              = linalg::CVector<T, NC>;  // Observation column matrix 
+                using CStateType                    = utils::linalg::CVector<T, NA>;  // State column matrix 
+                using CControlType                  = utils::linalg::CVector<T, NB>;  // Control column matrix 
+                using CObservationType              = utils::linalg::CVector<T, NC>;  // Observation column matrix 
                 
-                using CStateTransModelType          = linalg::CMatrix<T, NA, NA>; // State transition type 
-                using CControInputModelType         = linalg::CMatrix<T, NA, NC>; // Control-input model, applied to control vecter
-                using CObservationModelType         = linalg::CMatrix<T,NC,NA>;   // Observation model type
+                using CStateTransModelType          = utils::linalg::CMatrix<T, NA, NA>; // State transition type 
+                using CControInputModelType         = utils::linalg::CMatrix<T, NA, NC>; // Control-input model, applied to control vecter
+                using CObservationModelType         = utils::linalg::CMatrix<T,NC,NA>;   // Observation model type
 
-                using CProcessCovarianceType        = linalg::CMatrix<T, NA, NA>;
-                using CObservationCovarianceType    = linalg::CMatrix<T, NC, NC>;
+                using CProcessCovarianceType        = utils::linalg::CMatrix<T, NA, NA>;
+                using CObservationCovarianceType    = utils::linalg::CMatrix<T, NC, NC>;
                 
-                using CKalmanGainType               = linalg::CMatrix<T, NA, NC>;
+                using CKalmanGainType               = utils::linalg::CMatrix<T, NA, NC>;
 
                 /* Constructor */
                 CKalmanFilter(
@@ -105,11 +105,11 @@ namespace filter{
             template <class T,uint32_t NA, uint32_t NB,uint32_t NC>
             class IJacobianMatrices{
                 public:
-                    using CStatesType           =   linalg::CMatrix<T,NB,1>;
-                    using CControlType            =   linalg::CMatrix<T,NA,1>;
-                    // using CObservationType           =   linalg::CMatrix<T,NC,1>;
-                    using CJMTransitionType     =   linalg::CMatrix<T,NB,NB>;
-                    using CJMObservationType    =   linalg::CMatrix<T,NC,NB>;
+                    using CStatesType           =   utils::linalg::CMatrix<T,NB,1>;
+                    using CControlType            =   utils::linalg::CMatrix<T,NA,1>;
+                    // using CObservationType           =   utils::linalg::CMatrix<T,NC,1>;
+                    using CJMTransitionType     =   utils::linalg::CMatrix<T,NB,NB>;
+                    using CJMObservationType    =   utils::linalg::CMatrix<T,NC,NB>;
 
                     //The method calculates and returns  the states transition matrix 
                     virtual CJMTransitionType getJMTransition(const CStatesType&     f_states
@@ -132,15 +132,15 @@ namespace filter{
             class CEKF
             {
                 public:
-                    using CSystemModelType              =   systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>;
-                    using CJacobianMatricesType         =   filter::nlti::mimo::IJacobianMatrices<T,NA,NB,NC>;
-                    using CStatesType                   =   linalg::CMatrix<T,NB,1>;
-                    using CControlType                    =   linalg::CMatrix<T,NA,1>;
-                    using CObservationType                   =   linalg::CMatrix<T,NC,1>;
-                    using CJMTransitionType             =   linalg::CMatrix<T,NB,NB>;
-                    using CJMObservationType            =   linalg::CMatrix<T,NC,NB>;
-                    using CObservationNoiseType         =   linalg::CMatrix<T,NC,NC>;
-                    using CKalmanGainType               =   linalg::CMatrix<T,NC,NB>;
+                    using CSystemModelType              =   signal::systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>;
+                    using CJacobianMatricesType         =   signal::filter::nlti::mimo::IJacobianMatrices<T,NA,NB,NC>;
+                    using CStatesType                   =   utils::linalg::CMatrix<T,NB,1>;
+                    using CControlType                    =   utils::linalg::CMatrix<T,NA,1>;
+                    using CObservationType                   =   utils::linalg::CMatrix<T,NC,1>;
+                    using CJMTransitionType             =   utils::linalg::CMatrix<T,NB,NB>;
+                    using CJMObservationType            =   utils::linalg::CMatrix<T,NC,NB>;
+                    using CObservationNoiseType         =   utils::linalg::CMatrix<T,NC,NC>;
+                    using CKalmanGainType               =   utils::linalg::CMatrix<T,NC,NB>;
                     
                     /* Constructor */
                     CEKF(CSystemModelType&                          f_systemModel
@@ -166,7 +166,7 @@ namespace filter{
             }; // class CEKF
         }; //namespace mimo
     }; //namespace nlti
-}; // namespace filter
+}; // namespace signal::filter
 #include "kalmanfilters.hpp"
 
 

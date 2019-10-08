@@ -46,36 +46,36 @@ float           g_period_Encoder = 0.001;
 
 /// Create a filter object for filtrating the noise appeared on the rotary encoder.
 //! [Create encoder filter]
-filter::lti::siso::CIIRFilter<float,1,2> g_encoderFilter(linalg::CRowVector<float,1>({ -0.77777778})
-                                                        ,linalg::CRowVector<float,2>({0.11111111,0.11111111}));
+signal::filter::lti::siso::CIIRFilter<float,1,2> g_encoderFilter(utils::linalg::CRowVector<float,1>({ -0.77777778})
+                                                        ,utils::linalg::CRowVector<float,2>({0.11111111,0.11111111}));
 //! [Create encoder filter]
 
 /// Create a quadrature encoder object with a filter. It periodically measueres the rotary speed of the motor and applies the given filter. 
-encoders::CQuadratureEncoderWithFilterTask g_quadratureEncoderTask(g_period_Encoder,encoders::CQuadratureEncoder_TIM4::Instance(),2048,g_encoderFilter);
+hardware::encoders::CQuadratureEncoderWithFilterTask g_quadratureEncoderTask(g_period_Encoder,hardware::encoders::CQuadratureEncoder_TIM4::Instance(),2048,g_encoderFilter);
 
 ///Create an encoder publisher object to transmite the rotary speed of the dc motor. 
 examples::sensors::CEncoderSender         g_encoderPublisher(0.01/g_baseTick,g_quadratureEncoderTask,g_rpi);
 
 
 /// Create a splines based converter object to convert the volt signal to pwm signal
-controllers::CConverterSpline<2,1> l_volt2pwmConverter({-0.0007836798991808444,0.0007836798991808444},{std::array<float,2>({0.043799873976055455,-0.050627}),std::array<float,2>({0.30029741650913677,0.0}),std::array<float,2>({0.043799873976055455,0.050627})});
+signal::controllers::CConverterSpline<2,1> l_volt2pwmConverter({-0.0007836798991808444,0.0007836798991808444},{std::array<float,2>({0.043799873976055455,-0.050627}),std::array<float,2>({0.30029741650913677,0.0}),std::array<float,2>({0.043799873976055455,0.050627})});
 //Create the controller transfer function for the motor
 /// Create a discrete transfer function, which respresents a discrete PID controller.
 
 //! [Create PID controller]
-systemmodels::lti::siso::CDiscreteTransferFunction<double,3,3> g_motorPIDTF(linalg::CRowVector<double, 3>({ 0.12058,-0.23751,0.11695}).transpose(),linalg::CRowVector<double, 3>({ 1.00000, -1.97531  ,0.97531}).transpose());
-controllers::siso::CPidController<double> l_pidController(g_motorPIDTF,g_period_Encoder);
+signal::systemmodels::lti::siso::CDiscreteTransferFunction<double,3,3> g_motorPIDTF(utils::linalg::CRowVector<double, 3>({ 0.12058,-0.23751,0.11695}).transpose(),utils::linalg::CRowVector<double, 3>({ 1.00000, -1.97531  ,0.97531}).transpose());
+signal::controllers::siso::CMotorController<double> l_pidController(g_motorPIDTF,g_period_Encoder);
 
-controllers::siso::CPidController<double> l_pidController2( 0.1150,0.81000,0.000222,0.04,g_period_Encoder);
+signal::controllers::siso::CMotorController<double> l_pidController2( 0.1150,0.81000,0.000222,0.04,g_period_Encoder);
 
-controllers::CMotorController g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
+signal::controllers::CMotorController g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
 //! [Create PID controller]
 
 /// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
 CMotionController           g_motionController(g_period_Encoder, g_rpi, g_car,&g_controller);
 
 /// Map with the key and the callback functions.If the message key equals to one of the enumerated keys, than it will be applied the corresponsive function. 
-serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
+utils::serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"MCTL",mbed::callback(CMotionController::staticSerialCallbackMove,&g_motionController)},
     {"BRAK",mbed::callback(CMotionController::staticSerialCallbackBrake,&g_motionController)},
     {"PIDA",mbed::callback(CMotionController::staticSerialCallbackPID,&g_motionController)},
@@ -84,17 +84,17 @@ serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
 };
 
 /// Create the serial monitor object, which decodes the messages and transmites the responses.
-serial::CSerialMonitor g_serialMonitor(g_rpi, g_serialMonitorSubscribers);
+utils::serial::CSerialMonitor g_serialMonitor(g_rpi, g_serialMonitorSubscribers);
 
 /// List of the task, each task will be applied their own periodicity, defined by initializing the objects.
-task::CTask* g_taskList[] = {
+utils::task::CTask* g_taskList[] = {
     &g_blinker,
     &g_serialMonitor,
     &g_encoderPublisher
 }; 
 
 /// Create the task manager, which applies periodically the tasks.
-task::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(task::CTask*), g_baseTick);
+utils::task::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(utils::task::CTask*), g_baseTick);
 
 
 /**

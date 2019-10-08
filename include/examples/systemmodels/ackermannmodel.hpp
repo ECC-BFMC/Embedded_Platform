@@ -36,10 +36,10 @@ namespace examples
         {
             /* System model type */
             template<class T,uint32_t NA,uint32_t NB,uint32_t NC>
-            using CSystemModelType      = ::systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>;
+            using CSystemModelType      = ::signal::systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>;
             /* Jacobian matrix*/
             template<class T,uint32_t NA,uint32_t NB,uint32_t NC>
-            using IJacobianMatricesType = ::filter::nlti::mimo::IJacobianMatrices<T,NA,NB,NC>;
+            using IJacobianMatricesType = ::signal::filter::nlti::mimo::IJacobianMatrices<T,NA,NB,NC>;
             //!  CAckermannModel class. 
             /*!
             * It inherits class CSystemModelType. 
@@ -114,8 +114,8 @@ namespace examples
                     }
                 
                 private:
-                    linalg::CMatrix<double,5,10> initObservationMatrix(){
-                        linalg::CMatrix<double,5,10> l_data;
+                    utils::linalg::CMatrix<double,5,10> initObservationMatrix(){
+                        utils::linalg::CMatrix<double,5,10> l_data;
                         l_data[0][2]=l_data[1][3]=1.f/m_dt;
                         l_data[0][4]=l_data[1][5]=-1.f/m_dt;
                         l_data[2][7]=1.f;
@@ -174,10 +174,10 @@ namespace examples
                     const double m_bJ,m_KJ,m_KL,m_RL;
                     /* Please leave this matrix to be the last member in this class, 
                     as it will be initialized  */
-                    linalg::CMatrix<double,5,10> m_ObservationMatrix;    
+                    utils::linalg::CMatrix<double,5,10> m_ObservationMatrix;    
             };
-        };
-    };
-};
+        }; // namespace ackermannmodel
+    }; // namespace systemmodels
+}; // namespace examples
 
 #endif

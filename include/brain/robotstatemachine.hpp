@@ -40,9 +40,9 @@ namespace brain{
         CRobotStateMachine(
             float f_period_sec, 
             Serial& f_serialPort, 
-            drivers::IMotorCommand&                 f_motorControl,
-            drivers::ISteeringCommand&              f_steeringControl,
-            controllers::CMotorController*           f_control = NULL);
+            hardware::drivers::IMotorCommand&                 f_motorControl,
+            hardware::drivers::ISteeringCommand&              f_steeringControl,
+            signal::controllers::CMotorController*           f_control = NULL);
         
 
         /* Start the Rtos timer for applying "_run" method  */
@@ -81,9 +81,9 @@ namespace brain{
         /* reference to Serial object */
         Serial& m_serialPort;
         /* Motor control interface */
-        drivers::IMotorCommand&                 m_motorControl;
+        hardware::drivers::IMotorCommand&                 m_motorControl;
         /* Steering wheel control interface */
-        drivers::ISteeringCommand&              m_steeringControl;
+        hardware::drivers::ISteeringCommand&              m_steeringControl;
         /* Speed */
         float m_speed;
         /* Angle */
@@ -101,7 +101,7 @@ namespace brain{
         /* Timeout for a hard braking with deactivated pid.  */
         Timeout                                 m_hbTimeOut;
         /* Speed Control for dc motor */
-        controllers::CMotorController*           m_control;
+        signal::controllers::CMotorController*           m_control;
         /* Rtos  timer for periodically applying */
         RtosTimer                               m_timer;
     }; // class CRobotStateMachine

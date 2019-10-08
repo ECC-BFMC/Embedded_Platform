@@ -9,7 +9,7 @@
   ******************************************************************************
  */
 
-#include <utils/examples/echoer.hpp>
+#include <examples/echoer.hpp>
 
 namespace examples{
     /** \brief  Class constructor
@@ -20,7 +20,7 @@ namespace examples{
      *  \param f_serialPort   Serial communication object
      */
     CEchoer::CEchoer(uint32_t f_period, Serial& f_serialPort) 
-        : task::CTask(f_period)
+        : utils::task::CTask(f_period)
         , m_serialPort(f_serialPort)
     {
     }

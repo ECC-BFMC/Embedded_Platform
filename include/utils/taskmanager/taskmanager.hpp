@@ -14,7 +14,7 @@
 
 #include <mbed.h>
 
-namespace task{
+namespace utils::task{
    /**
     * @brief It has aim to the task functionality. The tasks will be applied periodically by the task manager, the period is defined in the contructor. 
     * 
@@ -91,6 +91,6 @@ namespace task{
         Ticker m_ticker;
     };
 
-}; // namespace task
+}; // namespace utils::task
 
 #endif

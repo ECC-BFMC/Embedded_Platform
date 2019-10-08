@@ -21,7 +21,7 @@ namespace examples{
      *  \param f_led          Digital output line to LED
      */
     CBlinker::CBlinker(uint32_t f_period, DigitalOut f_led) 
-        : task::CTask(f_period)
+        : utils::task::CTask(f_period)
         , m_led(f_led) 
     {
         m_led = 1;

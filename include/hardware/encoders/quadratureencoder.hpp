@@ -17,7 +17,7 @@
 
 #include <rtos.h>
 
-namespace encoders{
+namespace hardware::encoders{
 
 /**
  * @brief It implements a periodic task, which get the value from the counter and reset it to zero.
@@ -25,7 +25,7 @@ namespace encoders{
  */
 class CQuadratureEncoder:public IEncoderGetter{
     public:
-      CQuadratureEncoder(float,drivers::IQuadratureCounter_TIMX*,uint16_t);
+      CQuadratureEncoder(float,hardware::drivers::IQuadratureCounter_TIMX*,uint16_t);
       void startTimer();
   protected:
     virtual void _run();
@@ -33,7 +33,7 @@ class CQuadratureEncoder:public IEncoderGetter{
     virtual float getSpeedRps();
     virtual bool isAbs(){return false;}
   protected:
-      ::drivers::IQuadratureCounter_TIMX *m_quadraturecounter;
+      ::hardware::drivers::IQuadratureCounter_TIMX *m_quadraturecounter;
       int16_t           m_encoderCnt;
       const float       m_taskperiod_s;
       const uint16_t    m_resolution;
@@ -46,7 +46,7 @@ class CQuadratureEncoder:public IEncoderGetter{
  */
 class CQuadratureEncoderWithFilter: public CQuadratureEncoder, public IEncoderNonFilteredGetter{
     public:
-      CQuadratureEncoderWithFilter(float,drivers::IQuadratureCounter_TIMX *, uint16_t,filter::IFilter<float>&);
+      CQuadratureEncoderWithFilter(float,hardware::drivers::IQuadratureCounter_TIMX *, uint16_t,signal::filter::IFilter<float>&);
       
       virtual int16_t getCount();
       virtual float getSpeedRps();
@@ -55,10 +55,10 @@ class CQuadratureEncoderWithFilter: public CQuadratureEncoder, public IEncoderNo
     protected:
       virtual void _run();
       double m_encoderCntFiltered;
-      filter::IFilter<float>& m_filter;
+      signal::filter::IFilter<float>& m_filter;
 
 };
 
-}; // namespace encoders
+}; // namespace hardware::encoders
 
 #endif

@@ -12,7 +12,7 @@
 #define ENDOCER_INTERFACE_HPP
 
 #include <stdint.h>
-namespace encoders{
+namespace hardware::encoders{
     /**
      * @brief Rotary speed encoder interface class.
      *
@@ -61,6 +61,6 @@ namespace encoders{
          */
         virtual float getNonFilteredSpeedRps() = 0;
     };
-}; // namepsace encoders;
+}; // namepsace hardware::encoders;
 
 #endif

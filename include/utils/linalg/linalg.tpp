@@ -6,9 +6,9 @@
 #endif // LINALG_H
 
 template<class T, uint32_t N,uint32_t M>
-typename linalg::CMatrix<T,N,M>::CThisType linalg::CMatrix<T,N,M>::inv()
+typename utils::linalg::CMatrix<T,N,M>::CThisType utils::linalg::CMatrix<T,N,M>::inv()
 {
-    CThisType l_inv(linalg::CLUDecomposition<T,N>(*this).inv());
+    CThisType l_inv(utils::linalg::CLUDecomposition<T,N>(*this).inv());
     return l_inv;
 }
 

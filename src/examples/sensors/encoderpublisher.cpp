@@ -27,9 +27,9 @@ namespace examples
          *  @param f_serial       reference to the serial object
          */
         CEncoderPublisher::CEncoderPublisher(uint32_t            f_period
-                                                ,encoders::IEncoderGetter&     f_encoder
+                                                ,hardware::encoders::IEncoderGetter&     f_encoder
                                                 ,Serial&             f_serial)
-            :task::CTask(f_period)
+            :utils::task::CTask(f_period)
             ,m_isActive(false)
             ,m_encoder(f_encoder)
             ,m_serial(f_serial)

@@ -25,8 +25,8 @@ CPidController<T>::CPidController( T              f_kp
     :m_pidTf()
 {    
     // Calculate the coefficients for the discrete transferfunction based an Euler backward discretisation method. 
-    linalg::CMatrix<T,1,3> l_numPid({ (f_kd+f_tf*f_kp)/f_tf , (f_tf*f_dt*f_ki+f_dt*f_kp-2*f_tf*f_kp-2*f_kd)/f_tf , (f_kd+f_tf*f_kp+f_dt*f_dt*f_ki-f_dt*f_tf*f_ki-f_dt*f_kp)/f_tf});
-    linalg::CMatrix<T,1,3> l_denPid({ 1.0,-(2*f_tf-f_dt)/f_tf,(f_tf-f_dt)/f_tf });
+    utils::linalg::CMatrix<T,1,3> l_numPid({ (f_kd+f_tf*f_kp)/f_tf , (f_tf*f_dt*f_ki+f_dt*f_kp-2*f_tf*f_kp-2*f_kd)/f_tf , (f_kd+f_tf*f_kp+f_dt*f_dt*f_ki-f_dt*f_tf*f_ki-f_dt*f_kp)/f_tf});
+    utils::linalg::CMatrix<T,1,3> l_denPid({ 1.0,-(2*f_tf-f_dt)/f_tf,(f_tf-f_dt)/f_tf });
 
     m_pidTf.setNum(l_numPid.transpose());
     m_pidTf.setDen(l_denPid.transpose());
@@ -102,8 +102,8 @@ void CPidController<T>::setController(
     T              f_kd,
     T              f_tf)
 {
-    linalg::CMatrix<T,1,3> l_numPid({ (f_kd+f_tf*f_kp)/f_tf , (f_tf*m_dt*f_ki+m_dt*f_kp-2*f_tf*f_kp-2*f_kd)/f_tf , (f_kd+f_tf*f_kp+m_dt*m_dt*f_ki-m_dt*f_tf*f_ki-m_dt*f_kp)/f_tf });
-    linalg::CMatrix<T,1,3> l_denPid({ 1,-(2*f_tf-m_dt)/f_tf,(f_tf-m_dt)/f_tf });
+    utils::linalg::CMatrix<T,1,3> l_numPid({ (f_kd+f_tf*f_kp)/f_tf , (f_tf*m_dt*f_ki+m_dt*f_kp-2*f_tf*f_kp-2*f_kd)/f_tf , (f_kd+f_tf*f_kp+m_dt*m_dt*f_ki-m_dt*f_tf*f_ki-m_dt*f_kp)/f_tf });
+    utils::linalg::CMatrix<T,1,3> l_denPid({ 1,-(2*f_tf-m_dt)/f_tf,(f_tf-m_dt)/f_tf });
     
     m_pidTf.setNum(l_numPid.transpose());
     m_pidTf.setDen(l_denPid.transpose());

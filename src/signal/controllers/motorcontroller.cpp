@@ -11,6 +11,9 @@
 
 #include <signal/controllers/motorcontroller.hpp>
 
+namespace signal{
+    
+
 namespace controllers{
     /**
      * @brief Construct a new CMotorController::CMotorController object
@@ -19,9 +22,9 @@ namespace controllers{
      * @param f_pid     Reference to the controller interface.
      * @param f_converter [Optional] Pointer to the converter interface. 
      */
-    CMotorController::CMotorController(encoders::IEncoderGetter&          f_encoder
+    CMotorController::CMotorController(hardware::encoders::IEncoderGetter&          f_encoder
                             ,ControllerType<double>&                    f_pid
-                            ,controllers::IConverter*                   f_converter
+                            ,signal::controllers::IConverter*                   f_converter
                             ,float                                      f_inf_ref
                             ,float                                      f_sup_ref)
         :m_encoder(f_encoder)
@@ -177,3 +180,4 @@ namespace controllers{
     }
 
 }; //  namespace controllers
+};// namespace signal

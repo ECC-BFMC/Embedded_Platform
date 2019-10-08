@@ -23,7 +23,7 @@
 #include <utils/queue/queue.hpp>
 
 
-namespace serial{
+namespace utils::serial{
 
    /**
     * @brief Class Serial Monitor
@@ -36,7 +36,7 @@ namespace serial{
     *   '@KEY1:RESPONSECONTANT;;\r\n'
     * The key differs for each functionalities, so for each callback function.
     */
-    class CSerialMonitor : public task::CTask
+    class CSerialMonitor : public utils::task::CTask
     {
     public:
         typedef mbed::Callback<void(char const *, char *)> FCallback;
@@ -56,9 +56,9 @@ namespace serial{
         /* Reference to serial object */
         Serial& m_serialPort;
         /* Rx buffer */
-        CQueue<char,255> m_RxBuffer;
+        utils::CQueue<char,255> m_RxBuffer;
         /* Tx buffer */
-        CQueue<char,255> m_TxBuffer;
+        utils::CQueue<char,255> m_TxBuffer;
         /* Data buffer */
         array<char,256> m_parseBuffer;
         /* Parse iterator */
@@ -67,6 +67,6 @@ namespace serial{
         CSerialSubscriberMap m_serialSubscriberMap;
     };
 
-}; // namespace serial
+}; // namespace utils::serial
 
 #endif // SERIAL_MONITOR_HPP

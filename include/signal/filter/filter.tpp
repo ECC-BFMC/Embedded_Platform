@@ -18,7 +18,7 @@
 #endif // FILTER_HPP
 
 template <class T, uint32_t NC>
-using CMeasurementType = linalg::CColVector<T,NC>;
+using CMeasurementType = utils::linalg::CColVector<T,NC>;
 
 /******************************************************************************/
 /** @brief  CIIRFilter Class constructor
@@ -28,7 +28,7 @@ using CMeasurementType = linalg::CColVector<T,NC>;
  *  @param f_B   the feedforward filter coefficients
  */
 template <class T, uint32_t NA, uint32_t NB>
-filter::lti::siso::CIIRFilter<T,NA,NB>::CIIRFilter(const linalg::CRowVector<T,NA>& f_A,const linalg::CRowVector<T,NB>& f_B) 
+signal::filter::lti::siso::CIIRFilter<T,NA,NB>::CIIRFilter(const utils::linalg::CRowVector<T,NA>& f_A,const utils::linalg::CRowVector<T,NB>& f_B) 
     : m_A(f_A)
     , m_B(f_B)
     , m_Y()
@@ -42,7 +42,7 @@ filter::lti::siso::CIIRFilter<T,NA,NB>::CIIRFilter(const linalg::CRowVector<T,NA
   * @return                    the filtered output data
   */
 template <class T, uint32_t NA, uint32_t NB>
-T filter::lti::siso::CIIRFilter<T,NA,NB>::operator()(T& f_u)
+T signal::filter::lti::siso::CIIRFilter<T,NA,NB>::operator()(T& f_u)
 {
     for (uint32_t l_idx = NB-1; l_idx > 0; --l_idx)
     {
@@ -50,7 +50,7 @@ T filter::lti::siso::CIIRFilter<T,NA,NB>::operator()(T& f_u)
     }
     m_U[0][0] = f_u;
 
-    linalg::CMatrix<T,1,1> l_y = m_B*m_U - m_A*m_Y;
+    utils::linalg::CMatrix<T,1,1> l_y = m_B*m_U - m_A*m_Y;
     // T l_y = m_B*m_U - m_A*m_Y;
 
     for (uint32_t l_idx = NA-1; l_idx > 0 ; --l_idx)
@@ -69,7 +69,7 @@ T filter::lti::siso::CIIRFilter<T,NA,NB>::operator()(T& f_u)
  *  @param f_B   the feedforward filter coefficients
  */
 template <class T, uint32_t NB>
-filter::lti::siso::CFIRFilter<T,NB>::CFIRFilter(const linalg::CRowVector<T,NB>& f_B) 
+signal::filter::lti::siso::CFIRFilter<T,NB>::CFIRFilter(const utils::linalg::CRowVector<T,NB>& f_B) 
     : m_B(f_B), m_U() 
 {
 }
@@ -80,7 +80,7 @@ filter::lti::siso::CFIRFilter<T,NB>::CFIRFilter(const linalg::CRowVector<T,NB>& 
   * @return                    the filtered output data
   */
 template <class T, uint32_t NB>
-T filter::lti::siso::CFIRFilter<T,NB>::operator()(T& f_u)
+T signal::filter::lti::siso::CFIRFilter<T,NB>::operator()(T& f_u)
 {
     for (uint32_t l_idx = NB-1; l_idx > 0; --l_idx)
     {
@@ -88,7 +88,7 @@ T filter::lti::siso::CFIRFilter<T,NB>::operator()(T& f_u)
     }
     m_U[0] = f_u;
 
-    linalg::CMatrix<T,1,1> l_y = m_B*m_U;
+    utils::linalg::CMatrix<T,1,1> l_y = m_B*m_U;
 
     return l_y[0][0];
 }
@@ -99,7 +99,7 @@ T filter::lti::siso::CFIRFilter<T,NB>::operator()(T& f_u)
  *  
  */
 template <class T, uint32_t NB> 
-filter::lti::siso::CMeanFilter<T,NB>::CMeanFilter() 
+signal::filter::lti::siso::CMeanFilter<T,NB>::CMeanFilter() 
     : m_B(1./NB)
     , m_U() 
 {
@@ -111,7 +111,7 @@ filter::lti::siso::CMeanFilter<T,NB>::CMeanFilter()
   * @return                     the filtered output data 
   */
 template <class T, uint32_t NB> 
-T filter::lti::siso::CMeanFilter<T,NB>::operator()(T& f_u)
+T signal::filter::lti::siso::CMeanFilter<T,NB>::operator()(T& f_u)
 {
     T l_y =0;
 
@@ -136,7 +136,7 @@ T filter::lti::siso::CMeanFilter<T,NB>::operator()(T& f_u)
  *  
  */
 template <class T, uint32_t N>
-filter::nlti::siso::CMedianFilter<T,N>::CMedianFilter()
+signal::filter::nlti::siso::CMedianFilter<T,N>::CMedianFilter()
     :m_median()
     ,m_smallest()
     ,m_new(0)
@@ -163,7 +163,7 @@ filter::nlti::siso::CMedianFilter<T,N>::CMedianFilter()
   * @return                 filtered the data 
   */
 template <class T, uint32_t N>
-T filter::nlti::siso::CMedianFilter<T,N>::operator()(T& f_val)
+T signal::filter::nlti::siso::CMedianFilter<T,N>::operator()(T& f_val)
 {
     m_new = (m_new + 1) % m_size;		 //shift new index	 //inca e valoarea veche
     m_queue[m_new ].info = f_val;		 //suprascrie cea mai veche valoare
@@ -226,7 +226,7 @@ T filter::nlti::siso::CMedianFilter<T,N>::operator()(T& f_val)
   * @return    median value
   */
 template <class T, uint32_t N>
-T filter::nlti::siso::CMedianFilter<T, N>::getMedian()
+T signal::filter::nlti::siso::CMedianFilter<T, N>::getMedian()
 {
     T ret_val;
     if (1 == m_size % 2)		// daca filtrul are lungime impara

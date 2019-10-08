@@ -6,6 +6,7 @@
 #include <signal/systemmodels/systemmodels.hpp>
 #include <mbed.h>
 
+namespace signal{
 namespace controllers
 {
     namespace siso
@@ -33,7 +34,7 @@ namespace controllers
         {
             public:
                 /* Discrete transferfunction type */
-                using CPidSystemmodelType = systemmodels::lti::siso::CDiscreteTransferFunction<T,3,3>;
+                using CPidSystemmodelType = signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,3,3>;
                 
                 /* Constructor */
                 CPidController(T              f_kp
@@ -72,6 +73,7 @@ namespace controllers
     }; // namespace siso
 }; // namespace controllers   
 
+}; //namespace signal
 
 
 #endif

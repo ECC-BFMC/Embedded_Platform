@@ -12,7 +12,7 @@
 #include <hardware/drivers/dcmotor.hpp>
 
 
-namespace drivers{
+namespace hardware::drivers{
 
 
 
@@ -131,4 +131,4 @@ namespace drivers{
         return m_inf_limit<=f_pwm && f_pwm <=m_sup_limit;
     }
 
-}; // namespace drivers
+}; // namespace hardware::drivers

@@ -16,7 +16,7 @@
 #endif // KALMAN_FILTERS_HPP
 
 
-namespace filter{
+namespace signal::filter{
     namespace lti{
         namespace mimo{
             
@@ -114,15 +114,15 @@ namespace filter{
             template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
             typename CKalmanFilter<T,NA,NB,NC>::CObservationType CKalmanFilter<T,NA,NB,NC>::update(const CObservationType& f_observation)
             {
-                linalg::CVector<T, NC> l_measurementResidual;
+                utils::linalg::CVector<T, NC> l_measurementResidual;
                 l_measurementResidual   = f_observation - m_observationModel * m_state;
-                linalg::CMatrix<T,NC,NA> l_residualCovariance;
+                utils::linalg::CMatrix<T,NC,NA> l_residualCovariance;
                 
                 l_residualCovariance    = m_observationModel * m_processCovariance * transpose(m_observationModel) + m_observationNoiseCovariance;
                 m_kalmanGain            = m_processCovariance * transpose(m_observationModel) * l_residualCovariance.inv();
                 m_state                 = m_state + m_kalmanGain * l_measurementResidual;
                 m_processCovariance = ( CStateTransModelType::eye() - m_kalmanGain * m_observationModel ) * m_processCovariance;
-                linalg::CVector<T, NC> l_filteredMeasurements = m_observationModel * m_state;
+                utils::linalg::CVector<T, NC> l_filteredMeasurements = m_observationModel * m_state;
                 return l_filteredMeasurements;
             }
         }; // mimo
@@ -142,14 +142,14 @@ namespace filter{
              *  @param f_R              the observation error covariance 
              */
             template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-            filter::nlti::mimo::CEKF<T,NA,NB,NC>::CEKF(
+            signal::filter::nlti::mimo::CEKF<T,NA,NB,NC>::CEKF(
                     CSystemModelType&                           f_systemModel
                     ,CJacobianMatricesType&                     f_jbMatrices
                     ,const CJMTransitionType&                   f_Q
                     ,const CObservationNoiseType&               f_R)
                 :m_systemModel(f_systemModel)
                 ,m_jbMatrices(f_jbMatrices)
-                ,m_covarianceMatrix(linalg::CMatrix<T,NB,NB>::ones())
+                ,m_covarianceMatrix(utils::linalg::CMatrix<T,NB,NB>::ones())
                 ,m_Q(f_Q)
                 ,m_R(f_R)
             {
@@ -161,7 +161,7 @@ namespace filter{
              * 
              */
             template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-            void filter::nlti::mimo::CEKF<T,NA,NB,NC>::predict(const CControlType&   f_control)
+            void signal::filter::nlti::mimo::CEKF<T,NA,NB,NC>::predict(const CControlType&   f_control)
             {
                 //Previous updated state
                 CStatesType l_prev_states=m_systemModel.getStates();
@@ -181,7 +181,7 @@ namespace filter{
              * 
              */
             template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-            void filter::nlti::mimo::CEKF<T,NA,NB,NC>::update(const CControlType&   f_control
+            void signal::filter::nlti::mimo::CEKF<T,NA,NB,NC>::update(const CControlType&   f_control
                                                             ,const CObservationType&  f_observation)
             {
                 // Estimated system output
@@ -203,7 +203,7 @@ namespace filter{
         }; //namespace mimo
     }; //namespace nlti
 
-}; //namespace filter
+}; //namespace signal::filter
 
 
 #endif KALMAN_FILTERS_TPP

@@ -21,11 +21,11 @@ namespace examples
     {
         namespace ackermannmodel
         {
-            class CState: public linalg::CMatrix<double,10,1>
+            class CState: public utils::linalg::CMatrix<double,10,1>
             {
                 public:
-                    CState():linalg::CMatrix<double,10,1>(){}
-                    CState(const linalg::CMatrix<double,10,1>& f_matrix):linalg::CMatrix<double,10,1>(f_matrix){}
+                    CState():utils::linalg::CMatrix<double,10,1>(){}
+                    CState(const utils::linalg::CMatrix<double,10,1>& f_matrix):utils::linalg::CMatrix<double,10,1>(f_matrix){}
                     double& x(){return m_data[0][0];}
                     const double& x() const {return m_data[0][0];}
                     
@@ -56,7 +56,7 @@ namespace examples
                     double& i(){return m_data[9][0];}
                     const double& i() const{return m_data[9][0];}
 
-                    // CState& operator=(const linalg::CMatrix<double,10,1>& f_matrix){
+                    // CState& operator=(const utils::linalg::CMatrix<double,10,1>& f_matrix){
                     //     for (uint32_t l_row = 0; l_row < 10; ++l_row)
                     //     {
                     //         for (uint32_t l_col = 0; l_col < 1; ++l_col)
@@ -68,22 +68,22 @@ namespace examples
                     // }
             };
 
-            class CControl:public linalg::CMatrix<double,2,1>
+            class CControl:public utils::linalg::CMatrix<double,2,1>
             {
                 public:
-                    CControl():linalg::CMatrix<double,2,1>(){}
-                    CControl(const linalg::CMatrix<double,2,1>& f_matrix):linalg::CMatrix<double,2,1>(f_matrix){} 
+                    CControl():utils::linalg::CMatrix<double,2,1>(){}
+                    CControl(const utils::linalg::CMatrix<double,2,1>& f_matrix):utils::linalg::CMatrix<double,2,1>(f_matrix){} 
                     double& v(){return m_data[0][0];}
                     const double& v()const{return m_data[0][0];}
                     double& alpha(){return m_data[1][0];}
                     const double& alpha()const{return m_data[1][0];}
             };
 
-            class CObservation:public linalg::CMatrix<double,5,1>
+            class CObservation:public utils::linalg::CMatrix<double,5,1>
             {
                 public:
-                    CObservation():linalg::CMatrix<double,5,1>(){}
-                    CObservation(const linalg::CMatrix<double,5,1>& f_matrix):linalg::CMatrix<double,5,1>(f_matrix){}
+                    CObservation():utils::linalg::CMatrix<double,5,1>(){}
+                    CObservation(const utils::linalg::CMatrix<double,5,1>& f_matrix):utils::linalg::CMatrix<double,5,1>(f_matrix){}
                     double& x_ddot(){return m_data[0][0];}
                     const double& x_ddot() const{return m_data[0][0];}
                     double& y_ddot(){return m_data[1][0];}
@@ -102,8 +102,9 @@ namespace examples
                     double& i(){return m_data[4][0];}
                     const double& i()const{return m_data[4][0];}
             };
-        };
-    };
-};
+        }; // namespace ackermannmodel
+    }; // namespace systemmodels
+}; // namespace examples
+
 
 #endif

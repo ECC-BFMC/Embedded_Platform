@@ -11,7 +11,7 @@
 #include <hardware/encoders/quadratureencoder.hpp>
 
 
-namespace encoders{
+namespace hardware::encoders{
 
 
 
@@ -23,7 +23,7 @@ namespace encoders{
  * @param f_resolution The resolution of the rotation encoder. (Cpr count per revolution)
  */
 CQuadratureEncoder::CQuadratureEncoder(   float                           f_period_sec
-                                                ,drivers::IQuadratureCounter_TIMX*        f_quadraturecounter
+                                                ,hardware::drivers::IQuadratureCounter_TIMX*        f_quadraturecounter
                                                 ,uint16_t                        f_resolution)
                                                 :m_quadraturecounter(f_quadraturecounter)
                                                 ,m_taskperiod_s(f_period_sec)
@@ -78,9 +78,9 @@ float CQuadratureEncoder::getSpeedRps(){
  * @param f_filter The reference to the filter. 
  */
 CQuadratureEncoderWithFilter::CQuadratureEncoderWithFilter(   float                           f_period_sec
-                                                                    ,drivers::IQuadratureCounter_TIMX*        f_quadraturecounter
+                                                                    ,hardware::drivers::IQuadratureCounter_TIMX*        f_quadraturecounter
                                                                     ,uint16_t                       f_resolution
-                                                                    ,filter::IFilter<float>&       f_filter)
+                                                                    ,signal::filter::IFilter<float>&       f_filter)
                                                                     :CQuadratureEncoder(f_period_sec,f_quadraturecounter,f_resolution)
                                                                     ,m_filter(f_filter)
                                                                     {
@@ -137,4 +137,4 @@ float CQuadratureEncoderWithFilter::getNonFilteredSpeedRps(){
 }
 
 
-}; // namespace encoders 
+}; // namespace hardware::encoders 

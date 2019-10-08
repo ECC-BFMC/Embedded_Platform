@@ -15,6 +15,7 @@
 #endif // SYSTEM_MODELS_HPP
 
 
+
 /******************************************************************************/
 /**
  * @brief Construct a new CDiscreteTransferFunction object without input, it initializes the coefficients with zero, only the first coefficient with 1 value. 
@@ -24,7 +25,7 @@
  * @tparam NDen     Order of the denominator polynomial 
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CDiscreteTransferFunction()
+signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CDiscreteTransferFunction()
     :m_num(CNumType::zeros())
     ,m_den(CDenModType::zeros())
     ,m_denCoef(1)
@@ -44,7 +45,7 @@ systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CDiscreteTransf
  * @param f_den     Denominator polynomial coefficients
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CDiscreteTransferFunction(const CNumType& f_num,const CDenType& f_den)
+signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CDiscreteTransferFunction(const CNumType& f_num,const CDenType& f_den)
     :m_num(CNumType::zeros())
     ,m_den(CDenModType::zeros())
     ,m_denCoef(1)
@@ -62,7 +63,7 @@ systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CDiscreteTransf
  *  
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-void systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::clearMemmory()
+void signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::clearMemmory()
 {
     m_memInput=CInputMem::zeros();
     m_memOutput=COutputMem::zeros();
@@ -74,7 +75,7 @@ void systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::clearMemmo
  *  @return  the calculated next output value. 
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-T systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::operator()(const T& f_input)
+T signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::operator()(const T& f_input)
 {
     shiftMemory<NNum>(m_memInput);
     m_memInput[0][0]=f_input;
@@ -90,7 +91,7 @@ T systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::operator()(co
  *  
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-void systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::setNum(const CNumType& f_num)
+void signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::setNum(const CNumType& f_num)
 {
     for(uint32_t i=0;i<NNum;++i)
     {
@@ -104,7 +105,7 @@ void systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::setNum(con
  *  
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-void systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::setDen(const CDenType& f_den)
+void signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::setDen(const CDenType& f_den)
 {
     for(uint32_t i=1;i<NDen;++i)
     {
@@ -119,7 +120,7 @@ void systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::setDen(con
  *  @return last output value
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-T systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getOutput()
+T signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getOutput()
 {
     return m_memOutput[0][0];
 }
@@ -131,7 +132,7 @@ T systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getOutput()
  */
 template <class T,uint32_t NNum,uint32_t NDen>
 template<uint32_t N>
-void systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::shiftMemory(linalg::CMatrix<T,1,N>& f_mem)
+void signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::shiftMemory(utils::linalg::CMatrix<T,1,N>& f_mem)
 {
     for(uint32_t i=N-1;i>0;--i)
     {
@@ -144,7 +145,7 @@ void systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::shiftMemor
  *  @return the coefficients of the nominator 
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-const typename systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CNumType& systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getNum(){
+const typename signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CNumType& signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getNum(){
     return m_num;
 }
 
@@ -154,7 +155,7 @@ const typename systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::
  *  @return  the coefficients of denominator
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-const typename systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CDenModType& systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getDen(){
+const typename signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::CDenModType& signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getDen(){
     return m_den;
 }  
 
@@ -163,7 +164,7 @@ const typename systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::
  *  @return   value of the denomitor first coefficeint
  */
 template <class T,uint32_t NNum,uint32_t NDen>
-float systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getDenCurrent(){
+float signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getDenCurrent(){
     return m_denCoef;
 }
 
@@ -179,7 +180,7 @@ float systemmodels::lti::siso::CDiscreteTransferFunction<T,NNum,NDen>::getDenCur
  *  @param f_measurementMatrix      state-observation transition model
  */
 template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
+signal::systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
         const CStateTransitionType& f_stateTransitionMatrix,
         const CInputMatrixType& f_inputMatrix,
         const CMeasurementMatrixType& f_measurementMatrix) 
@@ -202,7 +203,7 @@ systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
  *  @param f_directTransferMatrix   control-observation transition model
  */
 template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
+signal::systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
         const CStateTransitionType& f_stateTransitionMatrix,
         const CInputMatrixType& f_inputMatrix,
         const CMeasurementMatrixType& f_measurementMatrix,
@@ -226,7 +227,7 @@ systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
  *  @param f_state                  initial state of the system model
  */
 template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
+signal::systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
         const CStateTransitionType& f_stateTransitionMatrix,
         const CInputMatrixType& f_inputMatrix,
         const CMeasurementMatrixType& f_measurementMatrix,
@@ -246,7 +247,7 @@ systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::CSSModel(
   * @return                     observation values
   */
 template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-linalg::CColVector<T,NC> systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::operator()(const CControlType& f_inputVector)
+utils::linalg::CColVector<T,NC> signal::systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::operator()(const CControlType& f_inputVector)
 {
     updateState(f_inputVector);
     return getOutput(f_inputVector);
@@ -257,7 +258,7 @@ linalg::CColVector<T,NC> systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::operator
   * @param f_inputVector        control values
   */
 template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-void systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::updateState(const CControlType& f_inputVector)
+void signal::systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::updateState(const CControlType& f_inputVector)
 {
     m_stateVector = m_stateTransitionMatrix * m_stateVector + m_inputMatrix * f_inputVector;
 }
@@ -268,7 +269,7 @@ void systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::updateState(const CControlTy
   * @return                     observation values
   */
 template <class T, uint32_t NA, uint32_t NB, uint32_t NC>
-linalg::CColVector<T,NC> systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::getOutput(const CControlType& f_inputVector)
+utils::linalg::CColVector<T,NC> signal::systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::getOutput(const CControlType& f_inputVector)
 {
     return m_measurementMatrix * m_stateVector + m_directTransferMatrix * f_inputVector;
 }
@@ -282,7 +283,7 @@ linalg::CColVector<T,NC> systemmodels::lti::mimo::CSSModel<T,NA,NB,NC>::getOutpu
  *  @param f_dt      Sampling time 
  */
 template <class T,uint32_t NA, uint32_t NB,uint32_t NC>
-systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>::CDiscreteTimeSystemModel(const double f_dt)
+signal::systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>::CDiscreteTimeSystemModel(const double f_dt)
     : m_states()
     , m_dt(f_dt)
 {
@@ -294,7 +295,7 @@ systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>::CDiscreteTimeSys
  *  @param f_dt      Sampling time
  */
 template <class T,uint32_t NA, uint32_t NB,uint32_t NC>
-systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>::CDiscreteTimeSystemModel(
+signal::systemmodels::nlti::mimo::CDiscreteTimeSystemModel<T,NA,NB,NC>::CDiscreteTimeSystemModel(
         const CStatesType&     f_states
        ,const double           f_dt)
     : m_states(f_states)

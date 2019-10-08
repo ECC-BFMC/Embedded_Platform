@@ -36,7 +36,7 @@ namespace examples{
         * @tparam Nr_Senrsor    Number of sensors 
         */
         template <class C_Sensor,uint Nr_Senrsor> 
-        class ProximityPublisher:public task::CTask
+        class ProximityPublisher:public utils::task::CTask
         {
             public:
                 /* Sensor array */

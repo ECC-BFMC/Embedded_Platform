@@ -15,7 +15,7 @@
 
 #include <math.h>
 #include <signal/systemmodels/systemmodels.hpp>
-#include <utils/examples/systemmodels/ackermanntypes.hpp>
+#include <examples/systemmodels/ackermanntypes.hpp>
 #include <signal/filter/kalmanfilters.hpp>
 
 /* Definition of PI value */

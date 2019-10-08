@@ -14,7 +14,7 @@
 #define EKF_AM_HPP
 
 #include <signal/filter/kalmanfilters.hpp>
-#include <utils/examples/systemmodels/ackermannmodel.hpp>
+#include <examples/systemmodels/ackermannmodel.hpp>
 
 namespace examples
 {

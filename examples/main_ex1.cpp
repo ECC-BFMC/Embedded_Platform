@@ -14,17 +14,17 @@
 /* Header file for the MOVE functionality */
 #include <move/move.hpp>
 /* Header file for the blinker functionality */
-#include <utils/examples/blinker.hpp>
+#include <examples/blinker.hpp>
 /* Header file for the serial communication functionality */
 #include <utils/serial/serialmonitor.hpp>
 /* Header file for the motion controller functionality */
 #include <motioncontroller/motioncontroller.hpp>
 /* Header file for the sensor task functionality */
-#include <utils/examples/sensors/sensortask.hpp>
+#include <examples/sensors/sensortask.hpp>
 /* Header file  for the controller functionality */
 #include <signal/controllers/controller.hpp>
 /* Header file  for the sendor publisher functionality */
-#include <utils/examples/sensors/sensorpublisher.hpp>
+#include <examples/sensors/sensorpublisher.hpp>
 /* Safety stop functionality */
 #include <SafetyStop/safetystopfunction.hpp>
 /* Quadrature encoder functionality */

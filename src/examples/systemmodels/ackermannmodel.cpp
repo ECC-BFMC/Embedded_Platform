@@ -8,10 +8,10 @@
   ******************************************************************************
  */
 
-#include <utils/examples/systemmodels/ackermannmodel.hpp>
+#include <examples/systemmodels/ackermannmodel.hpp>
 
 /* Specify model type */
-using ackermannmodeltype = systemmodels::nlti::mimo::CDiscreteTimeSystemModel<double,2,10,5>;
+using ackermannmodeltype = signal::systemmodels::nlti::mimo::CDiscreteTimeSystemModel<double,2,10,5>;
 
 /** \brief  Constructor for the CAckermannModel class
  *

@@ -12,17 +12,17 @@
 /* Task manager */
 #include <utils/taskmanager/taskmanager.hpp>
 /* Header file for the blinker functionality */
-#include <utils/examples/blinker.hpp>
+#include <examples/blinker.hpp>
 /* Header file for the serial communication functionality */
 #include <utils/serial/serialmonitor.hpp>
 /* Header file for the motion controller functionality */
 #include <brain/robotstatemachine.hpp>
 /* Header file for the sensor task functionality */
-#include <utils/examples/sensors/encoderpublisher.hpp>
+#include <examples/sensors/encoderpublisher.hpp>
 /* Header file  for the controller functionality */
 #include <signal/controllers/motorcontroller.hpp>
 /* Header file  for the sendor publisher functionality */
-#include <utils/examples/sensors/proximitypublisher.hpp>
+#include <examples/sensors/proximitypublisher.hpp>
 /* Quadrature encoder functionality */
 #include <hardware/encoders/quadratureencoder.hpp>
 

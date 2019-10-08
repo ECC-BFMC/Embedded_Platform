@@ -8,7 +8,7 @@
   *          functionality.
   ******************************************************************************
  */
-#include <utils/examples/sensors/encoderpublisher.hpp>
+#include <examples/sensors/encoderpublisher.hpp>
 
 namespace examples
 {

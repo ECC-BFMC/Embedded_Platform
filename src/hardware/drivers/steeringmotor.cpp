@@ -24,7 +24,7 @@ namespace hardware::drivers{
     };
 
     /**
-     * @brief It initializes the pwm parameters and set the steering in zero position and set the limits of the input degree value.
+     * @brief It initializes the pwm parameters and it sets the steering in zero position, the limits of the input degree value.
      * 
      * @param f_pwm               pin connected to servo motor
      * @param f_inf_limit         inferior limit 

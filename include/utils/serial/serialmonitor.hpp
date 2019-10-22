@@ -28,7 +28,7 @@ namespace utils::serial{
    /**
     * @brief Class Serial Monitor
     * 
-    * It has aim to decode the messages received from the other device and redirectionate to other functions the content of message. 
+    * It aims to decode the messages received from the other device and redirectionate to other functions the content of message. 
     * For decode it has a predefined structure with a header (key) part and a content part. The key has to be four character, the content is defined by user.
     * The message received has to start with '#' special character, the responses have the same key and start with "@" character. The special characters notice the direction of the message.
     * Examples of messages:

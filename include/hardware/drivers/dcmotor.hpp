@@ -45,9 +45,9 @@ namespace hardware::drivers{
      * 
      * It has role to control the vnh5019 motor driver. 
      * It has two interface, one to control the motor speed and direction and one to get the measured current value.
-     * The direction and the rotation speed are conducted a value, where the positive values define the forward move, 
-     * similary negative values represents the backward move. The magnitude of values gives the motor speed. So generally, the input signal can vary 
-     * between [-1,1]. We reduce this interval to avoid the robot high speed.  
+     * The direction and the rotation speed are regulated by a single value, where the positive values define the forward move, 
+     * similary negative values represent the backward move. The magnitude of values gives the motor speed. So generally, 
+     * the input signal can vary between [-1,1]. We reduce this interval to avoid the robot high speed.  
      * 
      */
     class CMotorDriverVnh:public ICurrentGetter, public IMotorCommand

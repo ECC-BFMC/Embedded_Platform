@@ -34,7 +34,7 @@ CQuadratureEncoder::CQuadratureEncoder(   float                           f_peri
 
 
 /**
- * @brief Start the RosTimer to periodically apply the _run function. 
+ * @brief Start the RosTimer to periodically apply the '_run' function. 
  * 
  */
 void CQuadratureEncoder::startTimer(){
@@ -43,7 +43,7 @@ void CQuadratureEncoder::startTimer(){
 
 
 /**
- * @brief The private run function, which will be applied periodically. 
+ * @brief The run function will be applied periodically. 
  * 
  */
 void CQuadratureEncoder::_run(){
@@ -87,7 +87,7 @@ CQuadratureEncoderWithFilter::CQuadratureEncoderWithFilter(   float             
 }
 
 /**
- * @brief Private run method for getting the value from the counter, reseting it.  In the last step, it filters the measured values. 
+ * @brief  The '_run' method aims for getting the value from the counter and reseting it.  In the last step, it filters the measured values. 
  * This method is applied automatically and periodically by the rtos timer, if it was started by the method 'startTimer'.
  * 
  */

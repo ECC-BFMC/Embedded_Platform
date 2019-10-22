@@ -1,14 +1,13 @@
 Encoder namespace
 =================
 
-In the 'encoder' namespace are implemented the rotary speed encoder functionalities, 
-it contains two interfaces to access filtered and non-filtered values
-and two class with encoder services. 
+In the 'encoder' namespace, the rotary speed encoder functionalities are implemented. 
+It contains two interfaces to access filtered and non-filtered values
+and two classes with encoder services. 
 
 
 .. image:: ../pics/diagrams/pics/Class_Encodder.png
     :align: center
-
 
 .. doxygenclass::  hardware::encoders::IEncoderGetter
    :project: myproject
@@ -21,7 +20,6 @@ and two class with encoder services.
    :protected-members:
    :private-members:
    :undoc-members:
-
 
 .. doxygenclass::  hardware::encoders::IEncoderNonFilteredGetter
    :project: myproject

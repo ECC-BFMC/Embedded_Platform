@@ -26,7 +26,7 @@ namespace hardware::encoders{
          */
         virtual int16_t  getCount() = 0;
         /**
-         * @brief Get the rotation speed of the encoder in the last period based the predefined period and encoder resolution. The result is returned in rotation per second (rps).
+         * @brief Get the rotation speed of the encoder based on the predefined period and encoder resolution. The result is returned in rotation per second (rps).
          * 
          * @return Counted value in a period
          */

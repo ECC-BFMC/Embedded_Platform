@@ -16,7 +16,7 @@
 
 namespace utils::task{
    /**
-    * @brief It has aim to the task functionality. The tasks will be applied periodically by the task manager, the period is defined in the contructor. 
+    * @brief It aims to the task functionality. The tasks will be applied periodically by the task manager, the period is defined in the contructor. 
     * 
     */
     class CTask
@@ -55,7 +55,7 @@ namespace utils::task{
     };
 
    /**
-    * @brief It has aim to implement the task manager functionality. It controls and applies periodically each task. 
+    * @brief It aims to implement the task manager functionality. It controls and applies periodically each task. 
     * It has two main part, a ticker and the mainCallback method. The ticker method applies automatically 'timerCallback' method of each tasks, so
     * numerate separately the ticks from the functionalities of tasks. The mainCallback method aims to apply the application logic for each tasks, 
     * if the task's trigger flag has true state. 

@@ -1,7 +1,7 @@
 Drivers namespace
 =================
 
-The drivers namespace contains some drivers to interact with actuators and sensors. 
+This namespace contains some applications to interact with actuators and sensors. 
 In our case, three different drivers are realized: dc motor driver, servo motor driver and 
 quadrature counter.
 

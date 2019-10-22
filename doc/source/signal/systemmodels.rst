@@ -1,10 +1,10 @@
 System Models namespace
 =======================
 
-The 'systemmodels' namespace contains some representation of system models, like transfer functions, state space model. 
+The 'systemmodels' namespace contains some representation of systems, like transfer functions, state space model. 
 These classes aims to symbolize the behavior of a system in domain of discrete time, so it can be used to implement a filter, 
 a controller or other systems, for example can interpret the dc motor's behavior. 
-This namespace include three type of model: transfer function, state space model, non-linear system model. 
+This namespace includes three type of model: transfer function, state space model, non-linear system model. 
 
 .. image:: ../pics/diagrams/pics/Class_SystemModels.png
     :align: center

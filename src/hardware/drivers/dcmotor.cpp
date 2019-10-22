@@ -39,7 +39,7 @@ namespace hardware::drivers{
 
     /**  @brief
      *  It initializes a object parameter based the given input paramterers, like input, output lines and the limits. 
-     * The negative value of limit specify the maximum backward speed, similarly the positive value gives the maximum forward speed.
+     * The negative value of limit specifies the maximum backward speed, similarly the positive value gives the maximum forward speed.
      *
      *  @param f_pwmPin        PWM pin
      *  @param f_inaPin        pin A

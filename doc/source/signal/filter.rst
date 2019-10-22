@@ -2,6 +2,9 @@ Filter namespace
 ================
 
 The 'filter' namespace implements the filters' functionalities. 
+There are four types of filter implemented: mean filter, median filter, finite-impulse-response filter
+and infinite-impulse-response. 
+
 
 
 .. image:: ../pics/diagrams/pics/Class_Filters.png

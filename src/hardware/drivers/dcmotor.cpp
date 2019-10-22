@@ -16,14 +16,14 @@ namespace hardware::drivers{
 
 
 
-    /**  @brief  VNH class constructor
+    /**  @brief 
+     *  It initializes a object parameter based the given input paramterers, like input and output lines. The limits
+     * of the drivers are -0.5 and 0.5 duty cycle of generated PWM signal. 
      *
-     *  Constructor method
-     *
-     *  @param _pwm      PWM pin
-     *  @param _ina      pin A
-     *  @param _inb      pin B
-     *  @param _current  current analog pin
+     *  @param f_pwmPin      PWM pin
+     *  @param f_inaPin      pin A
+     *  @param f_inbPin      pin B
+     *  @param f_currentPin  current analog pin
      */
     CMotorDriverVnh::CMotorDriverVnh(PinName f_pwmPin, PinName f_inaPin, PinName f_inbPin, PinName f_currentPin)
         :m_pwm(f_pwmPin)
@@ -37,14 +37,16 @@ namespace hardware::drivers{
     }
 
 
-    /**  @brief  VNH class constructor
+    /**  @brief
+     *  It initializes a object parameter based the given input paramterers, like input, output lines and the limits. 
+     * The negative value of limit specify the maximum backward speed, similarly the positive value gives the maximum forward speed.
      *
-     *  Constructor method
-     *
-     *  @param _pwm      PWM pin
-     *  @param _ina      pin A
-     *  @param _inb      pin B
-     *  @param _current  current analog pin
+     *  @param f_pwmPin        PWM pin
+     *  @param f_inaPin        pin A
+     *  @param f_inbPin        pin B
+     *  @param f_currentPin    current analog pin
+     *  @param f_inf_limit     inferior limit
+     *  @param f_sup_limit     superior limit
      */
     CMotorDriverVnh::CMotorDriverVnh(PinName f_pwmPin, PinName f_inaPin, PinName f_inbPin, PinName f_currentPin, float f_inf_limit, float f_sup_limit)
         :m_pwm(f_pwmPin)
@@ -58,16 +60,14 @@ namespace hardware::drivers{
     }
 
     /**  @brief  VNH class destructor
-     *
-     *  Destructor method
-     *
-     *   
      */
     CMotorDriverVnh::~CMotorDriverVnh()
     {
     }
 
-    /**  @brief  Run method
+    /**  @brief This method manipulates the output signals for driver to control the motor rotation. 
+     * The positive duty cycle value generates a motor rotation, which causes forward move of robots. A negative value
+     * produces a backward move.  
      *
      *  @param f_pwm     duty cycle of generated pwm signal
      *   
@@ -88,17 +88,17 @@ namespace hardware::drivers{
         m_pwm = std::abs(f_pwm);
     }
 
-    /**  @brief  Get measured current on the motor driver.
+    /**  @brief It returns measured current on the motor driver.
      *   \note Need to be tested. 
      *   
-     *  \return    Current value
-     */
+     *  \return    Meausered current value of dc motor [A].
+     */ 
     float CMotorDriverVnh::getCurrent(void)
     {
         return (m_current_in.read()) * 5 / 0.14;
     }
 
-    /**  @brief  Inverse the rotation direction of the motor and set a new duty cycle value. 
+    /**  @brief It inverses the rotation direction of the motor and set a new duty cycle value. 
      *
      *  @param f_pwm  duty cycle of generated pwm signal
      *   
@@ -110,7 +110,7 @@ namespace hardware::drivers{
         m_pwm =std::abs(f_pwm);
     }
 
-    /**  @brief  Brake the motor rotation, working like a dynamic braking method. 
+    /**  @brief  It brakes the motor rotation, working like a dynamic braking method. 
      *   
      */
     void CMotorDriverVnh::brake()
@@ -121,11 +121,11 @@ namespace hardware::drivers{
     }
 
     /**
-     * @brief check whether a number is in a given range
+     * @brief It checks whether a number is in a given range
      * 
      * @param f_pwm value 
-     * @return true is in the range
-     * @return false isn't in the range
+     * @return true means, that the value is in the range
+     * @return false means, that the value isn't in the range
      */
     bool CMotorDriverVnh::inRange(float f_pwm){
         return m_inf_limit<=f_pwm && f_pwm <=m_sup_limit;

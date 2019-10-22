@@ -18,9 +18,9 @@ namespace hardware::encoders{
 /**
  * @brief Construct a new CQuadratureEncoderTask::CQuadratureEncoderTask object
  * 
- * @param f_period_sec Period of the task
- * @param f_Quadratureencoder The counter object
- * @param f_resolution The resolution of the rotation encoder. (Cpr count per revolution)
+ * @param f_period_sec          Period of the task
+ * @param f_quadraturecounter   The counter object
+ * @param f_resolution          The resolution of the rotation encoder. (Cpr count per revolution)
  */
 CQuadratureEncoder::CQuadratureEncoder(   float                           f_period_sec
                                                 ,hardware::drivers::IQuadratureCounter_TIMX*        f_quadraturecounter
@@ -54,7 +54,7 @@ void CQuadratureEncoder::_run(){
 /**
  * @brief Getter function for counted impluses in the last period.
  * 
- * @return int16_t - counted impulses
+ * @return Counted impulses
  */
 int16_t CQuadratureEncoder::getCount(){
     return m_encoderCnt;
@@ -62,7 +62,7 @@ int16_t CQuadratureEncoder::getCount(){
 /**
  * @brief Getter function for the rotation speed (rotation per second)
  * 
- * @return float - rotation speed (rotation per second)
+ * @return Rotation speed (rotation per second)
  */
 
 float CQuadratureEncoder::getSpeedRps(){
@@ -73,7 +73,7 @@ float CQuadratureEncoder::getSpeedRps(){
  * @brief Construct a new CQuadratureEncoderWithFilterTask::CQuadratureEncoderWithFilterTask object
  * 
  * @param f_period_sec Period of the task
- * @param f_Quadratureencoder The counter object
+ * @param f_quadraturecounter The counter object
  * @param f_resolution The resolution of the rotation encoder. (Cpr count per revolution)
  * @param f_filter The reference to the filter. 
  */
@@ -101,7 +101,7 @@ void CQuadratureEncoderWithFilter::_run(){
 /**
  * @brief Getter function for the last filtered value.
  * 
- * @return int16_t - filtered counted impulses 
+ * @return Filtered counted impulses 
  */
 int16_t CQuadratureEncoderWithFilter::getCount(){
     return m_encoderCntFiltered;
@@ -110,7 +110,7 @@ int16_t CQuadratureEncoderWithFilter::getCount(){
 /**
  * @brief Getter function for the last filtered rotation speed (rotation per second). 
  * 
- * @return float - filtered rotation speed in rps 
+ * @return Filtered rotation speed in rps 
  */
 float CQuadratureEncoderWithFilter::getSpeedRps(){
     return static_cast<double>(m_encoderCntFiltered)/m_resolution / m_taskperiod_s;
@@ -120,7 +120,7 @@ float CQuadratureEncoderWithFilter::getSpeedRps(){
 /**
  * @brief Getter function for the last non-filtered value. 
  *
- * @return int16_t - non-filtered counted impulses  
+ * @return Non-filtered counted impulses  
  */
 int16_t CQuadratureEncoderWithFilter::getNonFilteredCount(){
     return m_encoderCntFiltered;
@@ -129,7 +129,7 @@ int16_t CQuadratureEncoderWithFilter::getNonFilteredCount(){
 /**
  * @brief Getter function for the last non-filtered rotation speed. 
  *
- * @return float - non-filtered rotation speed in rps  
+ * @return Non-filtered rotation speed in rps  
  */
 float CQuadratureEncoderWithFilter::getNonFilteredSpeedRps(){
     return static_cast<double>(m_encoderCntFiltered)/m_resolution / m_taskperiod_s;

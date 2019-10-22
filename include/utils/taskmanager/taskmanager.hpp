@@ -28,7 +28,7 @@ namespace utils::task{
         virtual ~CTask();
         /* Run method */
         virtual void run();
-        /* Timer callback */
+         /** @brief  Timer callback */
         void timerCallback()
         {
             m_ticks++;
@@ -38,26 +38,27 @@ namespace utils::task{
                 Trigger();
             }
         }
-        /* Trigger */
+         /** @brief  Trigger function to set the flag true state. */
         void Trigger()
         {
             m_triggered = true;
         }
     protected:
-        /* main app. logic - It's a pure function for application logic and has to override in the derivered class to implement the appl. */
+        /** @brief  main application logic - It's a pure function for application logic and has to override in the derivered class to implement the appl.*/
         virtual void _run() = 0;
-        /* period */
+        /** @brief period of the task */
         const uint32_t m_period;
-        /* ticks */
+        /** @brief  ticks */
         uint32_t m_ticks;
-        /* trigger flag */
+        /** @brief  trigger flag */
         bool m_triggered;
     };
 
    /**
     * @brief It has aim to implement the task manager functionality. It controls and applies periodically each task. 
-    * It has two main part, a ticker and the mainCallback method. The ticker method applies automatically 'timerCallback' method of each Task, as 
-    * numerate se
+    * It has two main part, a ticker and the mainCallback method. The ticker method applies automatically 'timerCallback' method of each tasks, so
+    * numerate separately the ticks from the functionalities of tasks. The mainCallback method aims to apply the application logic for each tasks, 
+    * if the task's trigger flag has true state. 
     */
     class CTaskManager
     {
@@ -66,7 +67,7 @@ namespace utils::task{
         CTaskManager(CTask** f_taskList, uint32_t f_taskCount, float f_baseFreq);
         /* Destructor */
         virtual ~CTaskManager();
-        /* Main callback */
+        /** @brief  The main callback method aims to apply the subtasks' run method. */
         inline void mainCallback()
         {
             for(uint32_t i = 0; i < m_taskCount; i++)
@@ -74,7 +75,7 @@ namespace utils::task{
                 m_taskList[i]->run();
             }
         }
-        /* Timer callback */
+        /** @brief  Timer callback method applies the subtasks' callback function. */
         void timerCallback()
         {
             for(uint32_t i = 0; i < m_taskCount; i++)
@@ -83,11 +84,11 @@ namespace utils::task{
             }
         }
     private:
-        /* task list */
+        /** @brief  List of tasks  */
         CTask** m_taskList;
-        /* task count */
+        /** @brief  number of tasks */
         uint32_t m_taskCount;
-        /* ticker */ 
+        /** @brief  Ticker for periodic applying the timer callback function  */
         Ticker m_ticker;
     };
 

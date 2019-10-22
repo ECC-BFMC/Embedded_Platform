@@ -35,8 +35,6 @@ namespace utils::serial{
             }
 
     /** @brief  Rx callback actions
-     *
-     *  @param None
      *  
      */
     void CSerialMonitor::serialRxCallback()
@@ -51,8 +49,6 @@ namespace utils::serial{
     }
 
     /** @brief  Tx callback actions
-     *
-     *  @param None
      *  
      */
     void CSerialMonitor::serialTxCallback()

@@ -5,7 +5,7 @@ If you want to control the forward speed of the robot, than you need an rotary e
 <!-- \f$\frac{Y(z^{-1})}{X(z^{-1})}= \frac{b_0+b_1 z^{-1}+ ... + b_n z^{-n}}{1+a_1 z^{-1}+ ... + a_m z^{-m}}\f$ -->
 ,in this case you can create the filter by the next line of code:
 
-    filter::lti::siso::CIIRFilter<float,m-1,n> g_encoderFilter(linalg::CRowVector<float,1m-1({ a1,....,am}),linalg::CRowVector<float,n>({b0,b1,...,bn}));
+    signal::filter::lti::siso::CIIRFilter<float,m-1,n> g_encoderFilter(utils::linalgCRowVector<float,1m-1({ a1,....,am}),utils::linalgCRowVector<float,n>({b0,b1,...,bn}));
 
 In our case the discrete-time filter is described by two second degree polynomials, and is initialized by the next line of code. 
 @snippet main_ex1.cpp Create encoder filter

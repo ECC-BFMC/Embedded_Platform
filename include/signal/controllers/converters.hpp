@@ -51,10 +51,13 @@ namespace signal{
       class CConverterSpline:public IConverter
       {
         public:
+          /** @brief Coefficient container types */
+          template<uint8_t NOrd>
           using CCoeffContainerType = std::array<float,NOrd+1>;
+          /** @brief Splines container type */
           using CSplineContainerType = std::array<CCoeffContainerType,NrBreak+1>;
+          /** @brief Breaks container type */
           using CBreakContainerType = std::array<float,NrBreak>;
-
 
           CConverterSpline(CBreakContainerType f_breaks,CSplineContainerType f_splines);
           float operator()(float);

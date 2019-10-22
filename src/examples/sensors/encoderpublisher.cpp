@@ -14,13 +14,10 @@ namespace examples
 {
 
     namespace sensors{
-        
-
-       
 
         /** \brief CEncoderPublisher contructor
          *
-         *  It initializes the member parameter, the publisher initially is deactivated.
+         *  It initializes the member parameter, the publisher is initially deactivated.
          *
          *  @param f_period       period value
          *  @param f_encoder      reference to encoder object
@@ -41,7 +38,7 @@ namespace examples
          * When the received integer value is bigger or equal to 1, then the publisher become 
          * active and send messages, otherwise is deactivated. 
          *
-         * @param  a                  input received string
+         * @param a                   input received string
          * @param b                   output reponse message
          * 
          */
@@ -57,7 +54,6 @@ namespace examples
         }
 
         /** \brief It's periodically applied method to send message to other device. 
-         * 
          */
         void CEncoderPublisher::_run()
         {

@@ -33,10 +33,12 @@ namespace hardware::drivers{
    */
   class CQuadratureCounter_TIM4:public IQuadratureCounter_TIMX{
       
-      /**
+      
+      /** 
        * @brief It uses to destroy the singleton object.
        */
       class CQuadratureCounter_TIM4_Destroyer{
+      
       public:
           CQuadratureCounter_TIM4_Destroyer(){}
           ~CQuadratureCounter_TIM4_Destroyer();

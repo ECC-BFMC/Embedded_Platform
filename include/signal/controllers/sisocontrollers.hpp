@@ -34,6 +34,8 @@ namespace controllers
         {
             public:
                 /* Discrete transferfunction type */
+
+                /** @brief Type of the system model for a pid controller */
                 using CPidSystemmodelType = signal::systemmodels::lti::siso::CDiscreteTransferFunction<T,3,3>;
                 
                 /* Constructor */
@@ -46,8 +48,6 @@ namespace controllers
 
                 /* Calculate the control signal based the input error. */
                 T calculateControl(const T& f_input);
-                /* Serial callback */
-                static void staticSerialCallback(void* obj,char const * a, char * b);
                 /* Serial callback implementation */
                 void serialCallback(char const * a, char * b);
 

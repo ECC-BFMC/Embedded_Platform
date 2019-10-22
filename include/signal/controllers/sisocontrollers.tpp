@@ -62,22 +62,6 @@ T CPidController<T>::calculateControl(const T& f_input)
     return m_pidTf(f_input);
 }
 
-/** @brief  Static serial callback method
-  *
-  * It applies the serial callback function of the given input object. 
-  *
-  * @param  obj                 PID controller object
-  * @param  a                   string to read data from
-  * @param b                    string to write data to
-  * \return None
-  */
-template<class T>
-void CPidController<T>::staticSerialCallback(void* obj,char const * a, char * b)
-{
-    CPidController* self = static_cast<CPidController*>(obj);
-    self->serialCallback(a,b);
-}
-
 /** @brief  Reset to zero all memory of the controller.
   *
   */
@@ -109,7 +93,8 @@ void CPidController<T>::setController(
     m_pidTf.setDen(l_denPid.transpose());
 }
 
-/** @brief  Serial callback method  for setting controller to values received. The first string has to contains the parameters (in order proportional, inter)
+/** @brief  Serial callback method  for setting controller to values received. The first string has to contains the parameters 
+ * (in order proportional, integral, derivative).
   *
   *
   * @param  a                   string to read data from

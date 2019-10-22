@@ -29,7 +29,7 @@ namespace examples
     namespace sensors{
 
        /**
-        * @brief CEncoderPublisher class is subclass of utils::task::CTask, a class to publish the encoder values periodically. 
+        * @brief CEncoderPublisher class is subclass of utils::task::CTask, a class to publish periodically the encoder values. 
         * 
         */
         class CEncoderPublisher:public utils::task::CTask
@@ -46,11 +46,11 @@ namespace examples
                 /* Run method */
                 void _run();
 
-                /* Active flag */
+                /** @brief Active flag  */
                 bool                m_isActive;
-                /*  Encoder value getter */
+                /** @brief Encoder getter interface  */
                 hardware::encoders::IEncoderGetter&     m_encoder;
-                /* Serial communication member*/
+                /** @brief Serial communication obj.  */
                 Serial&             m_serial;
         };
     }; // namespace sensors

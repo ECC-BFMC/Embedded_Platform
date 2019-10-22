@@ -21,6 +21,8 @@ namespace controllers{
      * @param f_encoder Reference to the encoder getter interface.
      * @param f_pid     Reference to the controller interface.
      * @param f_converter [Optional] Pointer to the converter interface. 
+     * @param f_inf_ref   [Optional] Inferior limit of reference signal.
+     * @param f_sup_ref   [Optional] Superior limit of reference signal.
      */
     CMotorController::CMotorController(hardware::encoders::IEncoderGetter&          f_encoder
                             ,ControllerType<double>&                    f_pid
@@ -175,6 +177,13 @@ namespace controllers{
         return l_pwm;
     }
 
+    /**
+     * @brief It verifies whether a number is in a given range
+     * 
+     * @param f_RefRps reference value for controller in rotation per second  
+     * @return true means, that the value is in the range
+     * @return false means, that the value isn't in the range
+     */
     bool CMotorController::inRange(double f_RefRps){
         return m_inf_ref<=f_RefRps && f_RefRps<=m_sup_ref;
     }

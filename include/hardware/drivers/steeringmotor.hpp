@@ -29,8 +29,10 @@ namespace hardware::drivers{
     };
 
 
-    /**
-     * @brief It is used to control the servo motor, which is connected to the steering wheels. The steering angle can be accessed through 'setAngle' method. 
+    /**  
+     * @brief Steering servo motor driver
+     * 
+     * It is used to control the servo motor, which is connected to the steering wheels. The steering angle can be accessed through 'setAngle' method. 
      * 
      */
     class CSteeringMotor: public ISteeringCommand
@@ -48,11 +50,12 @@ namespace hardware::drivers{
     private:
         /* convert angle degree to duty cycle for pwm signal */
         float conversion(float f_angle); //angle to duty cycle
-        /* PWM output pin */
+        /** @brief PWM output pin */
         PwmOut m_pwm;
 
-        /* Range */
+        /** @brief Inferior limit */
         const float m_inf_limit;
+        /** @brief Superior limit */
         const float m_sup_limit;
     };
 }; // namespace hardware::drivers

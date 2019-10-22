@@ -1,2 +1,2 @@
 echo off 
-copy BUILD\Nucleo_mbedrobot.bin E:\Nucleo.bin 
+copy BUILD\Nucleo_mbedrobot.bin D:\Nucleo.bin 

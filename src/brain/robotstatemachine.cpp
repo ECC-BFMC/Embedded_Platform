@@ -13,15 +13,14 @@
 
 namespace brain{
 
-
-
-    /** \brief  CRobotStateMachine Class constructor
-     *    
-     *
-     *  @param f_period_sec          period for controller execution in seconds
-     *  @param f_serialPort          reference to serial communication object
-     *  @param f_car                 reference to MOVE object
-     *  @param f_control             reference to controller object
+    /**
+     * @brief CRobotStateMachine Class constructor
+     * 
+     * @param f_period_sec          period for controller execution in seconds
+     * @param f_serialPort          reference to serial communication object
+     * @param f_motorControl        reference to dc motor control interface
+     * @param f_steeringControl     reference to steering motor control interface
+     * @param f_control             reference to controller object
      */
     CRobotStateMachine::CRobotStateMachine(
             float f_period_sec,

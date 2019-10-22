@@ -52,9 +52,13 @@ namespace signal::filter
                     T operator()(T& f_u);
                 private:
                     CIIRFilter(){}
+                    /** @brief Polynomial coefficient for feedback filter  */
                     utils::linalg::CRowVector<T,NA> m_A;
+                    /** @brief Polynomial coefficient for feedforward filter */
                     utils::linalg::CRowVector<T,NB> m_B;
+                    /** @brief Memory for feedback filter  */
                     utils::linalg::CColVector<T,NA> m_Y;
+                    /** @brief Memory for feedback filter  */
                     utils::linalg::CColVector<T,NB> m_U;
             }; // class CIIRFilter
 
@@ -74,12 +78,14 @@ namespace signal::filter
                     T operator()(T& f_u);
                 private:
                     CFIRFilter() {}
+                    /** @brief Polynomial coefficient for feedforward filter */
                     utils::linalg::CRowVector<T,NB> m_B;
+                    /** @brief Memory for feedback filter  */
                     utils::linalg::CColVector<T,NB> m_U;
             }; // class CFIRFilter
 
             /**
-             * @brief Mean filter
+             * @brief Mean filter or average filter
              * 
              * @tparam T    The type of the input and output signal
              * @tparam NB   Number of memorized values for calculating mean value
@@ -106,7 +112,7 @@ namespace signal::filter
         {   
 
             /**
-             * @brief  Median filter 
+             * @brief  Median filter - It results the middle value after the input values have been sorted. 
              * 
              * @tparam T        type of the values
              * @tparam N        size of the filter
@@ -130,7 +136,7 @@ namespace signal::filter
                     
                 };
 
-                my_structure *m_median;    //pointer to the loist element that represents the median
+                my_structure *m_median;    //pointer to the list element that represents the median
                 my_structure *m_smallest;  //pointer to the smallest element of the list (the first)
                 uint32_t m_new;		     //index to the newest element in the list
                 uint32_t m_size;		     //the size of the list/queue

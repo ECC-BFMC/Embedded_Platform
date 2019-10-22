@@ -13,9 +13,9 @@
 
 
 namespace hardware::drivers{
-    /** @brief  CSteeringMotor class constructor, it  initializes the pwm parameters and set the steering in zero position.
+    /** @brief  It initializes the pwm parameters and set the steering in zero position. Initially it sets the limits of input degree values to -23 and +23 degree. 
      *
-     *  @param _pwm               pin connected to servo motor
+     *  @param f_pwm               pin connected to servo motor
      */
     CSteeringMotor::CSteeringMotor(PinName f_pwm)
         :CSteeringMotor(f_pwm,-23.0,23.0)
@@ -23,6 +23,14 @@ namespace hardware::drivers{
     {
     };
 
+    /**
+     * @brief It initializes the pwm parameters and set the steering in zero position and set the limits of the input degree value.
+     * 
+     * @param f_pwm               pin connected to servo motor
+     * @param f_inf_limit         inferior limit 
+     * @param f_sup_limit         superior limit
+     * 
+     */
     CSteeringMotor::CSteeringMotor(PinName f_pwm, float f_inf_limit, float f_sup_limit)
         :m_pwm(f_pwm)
         ,m_inf_limit(f_inf_limit)
@@ -35,27 +43,23 @@ namespace hardware::drivers{
 
 
     /** @brief  CSteeringMotor class destructor
-     *
-     *  Destructor method
      */
     CSteeringMotor::~CSteeringMotor()
     {
     };
 
-    /** @brief  Set angle of the servo motor, which controls the steering wheels. 
+    /** @brief  It modifies the angle of the servo motor, which controls the steering wheels. 
      *
-     *  @param angle      angle degree, where the positive value means right direction and negative value the left direction. 
+     *  @param f_angle      angle degree, where the positive value means right direction and negative value the left direction. 
      */
     void CSteeringMotor::setAngle(float f_angle)
     {
         m_pwm.write(conversion(f_angle));
     };
 
-    /** @brief  Conversion method between angle and pwm signal
-     *
-     *  It converts angle degree to duty cycle for pwm signal. 
+    /** @brief  It converts angle degree to duty cycle for pwm signal. 
      * 
-     *  @param angle    degree
+     *  @param f_angle    angle degree
      *  \return         duty cycle in interval [0,1]
      */
     float CSteeringMotor::conversion(float f_angle)
@@ -64,11 +68,11 @@ namespace hardware::drivers{
     };
 
     /**
-     * @brief check whether a number is in a given range
+     * @brief It verifies whether a number is in a given range
      * 
      * @param f_angle value 
-     * @return true is in the range
-     * @return false isn't in the range
+     * @return true means, that the value is in the range
+     * @return false means, that the value isn't in the range
      */
     bool CSteeringMotor::inRange(float f_angle){
         return m_inf_limit<=f_angle && f_angle<=m_sup_limit;

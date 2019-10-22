@@ -38,8 +38,7 @@ CQuadratureCounter_TIM4::CQuadratureCounter_TIM4_Destroyer::~CQuadratureCounter_
 
 
 /**
- * @brief Constructor function. 
- * 
+ * @brief 
  * It verifies the existence of the singleton object. It creates a new instance when it's necessary and return the address of instance.
  * It initializes all parameter by appling method 'initialize'.
  * 

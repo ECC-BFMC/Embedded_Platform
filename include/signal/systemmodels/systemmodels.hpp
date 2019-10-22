@@ -144,7 +144,7 @@ namespace signal::systemmodels{
     namespace nlti{
         //Multi-input and multi-output 
         namespace mimo{
-            // Discrete time system model of a system nonlinear time invariant with multi-input and multi-output
+            // Discrete time model of a non-linear time-invariant system with multi-input and multi-output
             //  T       -variable type
             //  NA      -number of control
             //  NB      -number of states
@@ -160,17 +160,35 @@ namespace signal::systemmodels{
                     /* Constructor */
                     CDiscreteTimeSystemModel(const CStatesType&     f_states
                                             ,const double           f_dt);
-                    //State transition model
-                    //Calculate the system state depending on input, after calculation the relevant class members need to be syncronized.
+                    
+                    /** @brief State transition model
+                     * 
+                     * Calculate the system state depending on input, after calculation the relevant class members need to be synchronized.
+                     * 
+                     * @param f_input           Input control vector
+                     * @return CStatesType      State vector
+                     */
                     virtual CStatesType update(const CControlType&       f_input)=0;
                     //State observation model
-                    //Calculate the system output depending on input, after calculation the relevant class members need to be syncronized.
+                    //
+
+
+                    /** @brief State observation model
+                     * 
+                     * Calculate the system output depending on input, after calculation the relevant class members need to be synchronized.
+                     * 
+                     * @param f_input               Input control Signal
+                     * @return CObservationType     Observation vector
+                     */
                     virtual CObservationType calculateOutput(const CControlType&  f_input)=0;
                     // GETTERS
                     // The method returns the current system states
-                    CStatesType         getStates();//{return m_states;}
+
+                    /** @brief Get the States vector 
+                     */
+                    CStatesType         getStates(){return m_states;}
                     // The method returns the current system output
-                    CObservationType         getOutput(){return m_outputs;}
+                    CObservationType    getOutput(){return m_outputs;}
                     float               getTimeStep(){return m_dt;}
                     // SETTERS
                     void                setStates(const CStatesType& f_states){

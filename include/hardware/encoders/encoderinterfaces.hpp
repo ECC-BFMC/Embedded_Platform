@@ -22,19 +22,19 @@ namespace hardware::encoders{
         /**
          * @brief Get the counted impulse in the last period. It can be positive or negative number, when it uses by quadrature encoder.
          * 
-         * @return int16_t - rotation speed in a period
+         * @return Rotation speed in a period
          */
         virtual int16_t  getCount() = 0;
         /**
          * @brief Get the rotation speed of the encoder in the last period based the predefined period and encoder resolution. The result is returned in rotation per second (rps).
          * 
-         * @return float - counted value in a period
+         * @return Counted value in a period
          */
         virtual float getSpeedRps() = 0;
         /**
          * @brief Get the encoder capacity. If it's false, than the encoder can give the orientation like a positive or a negative rotation speed, else it returns only the absolute value of the rotation speed. 
          * 
-         * @return bool - capacity of measuring the rotation direction
+         * @return Capacity of measuring the rotation direction
          */
         virtual bool isAbs() = 0;
     };
@@ -51,13 +51,13 @@ namespace hardware::encoders{
         /**
          * @brief Get the non-filtered counted impulse in the last period. 
          * 
-         * @return int16_t - non-filtered counted value.
+         * @return Non-filtered counted value.
          */
         virtual int16_t  getNonFilteredCount()=0;
         /**
          * @brief Get the non-filtered rotation speed [rotation per second]
          * 
-         * @return float - non-filtered rotation speed
+         * @return Non-filtered rotation speed
          */
         virtual float getNonFilteredSpeedRps() = 0;
     };

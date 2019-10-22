@@ -24,19 +24,23 @@ namespace hardware::encoders{
  * 
  */
 class CQuadratureEncoder:public IEncoderGetter{
-    public:
+  public:
       CQuadratureEncoder(float,hardware::drivers::IQuadratureCounter_TIMX*,uint16_t);
       void startTimer();
-  protected:
     virtual void _run();
     virtual int16_t getCount();
     virtual float getSpeedRps();
     virtual bool isAbs(){return false;}
   protected:
+      /** @brief Counter interface */
       ::hardware::drivers::IQuadratureCounter_TIMX *m_quadraturecounter;
+      /** @brief Last counted value */
       int16_t           m_encoderCnt;
+      /** @brief Sampling period */
       const float       m_taskperiod_s;
+      /** @brief Resolution of encoder */
       const uint16_t    m_resolution;
+      /** @brief Rtos Timer for periodically applying */
       RtosTimer m_timer;
 };
 
@@ -54,7 +58,9 @@ class CQuadratureEncoderWithFilter: public CQuadratureEncoder, public IEncoderNo
       virtual float getNonFilteredSpeedRps();
     protected:
       virtual void _run();
+      /** @brief Last filtered counted value */
       double m_encoderCntFiltered;
+      /** @brief Filter interface */
       signal::filter::IFilter<float>& m_filter;
 
 };

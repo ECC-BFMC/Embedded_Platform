@@ -26,7 +26,7 @@ namespace signal
 namespace controllers
 {
 
-   /** CMotorController class
+   /**
     * @brief It implements a controller with a single input and a single output. It needs an encoder getter interface to get the measured values, a controller to calculate the control signal. It can be completed with a converter to convert the measaurment unit of the control signal. 
     * 
     */

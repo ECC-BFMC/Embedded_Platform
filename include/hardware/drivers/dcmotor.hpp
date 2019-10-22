@@ -41,10 +41,13 @@ namespace hardware::drivers{
     };
 
     /**
-     * @brief VNH Motor Driver class. 
+     * @brief VNH5019 Motor Driver class 
      * 
      * It has role to control the vnh5019 motor driver. 
-     * It has two interface, one to control the motor speed and direction and one to get the measured current value. 
+     * It has two interface, one to control the motor speed and direction and one to get the measured current value.
+     * The direction and the rotation speed are conducted a value, where the positive values define the forward move, 
+     * similary negative values represents the backward move. The magnitude of values gives the motor speed. So generally, the input signal can vary 
+     * between [-1,1]. We reduce this interval to avoid the robot high speed.  
      * 
      */
     class CMotorDriverVnh:public ICurrentGetter, public IMotorCommand
@@ -68,13 +71,13 @@ namespace hardware::drivers{
         bool inRange(float f_pwm);
         
     private:
-        /* PWM output pin */
+        /** @brief PWM output pin */
         PwmOut      m_pwm;
-        /* pin A for direction */
+        /** @brief pin A for direction */
         DigitalOut  m_ina;
-        /* pin B for direction */
+        /** @brief pin B for direction */
         DigitalOut  m_inb;
-        /* Measured current value by driver */
+        /** @brief Measured current value by driver */
         AnalogIn    m_current_in;
 
         const float m_inf_limit;

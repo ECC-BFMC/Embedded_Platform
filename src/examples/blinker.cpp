@@ -27,7 +27,7 @@ namespace examples{
         m_led = 1;
     }
 
-    /** \brief  Periodically applied method to change the LED state
+    /** \brief  Periodically applied method to change the LED's state
      * 
      */
     void CBlinker::_run()

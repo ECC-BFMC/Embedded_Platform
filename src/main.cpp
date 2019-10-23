@@ -21,8 +21,6 @@
 #include <examples/sensors/encoderpublisher.hpp>
 /* Header file  for the controller functionality */
 #include <signal/controllers/motorcontroller.hpp>
-/* Header file  for the sendor publisher functionality */
-#include <examples/sensors/proximitypublisher.hpp>
 /* Quadrature encoder functionality */
 #include <hardware/encoders/quadratureencoder.hpp>
 

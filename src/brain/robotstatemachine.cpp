@@ -134,7 +134,7 @@ namespace brain{
                 }
                 else // The pid controller is deactivated and the dc motor is controlled by user control signal by giving duty cycle of PWM. 
                 {
-                    m_motorControl.setSpeed(m_speed/100.0);
+                    m_motorControl.setSpeed(m_speed);
                 }
                 break;
 

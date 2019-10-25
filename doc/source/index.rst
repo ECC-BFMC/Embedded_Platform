@@ -10,7 +10,8 @@ Some simple usages of these are instanced in the 'examples' folder.
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-    
+   
+   other/development
    hardware/index
    signal/index
    utils/index

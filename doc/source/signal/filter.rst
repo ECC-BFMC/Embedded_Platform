@@ -35,21 +35,3 @@ and infinite-impulse-response.
    :project: myproject
    :members:
    :undoc-members:
-
-.. doxygenclass:: signal::filter::lti::mimo::CKalmanFilter
-   :project: myproject
-   :members:
-   :protected-members:
-   :private-members:
-
-.. doxygenclass:: signal::filter::nlti::mimo::IJacobianMatrices
-   :project: myproject
-   :members:
-   :protected-members:
-   :private-members:
-   
-.. doxygenclass:: signal::filter::nlti::mimo::CEKF
-   :project: myproject
-   :members:
-   :protected-members:
-   :private-members:

@@ -13,7 +13,7 @@
 
 #include <hardware/encoders/encoderinterfaces.hpp>
 #include <hardware/encoders/quadraturecounter.hpp>
-#include <signal/filter/Filter.hpp>
+#include <signal/filter/filter.hpp>
 
 #include <rtos.h>
 

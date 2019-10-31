@@ -20,21 +20,20 @@ official site of Arm Developer. Here is a `link <https://developer.arm.com/tools
 If you installed the Gnu Embedded Toolchain for Arm, you need to add a new environment variable with 'GCC_ARM_FOLDER' name,
 which value is the compiler folder. You can see an example on the following picture. 
 
-Other application necessary for easy building is MinGW, where is important to install 'msys-base-bin' 
-and to add the location of installation folder to the 'Path' environment variable. Something like on the figure below. 
-
 .. image:: ../pics/others/env_var_compiler.png
     :align: center
     :scale: 75%
 
-If you set correctly the environment variable, then the 'make' command is recognized in command prompt 
-and appears a message with missing target and makefile. 
+Other application necessary for easy building is MinGW, where is important to install 'msys-base-bin' 
+and to add the location of installation folder to the 'Path' environment variable. Something like on the figure below. 
 
 .. image:: ../pics/others/env_var_mingw.png
     :align: center
     :scale: 75%
 
-If you have done the two steps described above, then you finished the setup and you can compile the code. 
+If you set correctly the environment variable, then the 'make' command is recognized in command prompt 
+and appears a message with missing target and makefile. When you have done the two steps described above, 
+then you finished the setup and you can compile the code. 
 To build you need to open a command prompt (or terminal) and go to the project folder, where you can find
 the 'Makefile'. When you are in the right location, you have to apply the 'make' command and it will build
 automatically the script in the 'BUILD' folder. If everything went well, then a new binary file 
@@ -79,3 +78,18 @@ can easily copy the binary file from you device to the mentioned external device
 and the tricolor LED has green color. If you modified correctly the 'flash_win.bat' script and the device identification letter is same 
 in the script mention, than it copies the binary automatically by applying the script.
 
+Note
+----
+
+If you use Linux instead of Windows, then you don't need install MinGW with mysys and set the 'path' environment variable to this, 
+because all GNU Core utilities are already installed. It requires to setup the Gnu Embedded Toolchain for Arm, which means to download
+a linux version from the below mention `link <https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads>`_  
+and decompress some on your pc. After decompressing, you need to set the 'GCC_ARM_FOLDER' environment variable with the location, where you decompressed
+the cross-compiler. Therefore the 'make' utility knows the location of cross-compiler and can apply automatically. To add the persistent environment variable need to 
+introduce a code in terminal similar to the following:
+    "echo "export GCC_ARM_FOLDER=/home/user/Workspace/Crosscompilers/gcc-arm-none-eabi-8-2019-q3-update/bin" >> ~/.bashrc"
+The variable is accessible for only your user and you have to restart the terminal. After the setup you have to change the location in 
+terminal to main project folder and you can run the 'make' script. The flashing is similarly to the below presented process, it requires only 
+to copy binary file to external device. 
+The scripts for creating a new component (newComponent.py) and for flashing the micro-controller weren't projected to linux usage, so we cannot guarantee the 
+correct working of them. 

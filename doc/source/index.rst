@@ -16,6 +16,7 @@ Some simple usages of these are instanced in the 'examples' folder.
    signal/index
    utils/index
    examples/index
+   releasenote.rst
 
 
 Indices and tables

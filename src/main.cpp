@@ -18,7 +18,7 @@
  * @brief Application entry point.
  * @version 0.1
  * @date 2019-11-07
- *//
+ */
 /* The mbed library */
 #include <mbed.h>
 /* Task manager */

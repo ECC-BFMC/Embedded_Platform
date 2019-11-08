@@ -52,7 +52,6 @@ OBJECTS += src/utils/serial/serialmonitor.o
 OBJECTS += src/examples/echoer.o
 OBJECTS += src/examples/blinker.o
 OBJECTS += src/examples/sensors/encoderpublisher.o
-OBJECTS += src/utils/timer/timer.o
 
 OBJECTS += src/hardware/drivers/steeringmotor.o
 OBJECTS += src/hardware/drivers/dcmotor.o

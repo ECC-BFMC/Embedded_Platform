@@ -55,7 +55,6 @@ OBJECTS += src/examples/sensors/proximitypublisher.o
 OBJECTS += src/examples/sensors/encoderpublisher.o
 OBJECTS += src/examples/filter/ekf_am.o
 OBJECTS += src/examples/systemmodels/ackermannmodel.o
-OBJECTS += src/utils/timer/timer.o
 
 OBJECTS += src/hardware/drivers/steeringmotor.o
 OBJECTS += src/hardware/drivers/dcmotor.o

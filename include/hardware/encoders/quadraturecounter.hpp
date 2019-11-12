@@ -1,5 +1,5 @@
 /**
-Copyright 2019 Bosch Engineering Center Cluj and BFMC orginazers 
+Copyright 2019 Bosch Engineering Center Cluj and BFMC organizers 
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ namespace hardware::drivers{
    * @brief A driver for quadrature encoder based on timer TIM4. 
    * 
    * It's a singleton class for receiving and decoding the Quadrature signal. 
-   * It returns the position of the encoder via method 'getCount' and sets the position to zero by method 'reset'. 
+   * It returns the position of the encoder via method 'getCount' and sets the position to zero by method 'reset'.
+   * This counter processes the quadrature signal received on PB6 and PB7 lines. 
    */
   class CQuadratureCounter_TIM4:public IQuadratureCounter_TIMX{
       

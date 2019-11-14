@@ -6,3 +6,5 @@ and provide a interface between a higher level controllers and lower level actua
 The project has five main part: brain, hardware, signal, utils, examples. The brain folder contains the main state machine of robot, the drivers for actuator and sensors
 are implemented in the 'hardware' folder. The 'signal' folder  includes libraries for processing signals. 'Utils' package incorporates some util functionalities. 
 Some simple usages of these are instanced in the 'examples' folder. 
+
+[Documentation](https://bfmcembeddedplatform.readthedocs.io/en/stable/) 

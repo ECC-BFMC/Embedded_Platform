@@ -38,7 +38,7 @@ To build you need to open a command prompt (or terminal) and go to the project f
 the 'Makefile'. When you are in the right location, you have to apply the 'make' command and it will build
 automatically the script in the 'BUILD' folder. If everything went well, then a new binary file 
 with name 'Nucleo_mbedrobot.bin' appeared in the 'BUILD' folder. Success compilation termites with following message:
-    '===== bin file ready to flash: BUILD/Nucleo_mbedrobot.bin ====='. 
+'===== bin file ready to flash: BUILD/Nucleo_mbedrobot.bin ====='. 
 This binary you can copy on the micro-controller to flash it or you can apply the 'flash_win.bat' script.
 
 New component
@@ -48,8 +48,10 @@ For this reason, you need to realize write the header files in the 'include' dir
 source file in the 'src' folder. You can do this by appling the 'newComponent.pt' script written in python, which
 creates automatically the include files and the source file. There are some optional parameter, you can
 check they by adding '--help' parameter. Examples:
-    python newComponent.py --help
-    python newComponent.py -c test
+
+python newComponent.py --help
+python newComponent.py -c test
+
 In the second example, the script creates two includes file ('test.hpp' and 'test.inl') in the 'include' folder
 and a source file ('test.cpp') in the 'src' folder. If you can to compile these new components, then you must 
 add these to makefile like new objects. You can see on the figure below, where new object is defined in the 72nd line:
@@ -87,7 +89,9 @@ a linux version from the below mention `link <https://developer.arm.com/tools-an
 and decompress some on your pc. After decompressing, you need to set the 'GCC_ARM_FOLDER' environment variable with the location, where you decompressed
 the cross-compiler. Therefore the 'make' utility knows the location of cross-compiler and can apply automatically. To add the persistent environment variable need to 
 introduce a code in terminal similar to the following:
-    "echo "export GCC_ARM_FOLDER=/home/user/Workspace/Crosscompilers/gcc-arm-none-eabi-8-2019-q3-update/bin" >> ~/.bashrc"
+
+"echo "export GCC_ARM_FOLDER=/home/user/Workspace/Crosscompilers/gcc-arm-none-eabi-8-2019-q3-update/bin" >> ~/.bashrc"
+
 The variable is accessible for only your user and you have to restart the terminal. After the setup you have to change the location in 
 terminal to main project folder and you can run the 'make' script. The flashing is similarly to the below presented process, it requires only 
 to copy binary file to external device. 

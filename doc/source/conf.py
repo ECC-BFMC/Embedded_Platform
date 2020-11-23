@@ -21,9 +21,9 @@ subprocess.run("doxygen Doxyfile",shell=True)
 
 # -- Project information -----------------------------------------------------
 
-project = 'BFMC Embedded Platform'
-copyright = '2019, Nandor Kilyen'
-author = 'Nandor Kilyen'
+project = 'BFMC.EmbeddedPlatform'
+copyright = 'Bosch Engineering Center Cluj and BFMC organizers'
+author = 'Bosch Engineering Center Cluj and BFMC organizers'
 
 # The full version, including alpha/beta/rc tags
 release = 'v0.1'

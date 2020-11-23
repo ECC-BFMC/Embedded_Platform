@@ -16,11 +16,3 @@ Some simple usages of these are instanced in the 'examples' folder.
    signal/index
    utils/index
    examples/index
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

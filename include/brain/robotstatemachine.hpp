@@ -1,27 +1,32 @@
 /**
-Copyright 2019 Bosch Engineering Center Cluj and BFMC organizers 
+ * Copyright (c) 2019, Bosch Engineering Center Cluj and BFMC organizers
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-  
-  ******************************************************************************
-  * @file    MotionController.hpp
-  * @author  RBRO/PJ-IU
-  * @version V1.0.0
-  * @date    day-month-year
-  * @brief   This file contains the class declaration for the motion controller
-  *          functionality.
-  ******************************************************************************
- */
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+*/
 
 #ifndef MOTION_CONTROLLER_HPP
 #define MOTION_CONTROLLER_HPP
@@ -61,33 +66,19 @@ namespace brain{
 
         /* Start the Rtos timer for applying "_run" method  */
         void startRtosTimer();
-
-        /* Serial callback method for moving */ 
-        void serialCallbackMove(char const * a, char * b);
+        /* Serial callback method for Speed */ 
+        void serialCallbackSPED(char const * a, char * b);
+        /* Serial callback method for Steering */ 
+        void serialCallbackSTER(char const * a, char * b);
         /* Serial callback method for braking */
         void serialCallbackBrake(char const * a, char * b);
         /* Serial callback method for activating pid */
         void serialCallbackPID(char const * a, char * b);
 
-        /* Reset method */
-        void reset();
-        /* Get speed method */
-        float getSpeed();
-        /* Get angle method */
-        float getAngle();
-        /* Callback for changing the state to brake.*/
-        void BrakeCallback();
-        /* Set state method */
-        void setState(int f_state);
     private:
         /* Contains the state machine, which control the lower level drivers (motor and steering) based the current state. */
         virtual void _run();
-        
-        /* Serial callback for a hard braking */
-        void serialCallbackHardBrake(char const * a, char * b);
-        
-        
-        
+                
         /* Static function to convert from linear velocity ( centimeter per second ) of robot to angular velocity ( rotation per second ) of motor */
         static float Mps2Rps(float f_vel_cmps);
 
@@ -107,17 +98,11 @@ namespace brain{
         /* State machine state */
         uint8_t m_state;
         /* PID activation state */
-        bool    m_ispidActivated;
-        // 0-none
-        // 1-normal
-        // 2-brake regeneration
-        
-        /* Timeout for a hard braking with deactivated pid.  */
-        Timeout                                 m_hbTimeOut;
+        bool    m_ispidActivated;       
         /* Speed Control for dc motor */
         signal::controllers::CMotorController*           m_control;
         /* Rtos  timer for periodically applying */
-        RtosTimer                               m_timer;
+        EventQueue                               m_timer;
     }; // class CRobotStateMachine
 }; // namespace brain
 

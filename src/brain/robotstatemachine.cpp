@@ -1,27 +1,34 @@
 /**
-Copyright 2019 Bosch Engineering Center Cluj and BFMC organizers 
+ * Copyright (c) 2019, Bosch Engineering Center Cluj and BFMC organizers
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
 
-    http://www.apache.org/licenses/LICENSE-2.0
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
 
-  ******************************************************************************
-  * @file    MotionController.cpp
-  * @author  RBRO/PJ-IU
-  * @version V1.0.0
-  * @date    day-month-year
-  * @brief   This file contains the class definition for the motion controller
-  *          functionality.
-  ******************************************************************************
- */
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+*/
+
+
 #include <brain/robotstatemachine.hpp>
 
 namespace brain{
@@ -48,65 +55,15 @@ namespace brain{
         , m_angle()
         , m_period_sec(f_period_sec)
         , m_ispidActivated(false)
-        , m_hbTimeOut()
         , m_control(f_control)
         , m_timer(mbed::callback(this,&CRobotStateMachine::_run))
+
     {
     }
-
-    /** \brief  Set the speed and the angle to zero value
-     * 
-     */
-    void CRobotStateMachine::reset()
-    {   
-        m_speed = 0;
-        m_angle = 0;
-    }
-
-    /** \brief  Get last speed command
-     * 
-     *  \return speed command value. (duty cycle of pwm or speed of robot in mps)
-     */
-    float CRobotStateMachine::getSpeed() 
-    {
-        return m_speed;
-    }
-
-    /** \brief  Get last steering angle command.
-     * 
-     *  
-     *  \return steering angle in degree
-     */
-    float CRobotStateMachine::getAngle() 
-    {
-        return m_angle;
-    }
-
-    /** \brief  BrakeCallback method
-     * 
-     *  It changes the controller state to brake from default state. It's applied to deactivated hard braking.
-     *  
-     */
-    void CRobotStateMachine::BrakeCallback(){
-        if( m_state == 0){
-            m_state=2;
-        }
-    }
-
-    /** \brief  Set state of the controller
-     * 
-     *  @param  f_state state of controller express in integer value between 0 and 2
-     *  
-     */
-    void CRobotStateMachine::setState(int f_state){
-        m_state = f_state;
-    }
-
     /** \brief  _Run method contains the main application logic, where it controls the lower lever drivers (dc motor and steering) based the given command and state.
      * It has three state: 
-     *  - 0 - default state -> it doesn't apply any control signal on the drivers.
      *  - 1 - move state -> control the motor rotation speed by giving direct a PWM signal or by a pid controller
-     *                   -> and control the steering angle
+     *                   -> control the steering angle
      *  - 2 - brake state -> apply a dynamic braking on the motor and control the steering angle.          
      */
     void CRobotStateMachine::_run()
@@ -163,22 +120,21 @@ namespace brain{
         
     }
 
-    /** \brief  Serial callback method for move command
+    /** \brief  Serial callback method for speed command
      *
-     * Serial callback method setting controller to values received like steering angle and dc motor control values. 
-     * In the case of pid activated,  the dc motor control values has to be express in meter per second, otherwise represent the duty cycle of PWM signal in percent. 
+     * Serial callback method setting controller to value received for dc motor control values. 
+     * In the case of pid activated, the dc motor control values has to be express in meter per second, otherwise represent the duty cycle of PWM signal in percent. 
      * The steering angle has to express in degree, where the positive values marks the right direction and the negative values noticed the left turning direction.
      *
      * @param a                   string to read data 
      * @param b                   string to write data 
      * 
      */
-    void CRobotStateMachine::serialCallbackMove(char const * a, char * b)
+    void CRobotStateMachine::serialCallbackSPED(char const * a, char * b)
     {
         float l_speed;
-        float l_angle;
-        uint32_t l_res = sscanf(a,"%f;%f",&l_speed,&l_angle);
-        if (2 == l_res)
+        uint32_t l_res = sscanf(a,"%f",&l_speed);
+        if (1 == l_res)
         {
             if( !m_ispidActivated && !m_motorControl.inRange(l_speed)){ // Check the received control value
                 sprintf(b,"The speed command is too high;;");
@@ -188,12 +144,37 @@ namespace brain{
                 sprintf(b,"The speed reference is too high;;");
                 return;
             }
+
+            m_speed = l_speed;
+            m_state=1;
+            sprintf(b,"ack;;");
+        }
+        else
+        {
+            sprintf(b,"sintax error;;");
+        }
+    }
+
+    /** \brief  Serial callback method for steering command
+     *
+     * Serial callback method setting controller to value received for steering angle.
+     * The steering angle has to express in degree, where the positive values marks the right direction and the negative values noticed the left turning direction.
+     *
+     * @param a                   string to read data 
+     * @param b                   string to write data 
+     * 
+     */
+    void CRobotStateMachine::serialCallbackSTER(char const * a, char * b)
+    {
+        float l_angle;
+        uint32_t l_res = sscanf(a,"%f",&l_angle);
+        if (1 == l_res)
+        {
             if( !m_steeringControl.inRange(l_angle)){ // Check the received steering angle
                 sprintf(b,"The steering angle command is too high;;");
                 return;
             }
 
-            m_speed = l_speed;
             m_angle = l_angle; 
             m_state=1;
             sprintf(b,"ack;;");
@@ -238,43 +219,12 @@ namespace brain{
         }
     }
 
-    /** \brief  Serial callback actions for hard brake command
+    /** \brief  Serial callback actions for PID activation command
      *
-     * It can be used to activate a inverse current braking mechanism, the inverse current applies a short period of time. 
-     * The period is defined through attaching the "BrakeCallback" method. 
-     *
-     * @param a                   string to read data 
-     * @param b                   string to write data
-     * 
-     */
-    void CRobotStateMachine::serialCallbackHardBrake(char const * a, char * b)
-    {
-        float l_brake,l_angle;
-        uint32_t l_res = sscanf(a,"%f;%f",&l_brake,&l_angle);
-        if(2 == l_res && m_state!=0)
-        {
-            if( !m_steeringControl.inRange(l_angle)){
-                sprintf(b,"The steering angle command is too high;;");
-                return;
-            }
-            m_speed=0;
-            m_angle = l_angle; 
-            m_motorControl.inverseDirection(l_brake);
-            m_hbTimeOut.attach(callback(this,&CRobotStateMachine::BrakeCallback),0.04); // Attaching a callback function for changing state to brake. 
-            m_state = 0;
-
-            sprintf(b,"ack;;");           
-        }
-        else
-        {
-            sprintf(b,"sintax error;;");
-        }
-    }
-
-    /** \brief  Serial callback actions for hard PID activation command
-     *
-     * This function provides an interface to activate or deactivate the Pid controller. When the input string contains non-zero value, then it activates the pid functionality and the robot's linear velocity will be controlled in meter per second.
-     * When the value is zero, the user directly transmite the duty cycle of pwm signal to control the motor rotation speed. If the controller wasn't deffined for the motioncontroller object, this functionality cannot be activated. 
+     * This function provides an interface to activate or deactivate the Pid controller. When the input string contains non-zero value, then it activates 
+     * the pid functionality and the robot's linear velocity will be controlled in meter per second. When the value is zero, the user directly transmite 
+     * the duty cycle of pwm signal to control the motor rotation speed. If the controller wasn't deffined for the motioncontroller object, this functionality 
+     * cannot be activated. 
      *
      * @param a                   string to read data 
      * @param b                   string to write data
@@ -317,7 +267,7 @@ namespace brain{
      * 
      */
     void CRobotStateMachine::startRtosTimer(){
-        this->m_timer.start(static_cast<int>(m_period_sec*1000));
+        this->m_timer.dispatch(static_cast<int>(m_period_sec*1000));
     }
 
 }; // namespace brain

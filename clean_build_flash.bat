@@ -1,4 +1,4 @@
 echo off
 make clean 
 make 
-flash.bat 
+flash_win.bat 

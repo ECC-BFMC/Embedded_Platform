@@ -1,25 +1,33 @@
 /**
-Copyright 2019 Bosch Engineering Center Cluj and BFMC organizers 
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
- 
- * @file quadratureencodertask.hpp
- * @author  RBRO/PJ-IU
- * @brief 
- * @version 0.1
- * @date 2018-10-23
+ * Copyright (c) 2019, Bosch Engineering Center Cluj and BFMC organizers
+ * All rights reserved.
  * 
- */
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+*/
+
 #ifndef QUADRATURE_ENCODER_TASK_HPP
 #define QUADRATURE_ENCODER_TASK_HPP
 
@@ -37,7 +45,7 @@ namespace hardware::encoders{
  */
 class CQuadratureEncoder:public IEncoderGetter{
   public:
-      CQuadratureEncoder(float,hardware::drivers::IQuadratureCounter_TIMX*,uint16_t);
+      CQuadratureEncoder(float,hardware::encoders::IQuadratureCounter_TIMX*,uint16_t);
       void startTimer();
     virtual void _run();
     virtual int16_t getCount();
@@ -45,7 +53,7 @@ class CQuadratureEncoder:public IEncoderGetter{
     virtual bool isAbs(){return false;}
   protected:
       /** @brief Counter interface */
-      ::hardware::drivers::IQuadratureCounter_TIMX *m_quadraturecounter;
+      ::hardware::encoders::IQuadratureCounter_TIMX *m_quadraturecounter;
       /** @brief Last counted value */
       int16_t           m_encoderCnt;
       /** @brief Sampling period */
@@ -53,16 +61,16 @@ class CQuadratureEncoder:public IEncoderGetter{
       /** @brief Resolution of encoder */
       const uint16_t    m_resolution;
       /** @brief Rtos Timer for periodically applying */
-      RtosTimer m_timer;
+      EventQueue m_timer;
 };
 
 /**
- * @brief It implements the same functionality than CQuadratureEncoderTask class, but in additional it can filter the values. 
+ * @brief It implements the same functionality than CQuadratureEncoderTask class. Additionally it filters the values. 
  * 
  */
 class CQuadratureEncoderWithFilter: public CQuadratureEncoder, public IEncoderNonFilteredGetter{
     public:
-      CQuadratureEncoderWithFilter(float,hardware::drivers::IQuadratureCounter_TIMX *, uint16_t,signal::filter::IFilter<float>&);
+      CQuadratureEncoderWithFilter(float,hardware::encoders::IQuadratureCounter_TIMX *, uint16_t,signal::filter::IFilter<float>&);
       
       virtual int16_t getCount();
       virtual float getSpeedRps();

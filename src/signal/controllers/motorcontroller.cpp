@@ -1,27 +1,33 @@
 /**
- * Copyright 2019 Bosch Engineering Center Cluj and BFMC organizers 
+ * Copyright (c) 2019, Bosch Engineering Center Cluj and BFMC organizers
+ * All rights reserved.
  * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *   
-  ******************************************************************************
-  * @file    Controller.cpp
-  * @author  RBRO/PJ-IU
-  * @version V1.0.0
-  * @date    day-month-year
-  * @brief   This file contains the class implementation for the controller
-  *          functionality.
-  ******************************************************************************
- */
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+*/
+
 
 #include <signal/controllers/motorcontroller.hpp>
 
@@ -114,9 +120,9 @@ namespace controllers{
         bool   l_isAbs = m_encoder.isAbs();
         float  l_ref;
 
-        // Check the measured value and the superior limit for avoid over control state.
+        // Check the measured value and the superior limit for avoiding over control state.
         // In this case deactivate the controller. 
-        if(std::abs(l_MesRps) > m_mes_abs_sup){
+        if(std::abs(l_MesRps) > m_mes_abs_sup) {
             m_RefRps = 0.0;
             m_u = 0.0;
             return -1;
@@ -132,7 +138,7 @@ namespace controllers{
         // Check measured value is orientated or absolute
         if ( l_isAbs ){
             l_ref = std::abs(m_RefRps);
-        } else{ 
+        } else { 
             l_ref = m_RefRps;
         }
         float l_error=l_ref-l_MesRps;

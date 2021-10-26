@@ -40,7 +40,7 @@ namespace utils::serial{
      *  @param f_serialPort               reference to serial object
      *  @param f_serialSubscriberMap      map with the key and the callback functions
      */
-    CSerialMonitor::CSerialMonitor(Serial& f_serialPort
+    CSerialMonitor::CSerialMonitor(RawSerial& f_serialPort
                     ,CSerialSubscriberMap f_serialSubscriberMap)
             :utils::task::CTask(0)
             , m_serialPort(f_serialPort)
@@ -51,7 +51,7 @@ namespace utils::serial{
             , m_serialSubscriberMap(f_serialSubscriberMap) 
             {
                 m_serialPort.attach(mbed::callback(this,&CSerialMonitor::serialRxCallback), Serial::RxIrq); 
-                m_serialPort.attach(mbed::callback(this,&CSerialMonitor::serialTxCallback), Serial::TxIrq); 
+                // m_serialPort.attach(mbed::callback(this,&CSerialMonitor::serialTxCallback), Serial::TxIrq); 
             }
 
     /** @brief  Rx callback actions

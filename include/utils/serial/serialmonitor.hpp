@@ -66,7 +66,7 @@ namespace utils::serial{
         typedef std::map<string,FCallback> CSerialSubscriberMap;
 
         /* Constructor */
-        CSerialMonitor(Serial& f_serialPort
+        CSerialMonitor(RawSerial& f_serialPort
                     ,CSerialSubscriberMap f_serialSubscriberMap);
     private:
         /* Rx callback actions */
@@ -77,7 +77,7 @@ namespace utils::serial{
         virtual void _run();
 
         /** @brief Serial communication port */
-        Serial& m_serialPort;
+        RawSerial& m_serialPort;
         /** @brief Rx buffer */
         utils::CQueue<char,255> m_RxBuffer;
         /** @brief Tx buffer */

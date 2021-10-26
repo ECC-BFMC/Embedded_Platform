@@ -54,7 +54,7 @@ namespace periodics
             /* Constructor */
             CEncoderPublisher(uint32_t            f_period
                         ,hardware::encoders::IEncoderGetter&    f_encoder
-                        ,Serial&            f_serial);
+                        ,RawSerial&            f_serial);
             /* Serial callback implementation */
             void serialCallback(char const * a, char * b);
         private:
@@ -67,7 +67,7 @@ namespace periodics
             /** @brief Encoder getter interface  */
             hardware::encoders::IEncoderGetter&     m_encoder;
             /** @brief Serial communication obj.  */
-            Serial&             m_serial;
+            RawSerial&             m_serial;
     };
 }; // namespace periodics
 

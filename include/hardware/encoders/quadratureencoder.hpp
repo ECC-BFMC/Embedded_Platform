@@ -60,8 +60,8 @@ class CQuadratureEncoder:public IEncoderGetter{
       const float       m_taskperiod_s;
       /** @brief Resolution of encoder */
       const uint16_t    m_resolution;
-      /** @brief Rtos Timer for periodically applying */
-      EventQueue m_timer;
+      /** @brief Timer for periodically applying */
+      LowPowerTicker m_timer;
 };
 
 /**

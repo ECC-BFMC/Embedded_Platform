@@ -48,7 +48,7 @@
 
 
 /// Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART comunication, the inputs have to be transmiter and receiver pins. 
-Serial          g_rpi(USBTX, USBRX);
+RawSerial          g_rpi(USBTX, USBRX);
 /** @brief 
  * This object is used to control the direction and the rotation speed of the wheel. 
  * The D3 output pin is for generating PWM signal for the DC-Motor driver. 
@@ -87,7 +87,7 @@ signal::controllers::siso::CPidController<double> l_pidController( 0.115000,0.81
 signal::controllers::CMotorController g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
 
 /// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
-brain::CRobotStateMachine g_robotstatemachine(g_period_Encoder, g_rpi, g_motorVnhDriver,g_steeringDriver,&g_controller);
+brain::CRobotStateMachine g_robotstatemachine(g_period_Encoder, g_rpi, g_motorVnhDriver,g_steeringDriver, &g_controller);
 
 /// Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 utils::serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
@@ -128,10 +128,10 @@ uint32_t setup()
     g_rpi.printf("#               #\r\n");
     g_rpi.printf("#################\r\n");
     g_rpi.printf("\r\n");
-    /// Start the Rtos timer for the quadrature encoder    
+    /// Start periodic task for the quadrature encoder    
     g_quadratureEncoderTask.startTimer();
-    /// Start the Rtos timer for the motion controller
-    g_robotstatemachine.startRtosTimer();
+    /// Start tperiodic task for the motion controller
+    g_robotstatemachine.startTimer();
     return 0;    
 }
 

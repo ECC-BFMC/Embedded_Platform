@@ -44,7 +44,7 @@ namespace brain{
      */
     CRobotStateMachine::CRobotStateMachine(
             float f_period_sec,
-            Serial& f_serialPort,
+            RawSerial& f_serialPort,
             hardware::drivers::IMotorCommand&                 f_motorControl,
             hardware::drivers::ISteeringCommand&              f_steeringControl,
             signal::controllers::CMotorController*           f_control) 
@@ -56,7 +56,7 @@ namespace brain{
         , m_period_sec(f_period_sec)
         , m_ispidActivated(false)
         , m_control(f_control)
-        , m_timer(mbed::callback(this,&CRobotStateMachine::_run))
+        , m_timer()
 
     {
     }
@@ -263,11 +263,11 @@ namespace brain{
     }
 
     /**
-     * @brief Start RtosTimer, which periodically apply the run method. The period of the task is defined in the contructor.
+     * @brief Start periodically the _run method. 
      * 
      */
-    void CRobotStateMachine::startRtosTimer(){
-        this->m_timer.dispatch(static_cast<int>(m_period_sec*1000));
+    void CRobotStateMachine::startTimer(){
+        this->m_timer.attach(mbed::callback(this,&CRobotStateMachine::_run), m_period_sec);
     }
 
 }; // namespace brain

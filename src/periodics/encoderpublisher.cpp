@@ -44,7 +44,7 @@ namespace periodics
      */
     CEncoderPublisher::CEncoderPublisher(uint32_t            f_period
                                             ,hardware::encoders::IEncoderGetter&     f_encoder
-                                            ,Serial&             f_serial)
+                                            ,RawSerial&             f_serial)
         :utils::task::CTask(f_period)
         ,m_isActive(false)
         ,m_encoder(f_encoder)
@@ -77,7 +77,7 @@ namespace periodics
     void CEncoderPublisher::_run()
     {
         if(!m_isActive) return;
-        float l_rps=m_encoder.getSpeedRps();
+        float l_rps = m_encoder.getSpeedRps();
         m_serial.printf("@ENPB:%.2f;;\r\n",l_rps);  
     }                        
 

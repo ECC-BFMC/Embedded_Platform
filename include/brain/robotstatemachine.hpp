@@ -58,14 +58,14 @@ namespace brain{
 
         CRobotStateMachine(
             float f_period_sec, 
-            Serial& f_serialPort, 
+            RawSerial& f_serialPort, 
             hardware::drivers::IMotorCommand&                 f_motorControl,
             hardware::drivers::ISteeringCommand&              f_steeringControl,
             signal::controllers::CMotorController*           f_control = NULL);
         
 
         /* Start the Rtos timer for applying "_run" method  */
-        void startRtosTimer();
+        void startTimer();
         /* Serial callback method for Speed */ 
         void serialCallbackSPED(char const * a, char * b);
         /* Serial callback method for Steering */ 
@@ -84,7 +84,7 @@ namespace brain{
 
     private:
         /* reference to Serial object */
-        Serial& m_serialPort;
+        RawSerial& m_serialPort;
         /* Motor control interface */
         hardware::drivers::IMotorCommand&                 m_motorControl;
         /* Steering wheel control interface */
@@ -102,7 +102,7 @@ namespace brain{
         /* Speed Control for dc motor */
         signal::controllers::CMotorController*           m_control;
         /* Rtos  timer for periodically applying */
-        EventQueue                               m_timer;
+        LowPowerTicker                                m_timer;
     }; // class CRobotStateMachine
 }; // namespace brain
 

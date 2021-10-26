@@ -47,17 +47,17 @@ namespace hardware::encoders{
                                                     :m_quadraturecounter(f_quadraturecounter)
                                                     ,m_taskperiod_s(f_period_sec)
                                                     ,m_resolution(f_resolution)
-                                                    ,m_timer(mbed::callback(this,&CQuadratureEncoder::_run))
+                                                    ,m_timer()
     {
     }
 
 
     /**
-     * @brief Start the RosTimer to periodically apply the '_run' function. 
+     * @brief Start periodically the '_run' function. 
      * 
      */
     void CQuadratureEncoder::startTimer(){
-        m_timer.dispatch(static_cast<int>(m_taskperiod_s*1000));
+        m_timer.attach(mbed::callback(this,&CQuadratureEncoder::_run), m_taskperiod_s);
     }
 
 

@@ -91,12 +91,12 @@ brain::CRobotStateMachine g_robotstatemachine(g_period_Encoder, g_rpi, g_motorVn
 
 /// Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 utils::serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
-    {"SPED",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSPED)},
-    {"STER",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSTER)},
-    {"BRAK",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackBrake)},
-    {"PIDA",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackPID)},
-    {"ENPB",mbed::callback(&g_encoderPublisher,&periodics::CEncoderPublisher::serialCallback)},
-    {"PIDS",mbed::callback(&l_pidController,&signal::controllers::siso::CPidController<double>::serialCallback)}
+    {"1",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSPEEDcommand)},
+    {"2",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSTEERcommand)},
+    {"3",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
+    {"4",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackACTIVPIDcommand)},
+    {"5",mbed::callback(&g_encoderPublisher,&periodics::CEncoderPublisher::serialCallbackENCODERPUBcommand)},
+    {"6",mbed::callback(&l_pidController,&signal::controllers::siso::CPidController<double>::serialCallbackTUNEPIDcommand)}
 };
 
 /// Create the serial monitor object, which decodes, redirects the messages and transmites the responses.

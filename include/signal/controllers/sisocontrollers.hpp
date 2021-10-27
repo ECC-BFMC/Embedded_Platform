@@ -80,7 +80,7 @@ namespace controllers
                 /* Calculate the control signal based the input error. */
                 T calculateControl(const T& f_input);
                 /* Serial callback implementation */
-                void serialCallback(char const * a, char * b);
+                void serialCallbackTUNEPIDcommand(char const * a, char * b);
 
                 /* Set to zero the previous values in the transferfunction  */
                 void clear();

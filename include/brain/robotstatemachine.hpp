@@ -67,13 +67,13 @@ namespace brain{
         /* Start the Rtos timer for applying "_run" method  */
         void startTimer();
         /* Serial callback method for Speed */ 
-        void serialCallbackSPED(char const * a, char * b);
+        void serialCallbackSPEEDcommand(char const * a, char * b);
         /* Serial callback method for Steering */ 
-        void serialCallbackSTER(char const * a, char * b);
+        void serialCallbackSTEERcommand(char const * a, char * b);
         /* Serial callback method for braking */
-        void serialCallbackBrake(char const * a, char * b);
+        void serialCallbackBRAKEcommand(char const * a, char * b);
         /* Serial callback method for activating pid */
-        void serialCallbackPID(char const * a, char * b);
+        void serialCallbackACTIVPIDcommand(char const * a, char * b);
 
     private:
         /* Contains the state machine, which control the lower level drivers (motor and steering) based the current state. */

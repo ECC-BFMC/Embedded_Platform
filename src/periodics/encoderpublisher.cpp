@@ -61,7 +61,7 @@ namespace periodics
      * @param b                   output reponse message
      * 
      */
-    void CEncoderPublisher::serialCallback(char const * a, char * b) {
+    void CEncoderPublisher::serialCallbackENCODERPUBcommand(char const * a, char * b) {
         int l_isActivate=0;
         uint32_t l_res = sscanf(a,"%d",&l_isActivate);
         if(l_res==1){

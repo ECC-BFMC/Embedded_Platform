@@ -56,7 +56,7 @@ namespace periodics
                         ,hardware::encoders::IEncoderGetter&    f_encoder
                         ,RawSerial&            f_serial);
             /* Serial callback implementation */
-            void serialCallback(char const * a, char * b);
+            void serialCallbackENCODERPUBcommand(char const * a, char * b);
         private:
             
             /* Run method */

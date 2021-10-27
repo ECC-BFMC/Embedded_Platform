@@ -130,7 +130,7 @@ namespace brain{
      * @param b                   string to write data 
      * 
      */
-    void CRobotStateMachine::serialCallbackSPED(char const * a, char * b)
+    void CRobotStateMachine::serialCallbackSPEEDcommand(char const * a, char * b)
     {
         float l_speed;
         uint32_t l_res = sscanf(a,"%f",&l_speed);
@@ -164,7 +164,7 @@ namespace brain{
      * @param b                   string to write data 
      * 
      */
-    void CRobotStateMachine::serialCallbackSTER(char const * a, char * b)
+    void CRobotStateMachine::serialCallbackSTEERcommand(char const * a, char * b)
     {
         float l_angle;
         uint32_t l_res = sscanf(a,"%f",&l_angle);
@@ -193,7 +193,7 @@ namespace brain{
      * @param b                   string to write data
      * 
      */
-    void CRobotStateMachine::serialCallbackBrake(char const * a, char * b)
+    void CRobotStateMachine::serialCallbackBRAKEcommand(char const * a, char * b)
     {
         float l_angle;
         uint32_t l_res = sscanf(a,"%f",&l_angle);
@@ -230,7 +230,7 @@ namespace brain{
      * @param b                   string to write data
      * 
      */
-    void CRobotStateMachine::serialCallbackPID(char const * a, char * b)
+    void CRobotStateMachine::serialCallbackACTIVPIDcommand(char const * a, char * b)
     {
         int l_isActivate=0;
         uint32_t l_res = sscanf(a,"%d",&l_isActivate);

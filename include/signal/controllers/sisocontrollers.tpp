@@ -131,7 +131,7 @@ void CPidController<T>::setController(
   * @param b                    string to write data to
   */
 template<class T>
-void CPidController<T>::serialCallback(char const * a, char * b)
+void CPidController<T>::serialCallbackTUNEPIDcommand(char const * a, char * b)
 {
     float l_kp,l_ki,l_kd,l_tf;
     uint32_t l_res = sscanf(a,"%f;%f;%f;%f;",&l_kp,&l_ki,&l_kd,&l_tf);

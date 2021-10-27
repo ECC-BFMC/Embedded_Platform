@@ -105,10 +105,10 @@ namespace utils::serial{
                 {
                     if ((';' == m_parseIt[-3]) && (';' == m_parseIt[-2]) && ('\r' == m_parseIt[-1])) // Check the message ending
                     {
-                        char l_msgID[5];
+                        char l_msgID[2];
                         char l_msg[256];
 
-                        uint32_t res = sscanf(m_parseBuffer.data(),"#%4s:%s;;",l_msgID,l_msg); //Parse the message to key and content
+                        uint32_t res = sscanf(m_parseBuffer.data(),"#%1s:%s;;",l_msgID,l_msg); //Parse the message to key and content
                         if (res == 2) // Check the parsing
                         {
                             auto l_pair = m_serialSubscriberMap.find(l_msgID); // Search the key and callback function pair

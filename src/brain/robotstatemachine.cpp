@@ -82,7 +82,7 @@ namespace brain{
                     if( l_isCorrect == -1 ) // High consecutive control signal 
                     {
                         // In this case the encoder is working fine and measures too high speed rotation, than it changes to the braking state.  
-                        m_serialPort.printf("@PIDA:Too high speed and the encoder working;;\r\n");
+                        m_serialPort.printf("@4:Too high speed and the encoder working;;\r\n");
                         m_motorControl.brake();
                         m_control->clear();
                         m_state = 2;
@@ -91,7 +91,7 @@ namespace brain{
                     {
                         // In this case the encoder fails and measures 0 rps, but the control signal had a series high values. 
                         // This part protects the robot to run with high speed, when the encoder doesn't measure correctly or it's broker.
-                        m_serialPort.printf("@PIDA:Encoder error;;\r\n");
+                        m_serialPort.printf("@4:Encoder error;;\r\n");
                         m_motorControl.brake();
                         m_control->clear();
                         m_state = 2;

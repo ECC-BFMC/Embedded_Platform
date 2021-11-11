@@ -78,7 +78,7 @@ namespace periodics
     {
         if(!m_isActive) return;
         float l_rps = m_encoder.getSpeedRps();
-        m_serial.printf("@ENPB:%.2f;;\r\n",l_rps);  
+        m_serial.printf("@5:%.2f;;\r\n",l_rps);  
     }                        
 
 }; // namespace periodics

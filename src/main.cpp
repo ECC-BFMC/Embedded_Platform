@@ -119,8 +119,7 @@ utils::task::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(ut
  */
 uint32_t setup()
 {
-    // g_rpi.baud(230400);  
-    g_rpi.baud(256000); 
+    g_rpi.baud(19200); 
     g_rpi.printf("\r\n\r\n");
     g_rpi.printf("#################\r\n");
     g_rpi.printf("#               #\r\n");

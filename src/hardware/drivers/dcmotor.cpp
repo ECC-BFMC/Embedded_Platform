@@ -34,29 +34,6 @@
 
 namespace hardware::drivers{
 
-
-
-    /**  @brief 
-     *  It initializes a object parameter based the given input paramterers, like input and output lines. The limits
-     * of the drivers are -0.5 and 0.5 duty cycle of generated PWM signal. 
-     *
-     *  @param f_pwmPin      PWM pin
-     *  @param f_inaPin      pin A
-     *  @param f_inbPin      pin B
-     *  @param f_currentPin  current analog pin
-     */
-    CMotorDriverVnh::CMotorDriverVnh(PinName f_pwmPin, PinName f_inaPin, PinName f_inbPin, PinName f_currentPin)
-        :m_pwm(f_pwmPin)
-        ,m_ina(f_inaPin)
-        ,m_inb(f_inbPin)
-        ,m_current_in(f_currentPin)
-        ,m_inf_limit(-0.50)
-        ,m_sup_limit(0.50)
-    {  
-        m_pwm.period_us(200);
-    }
-
-
     /**  @brief
      *  It initializes a object parameter based the given input paramterers, like input, output lines and the limits. 
      * The negative value of limit specifies the maximum backward speed, similarly the positive value gives the maximum forward speed.
@@ -68,13 +45,12 @@ namespace hardware::drivers{
      *  @param f_inf_limit     inferior limit
      *  @param f_sup_limit     superior limit
      */
-    CMotorDriverVnh::CMotorDriverVnh(PinName f_pwmPin, PinName f_inaPin, PinName f_inbPin, PinName f_currentPin, float f_inf_limit, float f_sup_limit)
+    CMotorDriverVnh::CMotorDriverVnh(PinName f_pwmPin, PinName f_inaPin, PinName f_inbPin, float f_pwm_inf_limit, float f_pwm_sup_limit)
         :m_pwm(f_pwmPin)
         ,m_ina(f_inaPin)
         ,m_inb(f_inbPin)
-        ,m_current_in(f_currentPin)
-        ,m_inf_limit(f_inf_limit)
-        ,m_sup_limit(f_sup_limit)
+        ,m_pwm_inf_limit(f_pwm_inf_limit)
+        ,m_pwm_sup_limit(f_pwm_sup_limit)
     {  
         m_pwm.period_us(200);
     }
@@ -115,7 +91,7 @@ namespace hardware::drivers{
     {
         m_ina = 0;
         m_inb = 0;
-        m_pwm.write(100.0);
+        m_pwm.write(0.0);
     }
 
     /**
@@ -126,7 +102,7 @@ namespace hardware::drivers{
      * @return false means, that the value isn't in the range
      */
     bool CMotorDriverVnh::inRange(float f_pwm){
-        return m_inf_limit<=f_pwm && f_pwm <=m_sup_limit;
+        return m_pwm_inf_limit<=f_pwm && f_pwm <=m_pwm_sup_limit;
     }
 
 }; // namespace hardware::drivers

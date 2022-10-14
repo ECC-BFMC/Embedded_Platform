@@ -138,7 +138,7 @@ void CPidController<T>::serialCallbackTUNEPIDcommand(char const * a, char * b)
     if (4 == l_res)
     {
         setController(l_kp,l_ki,l_kd,l_tf);
-        sprintf(b,"ack;;%2.5f;%2.5f;%2.5f;%2.5f;",l_kp,l_ki,l_kd,l_tf);
+        sprintf(b,"ack;;");
     }
     else
     {

@@ -57,13 +57,12 @@ namespace brain{
     public:
 
         CRobotStateMachine(
-            float f_period_sec, 
-            RawSerial& f_serialPort, 
-            hardware::drivers::IMotorCommand&                 f_motorControl,
-            hardware::drivers::ISteeringCommand&              f_steeringControl,
-            signal::controllers::CMotorController*           f_control = NULL);
+            float                                               f_period_sec, 
+            RawSerial&                                          f_serialPort, 
+            hardware::drivers::IMotorCommand&                   f_dcMotor,
+            hardware::drivers::ISteeringCommand&                f_steeringControl,
+            signal::controllers::CMotorController*              f_dcMotorControl = NULL);
         
-
         /* Start the Rtos timer for applying "_run" method  */
         void startTimer();
         /* Serial callback method for Speed */ 
@@ -74,35 +73,34 @@ namespace brain{
         void serialCallbackBRAKEcommand(char const * a, char * b);
         /* Serial callback method for activating pid */
         void serialCallbackACTIVPIDcommand(char const * a, char * b);
+        /* Serial callback method for Movement */ 
+        void serialCallbackMOVEcommand(char const * a, char * b);
 
     private:
         /* Contains the state machine, which control the lower level drivers (motor and steering) based the current state. */
         virtual void _run();
-                
         /* Static function to convert from linear velocity ( centimeter per second ) of robot to angular velocity ( rotation per second ) of motor */
         static float Mps2Rps(float f_vel_cmps);
+        /* Static function to convert from meters to int */
+        static float m2imp(float f_meters);
 
     private:
         /* reference to Serial object */
-        RawSerial& m_serialPort;
+        RawSerial&                                      m_serialPort;
         /* Motor control interface */
-        hardware::drivers::IMotorCommand&                 m_motorControl;
+        hardware::drivers::IMotorCommand&               m_dcMotor;
         /* Steering wheel control interface */
-        hardware::drivers::ISteeringCommand&              m_steeringControl;
-        /* Speed */
-        float m_speed;
-        /* Angle */
-        float m_angle;
+        hardware::drivers::ISteeringCommand&            m_steeringControl;
         /* PEriod i nseconds */
-        float   m_period_sec;
+        float                                           m_period_sec;
         /* State machine state */
-        uint8_t m_state;
+        uint8_t                                         m_state;
         /* PID activation state */
-        bool    m_ispidActivated;       
+        bool                                            m_ispidActivated;       
         /* Speed Control for dc motor */
-        signal::controllers::CMotorController*           m_control;
+        signal::controllers::CMotorController*          m_dcMotorControl;
         /* Rtos  timer for periodically applying */
-        LowPowerTicker                                m_timer;
+        LowPowerTicker                                  m_timer;
     }; // class CRobotStateMachine
 }; // namespace brain
 

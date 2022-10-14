@@ -50,12 +50,19 @@ class CQuadratureEncoder:public IEncoderGetter{
     virtual void _run();
     virtual int16_t getCount();
     virtual float getSpeedRps();
+    virtual float getTraveledDistance();
+    virtual void startDistMeasure();
+    virtual void stopDistMeasure();
     virtual bool isAbs(){return false;}
   protected:
       /** @brief Counter interface */
       ::hardware::encoders::IQuadratureCounter_TIMX *m_quadraturecounter;
       /** @brief Last counted value */
       int16_t           m_encoderCnt;
+      /** @brief counted steps */
+      double           m_encoderStps;
+      /** @brief counted steps enabled */
+      bool           m_encoderStpsEnable;
       /** @brief Sampling period */
       const float       m_taskperiod_s;
       /** @brief Resolution of encoder */

@@ -63,9 +63,7 @@ namespace hardware::drivers{
     class CMotorDriverVnh:public IMotorCommand {
         public:
             /* Constructor */
-            CMotorDriverVnh(PinName, PinName, PinName, PinName);
-            /* Constructor */
-            CMotorDriverVnh(PinName, PinName, PinName, PinName, float, float);
+            CMotorDriverVnh(PinName, PinName, PinName, float, float);
             /* Destructor */
             ~CMotorDriverVnh();
             /* Run */
@@ -82,11 +80,9 @@ namespace hardware::drivers{
             DigitalOut  m_ina;
             /** @brief pin B for direction */
             DigitalOut  m_inb;
-            /** @brief Measured current value by driver */
-            AnalogIn    m_current_in;
 
-            const float m_inf_limit;
-            const float m_sup_limit;
+            const float m_pwm_inf_limit;
+            const float m_pwm_sup_limit;
     };
 
 

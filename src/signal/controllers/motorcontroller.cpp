@@ -41,14 +41,18 @@ namespace controllers{
      * @param f_encoder Reference to the encoder getter interface.
      * @param f_pid     Reference to the controller interface.
      * @param f_converter [Optional] Pointer to the converter interface. 
+     * @param f_inf_dist   [Optional] Inferior limit of reference signal.
+     * @param f_sup_dist   [Optional] Superior limit of reference signal.
      * @param f_inf_ref   [Optional] Inferior limit of reference signal.
      * @param f_sup_ref   [Optional] Superior limit of reference signal.
      */
     CMotorController::CMotorController(hardware::encoders::IEncoderGetter&          f_encoder
-                            ,ControllerType<double>&                    f_pid
-                            ,signal::controllers::IConverter*                   f_converter
-                            ,float                                      f_inf_ref
-                            ,float                                      f_sup_ref)
+                            ,ControllerType<double>&                                f_pid
+                            ,signal::controllers::IConverter*                       f_converter
+                            ,float                                                  f_inf_dist
+                            ,float                                                  f_sup_dist
+                            ,float                                                  f_inf_ref
+                            ,float                                                  f_sup_ref)
         :m_encoder(f_encoder)
         ,m_pid(f_pid)
         ,m_converter(f_converter)
@@ -59,6 +63,8 @@ namespace controllers{
         ,m_ref_abs_inf(10.0)
         ,m_mes_abs_inf(30.0)
         ,m_mes_abs_sup(300.0)
+        ,m_inf_dist(f_inf_dist)
+        ,m_sup_dist(f_sup_dist)
         ,m_inf_ref(f_inf_ref)
         ,m_sup_ref(f_sup_ref)
     {
@@ -74,38 +80,60 @@ namespace controllers{
         m_RefRps=f_RefRps;
     }
 
-    /** \brief  Get the value of reference signal.
-     *
+    /**
+     * @brief Set the reference signal value.
+     * 
+     * @param f_RefDist The value of the reference signal
      */
-    double CMotorController::getRef()
+    void CMotorController::setDist(double f_RefDist)
     {
-        return m_RefRps;
+        m_RefDist=f_RefDist;
+        m_encoder.startDistMeasure();
     }
 
     /** @brief  Get the value of the control signal calculated last time.
      * 
      */
-    double CMotorController::get()
+    double CMotorController::getSpeed()
     {
         return m_u;
-    }
-
-    /** @brief  Get the value of the error between the measured and reference signal. 
-     *
-     */
-    double CMotorController::getError()
-    {
-        return m_error;
     }
 
     /** @brief  Clear the memory of the controller. 
      *
      */
-    void CMotorController::clear()
+    void CMotorController::clearSpeed()
     {
         m_pid.clear();
     }
 
+    /**
+     * @brief It checks if the distance has been covered.
+     * 
+     * @return true control works fine
+     * @return false appeared an error
+     */
+    int8_t CMotorController::doneDist()
+    {
+        double dist = m_encoder.getTraveledDistance();
+
+        if ((m_RefDist > 0 && m_RefDist >= dist) || (m_RefDist < 0 && m_RefDist <= dist))
+        {
+            return 1;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
+    /** @brief  Clear the memory of the distance. 
+     *
+     */
+    void CMotorController::clearDist()
+    {
+        m_encoder.stopDistMeasure();
+    }
 
     /**
      * @brief It calculates the next value of the control signal, by utilizing the given interfaces.
@@ -131,7 +159,6 @@ namespace controllers{
         // Inactivate the controller to not brake the robot, when it stopped. 
         if(std::abs(m_RefRps) < m_ref_abs_inf && std::abs(l_MesRps) < m_mes_abs_inf ){
             m_u = 0.0;
-            m_error = 0.0;
             return 1; 
         }
 
@@ -157,7 +184,6 @@ namespace controllers{
         }
 
         m_u=l_pwm_control;
-        m_error=l_error;
         
         // Check measured value is oriantated or absolute.
         if(m_RefRps<0 && l_isAbs)
@@ -206,6 +232,17 @@ namespace controllers{
      */
     bool CMotorController::inRange(double f_RefRps){
         return m_inf_ref<=f_RefRps && f_RefRps<=m_sup_ref;
+    }
+
+    /**
+     * @brief It checks whether a number is in a given range
+     * 
+     * @param f_RefDist value 
+     * @return true means, that the value is in the range
+     * @return false means, that the value isn't in the range
+     */
+    bool CMotorController::distInRange(double f_RefDist){
+        return m_inf_dist<=f_RefDist && f_RefDist <=m_sup_dist;
     }
 
 }; //  namespace controllers

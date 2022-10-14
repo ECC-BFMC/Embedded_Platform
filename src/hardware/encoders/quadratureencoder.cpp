@@ -45,6 +45,9 @@ namespace hardware::encoders{
                                                     ,hardware::encoders::IQuadratureCounter_TIMX*        f_quadraturecounter
                                                     ,uint16_t                        f_resolution)
                                                     :m_quadraturecounter(f_quadraturecounter)
+                                                    ,m_encoderCnt()
+                                                    ,m_encoderStps(0)
+                                                    ,m_encoderStpsEnable(false)
                                                     ,m_taskperiod_s(f_period_sec)
                                                     ,m_resolution(f_resolution)
                                                     ,m_timer()
@@ -67,6 +70,10 @@ namespace hardware::encoders{
      */
     void CQuadratureEncoder::_run(){
         m_encoderCnt = m_quadraturecounter->getCount();
+        if (m_encoderStpsEnable)
+        {
+            m_encoderStps += m_encoderCnt;
+        }
         m_quadraturecounter->reset();
     }
 
@@ -87,6 +94,35 @@ namespace hardware::encoders{
 
     float CQuadratureEncoder::getSpeedRps(){
         return static_cast<float>(m_encoderCnt)/ m_resolution / m_taskperiod_s;
+    }
+
+    /**
+     * @brief Getter function for the traveled distance. 
+     * 
+     * @return traveled distance
+     */
+    float CQuadratureEncoder::getTraveledDistance(){
+        return static_cast<double>(m_encoderStps);
+    }
+
+    /**
+     * @brief Getter function starts the recording for the traveled distance. 
+     * 
+     * @return 
+     */
+    void CQuadratureEncoder::startDistMeasure(){
+        m_encoderStps = 0;
+        m_encoderStpsEnable = true;
+    }
+
+    /**
+     * @brief Getter function for the traveled distance. 
+     * 
+     * @return 
+     */
+    void CQuadratureEncoder::stopDistMeasure(){
+        m_encoderStps = 0;
+        m_encoderStpsEnable = false;
     }
 
     /**
@@ -115,7 +151,6 @@ namespace hardware::encoders{
         CQuadratureEncoder::_run();
         float temp = m_encoderCnt;
         m_encoderCntFiltered = static_cast<int16_t>(m_filter(temp));
-
     }
 
     /**

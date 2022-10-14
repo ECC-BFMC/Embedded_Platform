@@ -52,6 +52,25 @@ namespace hardware::encoders{
          */
         virtual float getSpeedRps() = 0;
         /**
+         * @brief Get the Getter function for the traveled distance.
+         * 
+         * @return Counted value in a period
+         */
+        virtual float getTraveledDistance() = 0;
+        /**
+         * @brief Start the traveled distance measurement.
+         * 
+         * @return 
+         */
+        virtual void startDistMeasure();
+        /**
+         * @brief Stop the travel distange measurement.
+         * 
+         * @return 
+         */
+        virtual void stopDistMeasure();
+        
+        /**
          * @brief Get the encoder capacity. If it's false, than the encoder can give the orientation like a positive or a negative rotation speed, else it returns only the absolute value of the rotation speed. 
          * 
          * @return Capacity of measuring the rotation direction

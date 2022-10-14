@@ -56,8 +56,8 @@ RawSerial          g_rpi(USBTX, USBRX);
  * The A0 parameter represent an analog input pin, to measure the electric current used by the motor driver.
  * D9 reppresents the output pin for the servo motor, it must to generate a PWM signal. 
  */
-hardware::drivers::CMotorDriverVnh g_motorVnhDriver(D3, D2, D4, A0, -0.50, 0.50);
-hardware::drivers::CSteeringMotor g_steeringDriver(D9);
+hardware::drivers::CMotorDriverVnh g_motorVnhDriver(D3, D2, D4, -0.30, 0.30);
+hardware::drivers::CSteeringMotor g_steeringDriver(D9, -23.0, 23.0);
 
 /// Base sample time for the task manager. The measurement unit of base sample time is second.
 const float g_baseTick = 0.0001; // seconds
@@ -84,7 +84,7 @@ signal::controllers::CConverterSpline<2,1> l_volt2pwmConverter({-0.22166,0.22166
 signal::controllers::siso::CPidController<double> l_pidController( 0.115000,0.810000,0.000222,0.040000,g_period_Encoder);
 
 /// Create a controller object based on the predefined PID controller, the quadrature encoder and the spline object;
-signal::controllers::CMotorController g_controller(g_quadratureEncoderTask,l_pidController,&l_volt2pwmConverter);
+signal::controllers::CMotorController g_controller(g_quadratureEncoderTask, l_pidController, &l_volt2pwmConverter, -310299.0, 310299.0);
 
 /// Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
 brain::CRobotStateMachine g_robotstatemachine(g_period_Encoder, g_rpi, g_motorVnhDriver,g_steeringDriver, &g_controller);
@@ -96,7 +96,8 @@ utils::serial::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers =
     {"3",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
     {"4",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackACTIVPIDcommand)},
     {"5",mbed::callback(&g_encoderPublisher,&periodics::CEncoderPublisher::serialCallbackENCODERPUBcommand)},
-    {"6",mbed::callback(&l_pidController,&signal::controllers::siso::CPidController<double>::serialCallbackTUNEPIDcommand)}
+    {"6",mbed::callback(&l_pidController,&signal::controllers::siso::CPidController<double>::serialCallbackTUNEPIDcommand)},
+    {"7",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackMOVEcommand)}
 };
 
 /// Create the serial monitor object, which decodes, redirects the messages and transmites the responses.

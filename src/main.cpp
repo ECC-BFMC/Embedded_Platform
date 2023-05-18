@@ -41,7 +41,7 @@ RawSerial g_rpi(USBTX, USBRX);
 periodics::CBlinker g_blinker(0.5 / g_baseTick, LED1);
 /// It's a task for sending periodically the instant current consumption of the battery
 periodics::CInstantConsumption g_instantconsumption(0.2 / g_baseTick, D1, g_rpi);
-/// It's a task for sending periodically the battery current, so to notice when discharging
+/// It's a task for sending periodically the battery voltage, so to notice when discharging
 periodics::CTotalVoltage g_totalvoltage(3.0 / g_baseTick, D0, g_rpi);
 /// It's a task for sending periodically the IMU values
 periodics::CImu g_imu(0.1 / g_baseTick, I2C_SDA, I2C_SCL, g_rpi);

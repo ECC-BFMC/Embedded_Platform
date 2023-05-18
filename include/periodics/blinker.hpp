@@ -35,26 +35,32 @@
 
 /* The mbed library */
 #include <mbed.h>
-#include <utils/taskmanager/taskmanager.hpp>
+/* Header file for the task manager library, which  applies periodically the fun function of it's children*/
+#include <utils/taskmanager.hpp>
 
 
-namespace periodics{
-
+namespace periodics
+{
    /**
     * @brief It is used for toggling a LED.
     * 
     */
-    class CBlinker : public utils::task::CTask
+    class CBlinker : public utils::CTask
     {
         public:
             /* Construnctor */
-            CBlinker(uint32_t f_period, mbed::DigitalOut f_led);
+            CBlinker(
+                uint32_t            f_period, 
+                mbed::DigitalOut    f_led
+            );
+            /* Destructor */
+            ~CBlinker();
         private:
             /* Run method */
-            virtual void _run();
+            virtual void        _run();
             /* Digital output line connected to a LED */
-            mbed::DigitalOut m_led;    
-    };
+            mbed::DigitalOut    m_led;    
+    }; // class CBlinker
 }; // namespace periodics
 
-#endif
+#endif // BLINKER_HPP

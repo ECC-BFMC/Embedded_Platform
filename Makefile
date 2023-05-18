@@ -46,26 +46,27 @@ PROJECT := Nucleo_mbedrobot
 ###############################################################################
 # Objects and Paths
 
-OBJECTS += src/utils/linalg/linalg.o
-OBJECTS += src/utils/queue/queue.o
-OBJECTS += src/utils/taskmanager/taskmanager.o
-OBJECTS += src/utils/serial/serialmonitor.o
-OBJECTS += src/periodics/blinker.o
-OBJECTS += src/periodics/encoderpublisher.o
-
-OBJECTS += src/hardware/drivers/steeringmotor.o
-OBJECTS += src/hardware/drivers/dcmotor.o
-OBJECTS += src/hardware/encoders/quadraturecounter.o
-OBJECTS += src/hardware/encoders/quadratureencoder.o
-
-OBJECTS += src/signal/filter/filter.o
-OBJECTS += src/signal/systemmodels/systemmodels.o
-OBJECTS += src/signal/controllers/motorcontroller.o
-OBJECTS += src/signal/controllers/converters.o
-OBJECTS += src/signal/controllers/sisocontrollers.o
-
-OBJECTS += src/brain/robotstatemachine.o
+# Main executable
 OBJECTS += src/main.o
+
+# Brain namespace
+OBJECTS += src/brain/robotstatemachine.o
+
+# Drivers namespace
+OBJECTS += src/drivers/BNO055.o
+OBJECTS += src/drivers/steeringmotor.o
+OBJECTS += src/drivers/speedingmotor.o
+
+#Periodics namespace
+OBJECTS += src/periodics/blinker.o
+OBJECTS += src/periodics/imu.o
+OBJECTS += src/periodics/instantconsumption.o
+OBJECTS += src/periodics/totalvoltage.o
+
+#Utils namespace
+OBJECTS += src/utils/queue.o
+OBJECTS += src/utils/taskmanager.o
+OBJECTS += src/utils/serialmonitor.o
 
 OBJECTS += mbed-os/cmsis/TARGET_CORTEX_M/mbed_tz_context.o
 OBJECTS += mbed-os/components/802.15.4_RF/atmel-rf-driver/source/NanostackRfPhyAtmel.o

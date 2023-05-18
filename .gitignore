@@ -1,4 +1,5 @@
-BUILD/src/
-doc/build/
-doc/source/xml
-.vscode/settings.json
+.vscode/
+BUILD/.link_options.txt
+BUILD/Nucleo_mbedrobot.link_script.d
+BUILD/Nucleo_mbedrobot.link_script.ld
+GettingStarted.html

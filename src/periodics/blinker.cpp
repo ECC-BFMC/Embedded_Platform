@@ -39,11 +39,21 @@ namespace periodics{
      *  \param f_period       Toggling period of LED
      *  \param f_led          Digital output line to LED
      */
-    CBlinker::CBlinker(uint32_t f_period, mbed::DigitalOut f_led) 
-        : utils::task::CTask(f_period), m_led(f_led) 
+    CBlinker::CBlinker(
+            uint32_t            f_period, 
+            mbed::DigitalOut    f_led
+        ) 
+        : utils::CTask(f_period)
+        , m_led(f_led) 
     {
         m_led = 1;
     }
+
+    /** @brief  CBlinker class destructor
+     */
+    CBlinker::~CBlinker()
+    {
+    };
 
     /** \brief  Periodically applied method to change the LED's state
      * 

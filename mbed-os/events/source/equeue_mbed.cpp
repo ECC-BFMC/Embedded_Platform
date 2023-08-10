@@ -3,6 +3,7 @@
  * https://github.com/mbedmicro/mbed
  *
  * Copyright (c) 2016-2019 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +39,7 @@ using namespace mbed;
 #if MBED_CONF_RTOS_API_PRESENT
 
 #include "rtos/Kernel.h"
-#include "platform/source/mbed_os_timer.h"
+#include "platform/internal/mbed_os_timer.h"
 
 void equeue_tick_init()
 {
@@ -49,6 +50,9 @@ void equeue_tick_init()
 
 unsigned equeue_tick()
 {
+    using unsigned_ms_t = std::chrono::duration<unsigned, std::milli>;
+
+    unsigned_ms_t d;
 #if defined MBED_TICKLESS || !MBED_CONF_RTOS_PRESENT
     // It is not safe to call get_ms_count from ISRs, both
     // because documentation says so, and because it will give
@@ -60,9 +64,9 @@ unsigned equeue_tick()
         // should not be called from critical sections, for
         // performance reasons, but I don't have a good
         // current alternative!
-        return mbed::internal::os_timer->get_time() / 1000;
+        d = std::chrono::duration_cast<unsigned_ms_t>(mbed::internal::os_timer->get_time().time_since_epoch());
     } else {
-        return rtos::Kernel::get_ms_count();
+        d = rtos::Kernel::Clock::now().time_since_epoch();
     }
 #else
     // And this is the legacy behaviour - if running in
@@ -70,8 +74,9 @@ unsigned equeue_tick()
     // documentation saying no. (Most recent CMSIS-RTOS
     // permits `ososKernelGetTickCount` from IRQ, and our
     // `rtos::Kernel` wrapper copes too).
-    return rtos::Kernel::get_ms_count();
+    d = rtos::Kernel::Clock::now().time_since_epoch();
 #endif
+    return d.count();
 }
 
 #else
@@ -101,10 +106,10 @@ static void equeue_tick_update()
 
 void equeue_tick_init()
 {
-    MBED_STATIC_ASSERT(sizeof(equeue_timer) >= sizeof(ALIAS_TIMER),
-                       "The equeue_timer buffer must fit the class Timer");
-    MBED_STATIC_ASSERT(sizeof(equeue_ticker) >= sizeof(ALIAS_TICKER),
-                       "The equeue_ticker buffer must fit the class Ticker");
+    static_assert(sizeof(equeue_timer) >= sizeof(ALIAS_TIMER),
+                  "The equeue_timer buffer must fit the class Timer");
+    static_assert(sizeof(equeue_ticker) >= sizeof(ALIAS_TICKER),
+                  "The equeue_ticker buffer must fit the class Ticker");
     ALIAS_TIMER *timer = new (equeue_timer) ALIAS_TIMER;
     ALIAS_TICKER *ticker = new (equeue_ticker) ALIAS_TICKER;
 
@@ -151,7 +156,7 @@ void equeue_mutex_unlock(equeue_mutex_t *m)
 
 #include "rtos/EventFlags.h"
 
-MBED_STATIC_ASSERT(sizeof(equeue_sema_t) == sizeof(rtos::EventFlags), "equeue_sema_t / rtos::EventFlags mismatch");
+static_assert(sizeof(equeue_sema_t) == sizeof(rtos::EventFlags), "equeue_sema_t / rtos::EventFlags mismatch");
 
 int equeue_sema_create(equeue_sema_t *s)
 {

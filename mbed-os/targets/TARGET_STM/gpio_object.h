@@ -57,9 +57,8 @@ typedef struct {
 
 static inline void gpio_write(gpio_t *obj, int value)
 {
-#if defined(DUAL_CORE)
-    uint32_t timeout = HSEM_TIMEOUT;
-    while (LL_HSEM_1StepLock(HSEM, CFG_HW_GPIO_SEMID) && (--timeout != 0)) {
+#if defined(DUAL_CORE) && (TARGET_STM32H7)
+    while (LL_HSEM_1StepLock(HSEM, CFG_HW_GPIO_SEMID)) {
     }
 #endif /* DUAL_CORE */
 
@@ -73,7 +72,7 @@ static inline void gpio_write(gpio_t *obj, int value)
 #endif
     }
 
-#if defined(DUAL_CORE)
+#if defined(DUAL_CORE) && (TARGET_STM32H7)
     LL_HSEM_ReleaseLock(HSEM, CFG_HW_GPIO_SEMID, HSEM_CR_COREID_CURRENT);
 #endif /* DUAL_CORE */
 }

@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-#if DEVICE_SERIAL
-
 #include <ctype.h>
 #include <cstdio>
 #include <string.h>
 #include "greentea-client/test_env.h"
-#include "greentea-client/greentea_serial.h"
 #include "greentea-client/greentea_metrics.h"
 #include "mbed_trace.h"
+#include "platform/mbed_retarget.h"
 
 /**
  *   Generic test suite transport protocol keys
@@ -59,7 +57,6 @@ static void greentea_notify_timeout(const int);
 static void greentea_notify_hosttest(const char *);
 static void greentea_notify_completion(const int);
 static void greentea_notify_version();
-static void greentea_write_string(const char *str);
 
 /** \brief Handle the handshake with the host
  *  \details This is contains the shared handhshake functionality that is used between
@@ -212,17 +209,15 @@ void greentea_notify_coverage_end() {
  *
  *        This function writes the preamble "{{" which is required
  *        for key-value comunication between the target and the host.
- *        This uses a Rawserial object, greentea_serial, which provides
- *        a direct interface to the USBTX and USBRX serial pins and allows
- *        the direct writing of characters using the putc() method.
+ *        This uses greentea_putc which allows the direct writing of characters
+ *        using the write() method.
  *        This suite of functions are provided to allow for serial communication
  *        to the host from within a thread/ISR.
- *
  */
-inline void greentea_write_preamble()
+static void greentea_write_preamble()
 {
-    greentea_serial->putc('{');
-    greentea_serial->putc('{');
+    greentea_putc('{');
+    greentea_putc('{');
 }
 
 /**
@@ -230,39 +225,19 @@ inline void greentea_write_preamble()
  *
  *        This function writes the postamble "{{\n" which is required
  *        for key-value comunication between the target and the host.
- *        This uses a Rawserial object, greentea_serial, which provides
- *        a direct interface to the USBTX and USBRX serial pins and allows
- *        the direct writing of characters using the putc() method.
+ *        This uses greentea_putc which allows the direct writing of characters
+ *        using the write() method.
  *        This suite of functions are provided to allow for serial communication
  *        to the host from within a thread/ISR.
  *
  */
-inline void greentea_write_postamble()
+static void greentea_write_postamble()
 {
-    greentea_serial->putc('}');
-    greentea_serial->putc('}');
-    greentea_serial->putc('\r');
-    greentea_serial->putc('\n');
+    greentea_putc('}');
+    greentea_putc('}');
+    greentea_putc('\r');
+    greentea_putc('\n');
 }
-
-/**
- * \brief Write a string to the serial port
- *
- *        This function writes a '\0' terminated string from the target
- *        to the host. It writes directly to the serial port using the
- *        greentea_serial, Rawserial object.
- *
- * \param str - string value
- *
- */
-inline void greentea_write_string(const char *str)
-{
-    while (*str != '\0') {
-        greentea_serial->putc(*str);
-        str ++;
-    }
-}
-
 
 /**
  * \brief Write an int to the serial port
@@ -270,7 +245,7 @@ inline void greentea_write_string(const char *str)
  *        This function writes an integer value from the target
  *        to the host. The integer value is converted to a string and
  *        and then written character by character directly to the serial
- *        port using the greentea_serial, Rawserial object.
+ *        port using the console.
  *        sprintf() is used to convert the int to a string. Sprintf if
  *        inherently thread safe so can be used.
  *
@@ -278,13 +253,13 @@ inline void greentea_write_string(const char *str)
  *
  */
 #define MAX_INT_STRING_LEN 15
-inline void greentea_write_int(const int val)
+static void greentea_write_int(const int val)
 {
     char intval[MAX_INT_STRING_LEN];
     unsigned int i = 0;
     sprintf(intval, "%d", val);
     while (intval[i] != '\0') {
-        greentea_serial->putc(intval[i]);
+        greentea_putc(intval[i]);
         i++;
     }
 }
@@ -293,7 +268,7 @@ inline void greentea_write_int(const int val)
  * \brief Encapsulate and send key-value message from DUT to host
  *
  *        This function uses underlying functions to write directly
- *        to the serial port, (USBTX). This allows KVs to be used
+ *        to the serial port, (CONSOLE_TX). This allows KVs to be used
  *        from within interrupt context.
  *
  * \param key Message key (message/event name)
@@ -304,7 +279,7 @@ extern "C" void greentea_send_kv(const char *key, const char *val) {
     if (key && val) {
         greentea_write_preamble();
         greentea_write_string(key);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_string(val);
         greentea_write_postamble();
     }
@@ -314,7 +289,7 @@ extern "C" void greentea_send_kv(const char *key, const char *val) {
  * \brief Encapsulate and send key-value message from DUT to host
  *
  *        This function uses underlying functions to write directly
- *        to the serial port, (USBTX). This allows KVs to be used
+ *        to the serial port, (CONSOLE_TX). This allows KVs to be used
  *        from within interrupt context.
  *        Last value is an integer to avoid integer to string conversion
  *        made by the user.
@@ -327,7 +302,7 @@ void greentea_send_kv(const char *key, const int val) {
     if (key) {
         greentea_write_preamble();
         greentea_write_string(key);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_int(val);
         greentea_write_postamble();
     }
@@ -337,7 +312,7 @@ void greentea_send_kv(const char *key, const int val) {
  * \brief Encapsulate and send key-value-value message from DUT to host
  *
  *        This function uses underlying functions to write directly
- *        to the serial port, (USBTX). This allows KVs to be used
+ *        to the serial port, (CONSOLE_TX). This allows KVs to be used
  *        from within interrupt context.
  *        Last value is an integer to avoid integer to string conversion
  *        made by the user.
@@ -351,9 +326,9 @@ void greentea_send_kv(const char *key, const char *val, const int result) {
     if (key) {
         greentea_write_preamble();
         greentea_write_string(key);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_string(val);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_int(result);
         greentea_write_postamble();
 
@@ -364,7 +339,7 @@ void greentea_send_kv(const char *key, const char *val, const int result) {
  * \brief Encapsulate and send key-value-value-value message from DUT to host
  *
  *        This function uses underlying functions to write directly
- *        to the serial port, (USBTX). This allows KVs to be used
+ *        to the serial port, (CONSOLE_TX). This allows KVs to be used
  *        from within interrupt context.
  *        Last 2 values are integers to avoid integer to string conversion
  *        made by the user.
@@ -384,11 +359,11 @@ void greentea_send_kv(const char *key, const char *val, const int passes, const 
     if (key) {
         greentea_write_preamble();
         greentea_write_string(key);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_string(val);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_int(passes);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_int(failures);
         greentea_write_postamble();
     }
@@ -398,7 +373,7 @@ void greentea_send_kv(const char *key, const char *val, const int passes, const 
  * \brief Encapsulate and send key-value-value message from DUT to host
  *
  *        This function uses underlying functions to write directly
- *        to the serial port, (USBTX). This allows key-value-value to be used
+ *        to the serial port, (CONSOLE_TX). This allows key-value-value to be used
  *        from within interrupt context.
  *        Both values are integers to avoid integer to string conversion
  *        made by the user.
@@ -417,9 +392,9 @@ void greentea_send_kv(const char *key, const int passes, const int failures) {
     if (key) {
         greentea_write_preamble();
         greentea_write_string(key);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_int(passes);
-        greentea_serial->putc(';');
+        greentea_putc(';');
         greentea_write_int(failures);
         greentea_write_postamble();
     }
@@ -544,26 +519,6 @@ enum Token {
     tok_semicolon = -4,
     tok_string = -5
 };
-
-/**
- * \brief Read character from stream of data
- *
- *        Closure for default "get character" function.
- *        This function is used to read characters from the stream
- *        (default is serial port RX). Key-value protocol tokenizer
- *        will build stream of tokes used by key-value protocol to
- *        detect valid messages.
- *
- *        If EOF is received parser finishes parsing and stops. In
- *        situation where we have serial port stream of data parsing
- *        goes forever.
- *
- * \return Next character from the stream or EOF if stream has ended.
- *
- */
-extern "C" int greentea_getc() {
-    return greentea_serial->getc();
-}
 
 /**
  * \brief parse input string for key-value pairs: {{key;value}}
@@ -735,6 +690,7 @@ static int gettok(char *out_str, const int str_size) {
 	if (LastChar == '}') {
 		LastChar = greentea_getc();
 		if (LastChar == '}') {
+			greentea_getc(); //offset the extra '\n' send by Greentea python tool
 			LastChar = '!';
 			return tok_close;
 		}
@@ -786,5 +742,3 @@ static int HandleKV(char *out_key,
     getNextToken(0, 0);
     return 0;
 }
-
-#endif

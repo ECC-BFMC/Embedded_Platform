@@ -37,8 +37,6 @@
 #include <drivers/speedingmotor.hpp>
 /* Header file for the burshless motor  */
 #include <drivers/steeringmotor.hpp>
-/* Header file for the serial communication functionality */
-#include <utils/serialmonitor.hpp>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/taskmanager.hpp>
 
@@ -57,7 +55,7 @@ namespace brain
             /* Constructor */
             CRobotStateMachine(
                 uint32_t                      f_period, 
-                RawSerial&                    f_serialPort, 
+                UnbufferedSerial&             f_serialPort, 
                 drivers::ISteeringCommand&    f_steeringControl,
                 drivers::ISpeedingCommand&    f_speedingControl
             );
@@ -74,7 +72,7 @@ namespace brain
             /* Contains the state machine, which control the lower level drivers (motor and steering) based the current state. */
             virtual void _run();
             /* reference to Serial object */
-            RawSerial&                    m_serialPort;
+            UnbufferedSerial&                    m_serialPort;
             /* Steering wheel control interface */
             drivers::ISteeringCommand&    m_steeringControl;
             /* Steering wheel control interface */

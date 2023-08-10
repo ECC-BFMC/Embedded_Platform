@@ -5,7 +5,7 @@ The project contains all the software present on the Nucleo board, together with
 - Motors control,
 - IMU readings
 - Notifications from Power Board
-- Architecture prone to features adition
+- Architecture prone to features addition
 
-## The documentation is available in more details here:
+## The documentation is available in details here:
 [Documentation](https://bosch-future-mobility-challenge-documentation.readthedocs-hosted.com/data/embeddedplatform.html) 

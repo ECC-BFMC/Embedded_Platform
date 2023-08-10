@@ -1,5 +1,6 @@
 /* mbed Microcontroller Library
- * Copyright (c) 2017 ARM Limited
+ * Copyright (c) 2017-2020 ARM Limited
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +21,9 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 
-/***************************/
-/* MBED                    */
-/***************************/
-#if TARGET_LIKE_MBED
-
-#if MBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES
-static char mbed_stdio_out_prev = 0;
-#endif
-
-
-/***************************/
-/* Linux                   */
-/***************************/
-#else
+#if !TARGET_LIKE_MBED
 /* Linux implementation is for debug only */
 #define MBED_CONF_PLATFORM_MINIMAL_PRINTF_ENABLE_FLOATING_POINT 1
 #define MBED_CONF_PLATFORM_MINIMAL_PRINTF_SET_FLOATING_POINT_MAX_DECIMALS 6
@@ -99,13 +88,21 @@ typedef enum {
 } length_t;
 
 /**
+ * Enum for integer printing type
+ */
+typedef enum {
+    INT_UNSIGNED,
+    INT_SIGNED,
+    HEX_LOWER,
+    HEX_UPPER,
+    ZERO_NEGATIVE /* special case when printing integer part of double values where it is 0 and the value is negative */
+} integer_type_t;
+
+/**
  * Prototypes
  */
-static void mbed_minimal_formatted_string_signed(char *buffer, size_t length, int *result, MBED_SIGNED_STORAGE value, FILE *stream);
-static void mbed_minimal_formatted_string_unsigned(char *buffer, size_t length, int *result, MBED_UNSIGNED_STORAGE value, FILE *stream);
-static void mbed_minimal_formatted_string_hexadecimal(char *buffer, size_t length, int *result, MBED_UNSIGNED_STORAGE value, FILE *stream, bool upper);
+static void mbed_minimal_formatted_string_integer(char *buffer, size_t length, int *result, MBED_UNSIGNED_STORAGE value, integer_type_t type, int width_size, bool prepend_zeros, FILE *stream);
 static void mbed_minimal_formatted_string_void_pointer(char *buffer, size_t length, int *result, const void *value, FILE *stream);
-static void mbed_minimal_formatted_string_character(char *buffer, size_t length, int *result, char character, FILE *stream);
 static void mbed_minimal_formatted_string_string(char *buffer, size_t length, int *result, const char *string, size_t precision, FILE *stream);
 
 
@@ -121,120 +118,118 @@ static void mbed_minimal_putchar(char *buffer, size_t length, int *result, char 
 {
     /* only continue if 'result' doesn't overflow */
     if ((*result >= 0) && (*result <= INT_MAX - 1)) {
-        /* write data only if there's enough space */
-        if ((size_t)*result < length) {
-            if (buffer) {
-                buffer[*result] = data;
+        if (stream) {
+            if (fputc(data, stream) == EOF) {
+                *result = EOF;
             } else {
-                fputc(data, stream);
+                *result += 1;
             }
+        } else {
+            if (buffer) {
+                /* write data only if there's enough space */
+                if ((size_t)*result < length) {
+                    buffer[*result] = data;
+                }
+            }
+
+            /* increment 'result' even if data was not written. This ensures that
+               'mbed_minimal_formatted_string' returns the correct value. */
+            *result += 1;
         }
-        /* increment 'result' even if data was not written. This ensures that
-           'mbed_minimal_formatted_string' returns the correct value. */
-        *result += 1;
     }
 }
 
 /**
- * @brief      Print signed integer.
+ * @brief      Print integer in signed, unsigned or hexadecimal format.
  *
- * @param      buffer  The buffer to store output (NULL for stdout).
- * @param[in]  length  The length of the buffer.
- * @param      result  The current output location.
- * @param[in]  value   The value to be printed.
+ * @param      buffer           The buffer to store output (NULL for stdout).
+ * @param[in]  length           The length of the buffer.
+ * @param      result           The current output location.
+ * @param[in]  value            The value to be printed.
+ * @param      type             The type of integer format that shall be printed (signed, unsigend or hexadecimal)
+ * @param      width_size       The width modifier.
+ * @param      prepend_zeros    Flag to prepends zeros when the width_size is greater than 0
  */
-static void mbed_minimal_formatted_string_signed(char *buffer, size_t length, int *result, MBED_SIGNED_STORAGE value, FILE *stream)
+static void mbed_minimal_formatted_string_integer(char *buffer, size_t length, int *result, MBED_UNSIGNED_STORAGE value, integer_type_t type, int width_size, bool prepend_zeros, FILE *stream)
 {
-    MBED_UNSIGNED_STORAGE new_value = 0;
+    /* allocate 3 digits per byte */
+    char scratch[sizeof(MBED_UNSIGNED_STORAGE) * 3] = { 0 };
 
-    /* if value is negative print sign and treat as positive number */
-    if (value < 0) {
-        /* write sign */
-        mbed_minimal_putchar(buffer, length, result, '-', stream);
+    int index = 0;
 
-        /* get absolute value using two's complement */
-        new_value = ~((MBED_UNSIGNED_STORAGE) value) + 1;
-    } else {
-        new_value = value;
+    bool negative_value = false;
+
+    const char filler = prepend_zeros ? '0' : ' ';
+
+    if (type == INT_SIGNED) {
+        if ((MBED_SIGNED_STORAGE) value < 0) {
+            /* get absolute value using two's complement */
+            value = ~value + 1;
+            negative_value = true;
+        }
+    } else if (type == ZERO_NEGATIVE) {
+        negative_value = true;
     }
 
-    /* use unsigned long int function */
-    mbed_minimal_formatted_string_unsigned(buffer, length, result, new_value, stream);
-}
-
-/**
- * @brief      Print unsigned integer.
- *
- * @param      buffer  The buffer to store output (NULL for stdout).
- * @param[in]  length  The length of the buffer.
- * @param      result  The current output location.
- * @param[in]  value   The value to be printed.
- */
-static void mbed_minimal_formatted_string_unsigned(char *buffer, size_t length, int *result, MBED_UNSIGNED_STORAGE value, FILE *stream)
-{
-    /* treat 0 as a corner case */
     if (value == 0) {
-        mbed_minimal_putchar(buffer, length, result, '0', stream);
+        scratch[index] = '0';
+        index++;
     } else {
-        /* allocate 3 digits per byte */
-        char scratch[sizeof(MBED_UNSIGNED_STORAGE) * 3] = { 0 };
-
-        size_t index = 0;
-
         /* write numbers in reverse order to scratch pad */
         for (; value > 0; index++) {
-            /* use '0' as base and add digit */
-            scratch[index] = '0' + (value % 10);
+            if (type == HEX_LOWER || type == HEX_UPPER) {
+                /* get least significant byte */
+                const uint8_t output = value & 0x0F;
 
-            /* shift value one decimal position */
-            value = value / 10;
-        }
+                static const char int2hex_lower[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
+                                                        '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+                                                      };
+                static const char int2hex_upper[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
+                                                        '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+                                                      };
 
-        /* write scratch pad to buffer or output */
-        for (; index > 0; index--) {
-            mbed_minimal_putchar(buffer, length, result, scratch[index - 1], stream);
+                if (type == HEX_LOWER) {
+                    scratch[index] = int2hex_lower[output];
+                } else {
+                    scratch[index] = int2hex_upper[output];
+                }
+
+                /* shift value one byte position */
+                value = value >> 4;
+            } else {
+                /* use '0' as base and add digit */
+                scratch[index] = '0' + (value % 10);
+
+                /* shift value one decimal position */
+                value = value / 10;
+            }
         }
     }
-}
 
-/**
- * @brief      Print hexadecimal.
- *
- * @param      buffer  The buffer to store output (NULL for stdout).
- * @param[in]  length  The length of the buffer.
- * @param      result  The current output location.
- * @param[in]  value   The value to be printed.
- * @param      upper   Flag to print the hexadecimal in upper or lower case.
- */
-static void mbed_minimal_formatted_string_hexadecimal(char *buffer, size_t length, int *result, MBED_UNSIGNED_STORAGE value, FILE *stream, bool upper)
-{
-    bool print_leading_zero = false;
-
-    for (int index = 7; index >= 0; index--) {
-        /* get most significant byte */
-        uint8_t output = value >> (8 * index);
-
-        /* only print leading zeros when set */
-        if (print_leading_zero || (output != 0) || (index == 0)) {
-            unsigned int nibble_one = (output >> 4);
-            unsigned int nibble_two = (output & 0x0F);
-
-            const char int2hex_lower[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
-                                             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-                                           };
-            const char int2hex_upper[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
-                                             '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-                                           };
-            const char *int2hex = upper ? int2hex_upper : int2hex_lower;
-
-            if (print_leading_zero || nibble_one != 0) {
-                mbed_minimal_putchar(buffer, length, result, int2hex[nibble_one], stream);
-            }
-            mbed_minimal_putchar(buffer, length, result, int2hex[nibble_two], stream);
-
-            /* print zeroes after the first non-zero byte */
-            print_leading_zero = true;
+    if (negative_value) {
+        if (prepend_zeros) {
+            mbed_minimal_putchar(buffer, length, result, '-', stream);
         }
+        index++; // add one to index to count '-'
+    }
+
+    // print filler characters
+    if (width_size > index) {
+        for (int i = width_size; i > index; i--) {
+            mbed_minimal_putchar(buffer, length, result, filler, stream);
+        }
+    }
+
+    if (negative_value) {
+        if (!prepend_zeros) {
+            mbed_minimal_putchar(buffer, length, result, '-', stream);
+        }
+        index--; // Restore index to correct position
+    }
+
+    /* print absolute value of integer */
+    for (; index > 0; index--) {
+        mbed_minimal_putchar(buffer, length, result, scratch[index - 1], stream);
     }
 }
 
@@ -253,98 +248,88 @@ static void mbed_minimal_formatted_string_void_pointer(char *buffer, size_t leng
     mbed_minimal_putchar(buffer, length, result, 'x', stream);
 
     /* write rest as a regular hexadecimal number */
-    mbed_minimal_formatted_string_hexadecimal(buffer, length, result, (ptrdiff_t) value, stream, true);
+    mbed_minimal_formatted_string_integer(buffer, length, result, (ptrdiff_t) value, HEX_UPPER, 0, false, stream);
 }
 
 #if MBED_CONF_PLATFORM_MINIMAL_PRINTF_ENABLE_FLOATING_POINT
 /**
  * @brief      Write double.
  *
- * @param      buffer  The buffer to store output (NULL for stdout).
- * @param[in]  length  The length of the buffer.
- * @param      result  The current output location.
- * @param[in]  value   The value to be printed.
+ * @param      buffer          The buffer to store output (NULL for stdout).
+ * @param[in]  length          The length of the buffer.
+ * @param      result          The current output location.
+ * @param[in]  value           The value to be printed.
+ * @param[in]  dec_precision   The decimal precision. If PRECISION_DEFAULT MBED_CONF_PLATFORM_MINIMAL_PRINTF_SET_FLOATING_POINT_MAX_DECIMALS is used.
+ * @param      width_size       The width modifier.
+ * @param      prepend_zeros    Flag to prepends zeros when the width_size is greater than 0
  */
-static void mbed_minimal_formatted_string_double(char *buffer, size_t length, int *result, double value, FILE *stream)
+static void mbed_minimal_formatted_string_double(char *buffer, size_t length, int *result, double value, int dec_precision, int width_size, bool prepend_zeros, FILE *stream)
 {
     /* get integer part */
     MBED_SIGNED_STORAGE integer = value;
+    /* fractional part represented as the int that will be formatted after the dot, e.g. 95 for 1.95 */
+    MBED_SIGNED_STORAGE decimal = 0;
 
-    /* write integer part */
-    mbed_minimal_formatted_string_signed(buffer, length, result, integer, stream);
-
-    /* write decimal point */
-    mbed_minimal_formatted_string_character(buffer, length, result, '.', stream);
-
-    /* get decimal part */
-    double precision = 1.0;
-
-    for (size_t index = 0; index < MBED_CONF_PLATFORM_MINIMAL_PRINTF_SET_FLOATING_POINT_MAX_DECIMALS; index++) {
-        precision *= 10;
+    if (dec_precision == PRECISION_DEFAULT) {
+        dec_precision = MBED_CONF_PLATFORM_MINIMAL_PRINTF_SET_FLOATING_POINT_MAX_DECIMALS;
     }
 
-    value = (value - integer) * precision;
-
-    /* convert to unsigned integer */
-    MBED_UNSIGNED_STORAGE decimal = 0;
-
-    if (value < 0) {
-        MBED_SIGNED_STORAGE temp = value;
-        decimal = ~((MBED_UNSIGNED_STORAGE) temp) + 1;
-    } else {
-        decimal = value;
-    }
-
-    /* round up or down */
-    value -= decimal;
-
-    if (!((value > -0.5) && (value < 0.5))) {
-        decimal++;
-    }
-
-    /* convert precision to unsigned integer */
-    MBED_UNSIGNED_STORAGE precision_in_uint = precision;
-    precision_in_uint /= 10;
-
-    /* ensure that leading zeros are printed if decimal equals 0  */
-    MBED_UNSIGNED_STORAGE val = decimal ? decimal : decimal + 1;
-    while (precision_in_uint > val) {
-        /* print leading zeros */
-        mbed_minimal_putchar(buffer, length, result, '0', stream);
-        precision_in_uint /= 10;
-    }
-
-    /* write decimal part */
-    mbed_minimal_formatted_string_unsigned(buffer, length, result, decimal, stream);
-}
-#endif
-
-/**
- * @brief      Print character.
- *
- * @param      buffer  The buffer to store output (NULL for stdout).
- * @param[in]  length  The length of the buffer.
- * @param      result  The current output location.
- * @param[in]  value   The character to be printed.
- */
-static void mbed_minimal_formatted_string_character(char *buffer, size_t length, int *result, char character, FILE *stream)
-{
-    /* write character */
-    if (buffer) {
-        mbed_minimal_putchar(buffer, length, result, character, stream);
-    } else {
-        /* convert \n to \r\n if enabled in platform configuration */
-#if MBED_CONF_PLATFORM_STDIO_CONVERT_NEWLINES
-        if (character == '\n' && mbed_stdio_out_prev != '\r') {
-            mbed_minimal_putchar(buffer, length, result, '\r', stream);
+    if (dec_precision != 0) {
+        /* get decimal part */
+        MBED_SIGNED_STORAGE precision = 1;
+        for (int index = 0; index < dec_precision; index++) {
+            precision *= 10;
         }
 
-        /* cache character */
-        mbed_stdio_out_prev = character;
-#endif
-        mbed_minimal_putchar(buffer, length, result, character, stream);
+        /* Multiply the frac part so we get an int value with the required accuracy.
+           E.g. For 0.1234 and dec_precision=3 you'd get 123.4 */
+        double decimal_double = (value - integer) * precision;
+        if (value < 0) {
+            /* The part after the dot does not have a sign, so negate the value before rounding */
+            decimal = -decimal_double + 0.5;
+            if (decimal >= precision) {
+                /* Rounding carries over to value's integer part (e.g. -1.95 with dec_precision=1 -> -2.0) */
+                integer--;
+                decimal = 0;
+            }
+        } else {
+            /* Round the value */
+            decimal = decimal_double + 0.5;
+            if (decimal >= precision) {
+                /* Rounding carries over to value's integer part (e.g. 1.95 with dec_precision=1 -> 2.0) */
+                integer++;
+                decimal = 0;
+            }
+        }
+
+        width_size -= dec_precision + 1; // decimal precision plus '.'
+        if (width_size < 0) {
+            width_size = 0;
+        }
+    } else {
+        value = (value - integer) * 1.0;
+        if (value > 0.5) {
+            integer++;
+        } else if (value < -0.5) {
+            integer--;
+        }
+    }
+
+    /* write integer part */
+    if (integer == 0 && value < 0) {
+        mbed_minimal_formatted_string_integer(buffer, length, result, integer, ZERO_NEGATIVE, width_size, prepend_zeros, stream);
+    } else {
+        mbed_minimal_formatted_string_integer(buffer, length, result, integer, INT_SIGNED, width_size, prepend_zeros, stream);
+    }
+
+    if (dec_precision != 0) {
+        /* write decimal point */
+        mbed_minimal_putchar(buffer, length, result, '.', stream);
+        /* write decimal part */
+        mbed_minimal_formatted_string_integer(buffer, length, result, decimal, INT_UNSIGNED, dec_precision, true, stream);
     }
 }
+#endif
 
 /**
  * @brief      Print string with precision.
@@ -362,6 +347,26 @@ static void mbed_minimal_formatted_string_string(char *buffer, size_t length, in
         string++;
         precision--;
     }
+}
+
+/**
+ * @brief Parse a string to an integer value as long as there are numerical characters in the string
+ *
+ * @param[in]   string      The input string. Has to begin with a numerical character to parse
+ * @param[out]  value       The output value.
+ * @return      size_t      The number of numerical characters parsed
+ */
+static size_t parse_string_to_integer(const char *string, int *value)
+{
+    size_t inner_index = 0;
+
+    while ((string[inner_index] >= '0') && (string[inner_index] <= '9')) {
+        *value = *value * 10 + (string[inner_index] - '0');
+
+        inner_index++;
+    }
+
+    return inner_index;
 }
 
 /**
@@ -397,20 +402,22 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                 size_t next_index = index + 1;
 
                 /**************************************************************
-                 * skip and ignore flags [-+(space)#0]
+                 * skip and ignore flags [-+(space)#]
                  *************************************************************/
                 if ((format[next_index] == '-') ||
                         (format[next_index] == '+') ||
                         (format[next_index] == ' ') ||
-                        (format[next_index] == '#') ||
-                        (format[next_index] == '0')) {
+                        (format[next_index] == '#')) {
                     /* skip to next character */
                     next_index++;
                 }
 
                 /**************************************************************
-                 * skip and ignore width [(number)*]
+                 * look for width and prepending zeros [(number)], skip [*]
                  *************************************************************/
+                bool prepend_zeros = false;
+                int width_size = 0;
+
                 if (format[next_index] == '*') {
                     /* skip to next character */
                     next_index++;
@@ -418,11 +425,15 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                     /* discard argument */
                     va_arg(arguments, MBED_SIGNED_NATIVE_TYPE);
                 } else {
-                    while ((format[next_index] >= '0') &&
-                            (format[next_index] <= '9')) {
-                        /* skip to next character */
-                        next_index++;
+                    if (format[next_index] == '0') {
+                        prepend_zeros = true;
+                        do {
+                            next_index++;
+                        } while (format[next_index] == '0');
                     }
+
+                    /* parse width modifier until not a decimal */
+                    next_index += parse_string_to_integer(&format[next_index], &width_size);
                 }
 
                 /**************************************************************
@@ -442,17 +453,7 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                     precision = 0;
 
                     /* parse precision until not a decimal */
-                    size_t inner_index = 0;
-
-                    while ((format[next_index + inner_index] >= '0') &&
-                            (format[next_index + inner_index] <= '9')) {
-                        precision = precision * 10 + (format[next_index + inner_index] - '0');
-
-                        inner_index++;
-                    }
-
-                    /* move index forward to point at next character */
-                    next_index += inner_index;
+                    next_index += parse_string_to_integer(&format[next_index], &precision);
                 }
 
                 /**************************************************************
@@ -502,13 +503,23 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                         /* use 64 bit storage type for readout */
                         value = va_arg(arguments, MBED_SIGNED_STORAGE);
                     } else
+#else
+                    /* If 64 bit is not enabled, print %ll[di] rather than truncated value */
+                    if (length_modifier == LENGTH_LL) {
+                        mbed_minimal_putchar(buffer, length, &result, '%', stream);
+                        if (next == '%') {
+                            // Continue printing loop after `%`
+                            index = next_index;
+                        }
+                        continue;
+                    }
 #endif
                     {
                         /* use native storage type (which can be 32 or 64 bit) */
                         value = va_arg(arguments, MBED_SIGNED_NATIVE_TYPE);
                     }
 
-                    /* constrict value based on lenght modifier */
+                    /* constrict value based on length modifier */
                     switch (length_modifier) {
                         case LENGTH_NONE:
                             value = (int) value;
@@ -537,7 +548,7 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
 
                     index = next_index;
 
-                    mbed_minimal_formatted_string_signed(buffer, length, &result, value, stream);
+                    mbed_minimal_formatted_string_integer(buffer, length, &result, value, INT_SIGNED, width_size, prepend_zeros, stream);
                 }
                 /* unsigned integer */
                 else if ((next == 'u') || (next == 'x') || (next == 'X')) {
@@ -551,13 +562,23 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                         /* use 64 bit storage type for readout */
                         value = va_arg(arguments, MBED_UNSIGNED_STORAGE);
                     } else
+#else
+                    /* If 64 bit is not enabled, print %ll[uxX] rather than truncated value */
+                    if (length_modifier == LENGTH_LL) {
+                        mbed_minimal_putchar(buffer, length, &result, '%', stream);
+                        if (next == '%') {
+                            // Continue printing loop after `%`
+                            index = next_index;
+                        }
+                        continue;
+                    }
 #endif
                     {
                         /* use native storage type (which can be 32 or 64 bit) */
                         value = va_arg(arguments, MBED_UNSIGNED_NATIVE_TYPE);
                     }
 
-                    /* constrict value based on lenght modifier */
+                    /* constrict value based on length modifier */
                     switch (length_modifier) {
                         case LENGTH_NONE:
                             value = (unsigned int) value;
@@ -591,9 +612,11 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
 
                     /* write unsigned or hexadecimal */
                     if (next == 'u') {
-                        mbed_minimal_formatted_string_unsigned(buffer, length, &result, value, stream);
+                        mbed_minimal_formatted_string_integer(buffer, length, &result, value, INT_UNSIGNED, width_size, prepend_zeros, stream);
+                    } else if (next == 'X') {
+                        mbed_minimal_formatted_string_integer(buffer, length, &result, value, HEX_UPPER, width_size, prepend_zeros, stream);
                     } else {
-                        mbed_minimal_formatted_string_hexadecimal(buffer, length, &result, value, stream, next == 'X');
+                        mbed_minimal_formatted_string_integer(buffer, length, &result, value, HEX_LOWER, width_size, prepend_zeros, stream);
                     }
                 }
 #if MBED_CONF_PLATFORM_MINIMAL_PRINTF_ENABLE_FLOATING_POINT
@@ -602,7 +625,7 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                     double value = va_arg(arguments, double);
                     index = next_index;
 
-                    mbed_minimal_formatted_string_double(buffer, length, &result, value, stream);
+                    mbed_minimal_formatted_string_double(buffer, length, &result, value, precision, width_size, prepend_zeros, stream);
                 }
 #endif
                 /* character */
@@ -610,7 +633,7 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                     char value = va_arg(arguments, MBED_SIGNED_NATIVE_TYPE);
                     index = next_index;
 
-                    mbed_minimal_formatted_string_character(buffer, length, &result, value, stream);
+                    mbed_minimal_putchar(buffer, length, &result, value, stream);
                 }
                 /* string */
                 else if (next == 's') {
@@ -627,7 +650,7 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                     mbed_minimal_formatted_string_void_pointer(buffer, length, &result, value, stream);
                 } else {
                     // Unrecognised, or `%%`. Print the `%` that led us in.
-                    mbed_minimal_formatted_string_character(buffer, length, &result, '%', stream);
+                    mbed_minimal_putchar(buffer, length, &result, '%', stream);
                     if (next == '%') {
                         // Continue printing loop after `%%`
                         index = next_index;
@@ -639,7 +662,7 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
                 /* not a format specifier */
             {
                 /* write normal character */
-                mbed_minimal_formatted_string_character(buffer, length, &result, format[index], stream);
+                mbed_minimal_putchar(buffer, length, &result, format[index], stream);
             }
         }
 
@@ -656,4 +679,3 @@ int mbed_minimal_formatted_string(char *buffer, size_t length, const char *forma
 
     return result;
 }
-

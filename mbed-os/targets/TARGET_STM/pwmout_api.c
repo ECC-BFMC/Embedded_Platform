@@ -76,14 +76,20 @@ uint32_t TIM_ChannelConvert_HAL2LL(uint32_t channel, pwmout_t *obj)
     }
 }
 
-void pwmout_init(pwmout_t *obj, PinName pin)
+#if STATIC_PINMAP_READY
+#define PWM_INIT_DIRECT pwmout_init_direct
+void pwmout_init_direct(pwmout_t *obj, const PinMap *pinmap)
+#else
+#define PWM_INIT_DIRECT _pwmout_init_direct
+static void _pwmout_init_direct(pwmout_t *obj, const PinMap *pinmap)
+#endif
 {
     // Get the peripheral name from the pin and assign it to the object
-    obj->pwm = (PWMName)pinmap_peripheral(pin, PinMap_PWM);
+    obj->pwm = (PWMName)pinmap->peripheral;
     MBED_ASSERT(obj->pwm != (PWMName)NC);
 
     // Get the functions (timer channel, (non)inverted) from the pin and assign it to the object
-    uint32_t function = pinmap_function(pin, PinMap_PWM);
+    uint32_t function = (uint32_t)pinmap->function;
     MBED_ASSERT(function != (uint32_t)NC);
     obj->channel = STM_PIN_CHANNEL(function);
     obj->inverted = STM_PIN_INVERTED(function);
@@ -190,9 +196,9 @@ void pwmout_init(pwmout_t *obj, PinName pin)
     }
 #endif
     // Configure GPIO
-    pinmap_pinout(pin, PinMap_PWM);
+    pin_function(pinmap->pin, pinmap->function);
 
-    obj->pin = pin;
+    obj->pin = pinmap->pin;
     obj->period = 0;
     obj->pulse = 0;
     obj->prescaler = 1;
@@ -200,10 +206,20 @@ void pwmout_init(pwmout_t *obj, PinName pin)
     pwmout_period_us(obj, 20000); // 20 ms per default
 }
 
+void pwmout_init(pwmout_t *obj, PinName pin)
+{
+    int peripheral = (int)pinmap_peripheral(pin, PinMap_PWM);
+    int function = (int)pinmap_find_function(pin, PinMap_PWM);
+
+    const PinMap static_pinmap = {pin, peripheral, function};
+
+    PWM_INIT_DIRECT(obj, &static_pinmap);
+}
+
 void pwmout_free(pwmout_t *obj)
 {
-    // Configure GPIO
-    pin_function(obj->pin, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
+    // Configure GPIO back to reset value
+    pin_function(obj->pin, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
 }
 
 void pwmout_write(pwmout_t *obj, float value)
@@ -259,7 +275,9 @@ void pwmout_write(pwmout_t *obj, float value)
     } else {
         // If channel already enabled, only update compare value to avoid glitch
         __HAL_TIM_SET_COMPARE(&TimHandle, channel, sConfig.Pulse);
+        return;
     }
+
 #if !defined(PWMOUT_INVERTED_NOT_SUPPORTED)
     if (obj->inverted) {
         HAL_TIMEx_PWMN_Start(&TimHandle, channel);
@@ -367,6 +385,11 @@ void pwmout_period_us(pwmout_t *obj, int us)
     __HAL_TIM_ENABLE(&TimHandle);
 }
 
+int pwmout_read_period_us(pwmout_t *obj)
+{
+    return obj->period;
+}
+
 void pwmout_pulsewidth(pwmout_t *obj, float seconds)
 {
     pwmout_pulsewidth_us(obj, seconds * 1000000.0f);
@@ -381,6 +404,12 @@ void pwmout_pulsewidth_us(pwmout_t *obj, int us)
 {
     float value = (float)us / (float)obj->period;
     pwmout_write(obj, value);
+}
+
+int pwmout_read_pulsewidth_us(pwmout_t *obj)
+{
+    float pwm_duty_cycle = pwmout_read(obj);
+    return (int)(pwm_duty_cycle * (float)obj->period);
 }
 
 const PinMap *pwmout_pinmap()

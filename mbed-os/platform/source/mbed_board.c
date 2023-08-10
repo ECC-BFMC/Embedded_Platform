@@ -25,13 +25,16 @@
 
 WEAK MBED_NORETURN void mbed_die(void)
 {
-#if !defined (NRF51_H) && !defined(TARGET_EFM32)
+#if !defined(TARGET_EFM32)
     core_util_critical_section_enter();
 #endif
     gpio_t led_err;
+#ifdef LED1
     gpio_init_out(&led_err, LED1);
+#endif
 
     while (1) {
+#ifdef LED1
         for (int i = 0; i < 4; ++i) {
             gpio_write(&led_err, 1);
             wait_us(150000);
@@ -45,6 +48,7 @@ WEAK MBED_NORETURN void mbed_die(void)
             gpio_write(&led_err, 0);
             wait_us(400000);
         }
+#endif
     }
 }
 
@@ -75,7 +79,7 @@ void mbed_error_vprintf(const char *format, va_list arg)
 void mbed_error_puts(const char *str)
 {
     // Writing the string to the console in a critical section is
-    // potentially beneficial - for example in UARTSerial it
+    // potentially beneficial - for example in BufferedSerial it
     // forces the "unbuffered" mode that makes sure all characters
     // go out now. If we made the call not in a critical section,
     // it would go to the software buffer and we would be reliant
@@ -111,9 +115,4 @@ void mbed_error_puts(const char *str)
     write(STDERR_FILENO, str, strlen(str));
 #endif
     core_util_critical_section_exit();
-}
-
-void mbed_error_vfprintf(const char *format, va_list arg)
-{
-    mbed_error_vprintf(format, arg);
 }

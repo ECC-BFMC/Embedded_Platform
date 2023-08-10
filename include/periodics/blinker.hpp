@@ -36,7 +36,7 @@
 /* The mbed library */
 #include <mbed.h>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
-#include <utils/taskmanager.hpp>
+#include <utils/task.hpp>
 
 
 namespace periodics

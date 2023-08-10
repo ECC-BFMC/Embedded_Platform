@@ -35,10 +35,8 @@
 
 /* The mbed library */
 #include <mbed.h>
-/* Header file for the serial communication functionality */
-#include <utils/serialmonitor.hpp>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
-#include <utils/taskmanager.hpp>
+#include <utils/task.hpp>
 
 namespace periodics
 {
@@ -52,18 +50,22 @@ namespace periodics
             /* Construnctor */
             CInstantConsumption(
                 uint32_t f_period, 
-                mbed::AnalogIn f_pin, 
-                RawSerial& f_serial
+                AnalogIn f_pin, 
+                UnbufferedSerial& f_serial
             );
             /* Destructor */
             ~CInstantConsumption();
+            /* Serial callback implementation */
+            void InstantPublisherCommand(char const * a, char * b);
         private:
             /* Run method */
             virtual void        _run();
             /* ADC input pin for instand consume */
-            mbed::AnalogIn      m_pin;    
+            AnalogIn      m_pin;    
+            /** @brief Active flag  */
+            bool            m_isActive;
             /* @brief Serial communication obj.  */
-            RawSerial&          m_serial;
+            UnbufferedSerial&          m_serial;
     }; // class CInstantConsumption
 }; // namespace periodics
 

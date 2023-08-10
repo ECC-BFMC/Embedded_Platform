@@ -33,18 +33,17 @@
 /* Header file for the blinker functionality */
 #include <periodics/blinker.hpp>
 /* Header file for the IMU functionality */
-#include <periodics/imu.hpp>
+// #include <periodics/imu.hpp>
+#include <drivers/bno055_c.hpp>
 /* Header file for the instant consumption measurement functionality */
 #include <periodics/instantconsumption.hpp>
 /* Header file for the total voltage measurement functionality */
 #include <periodics/totalvoltage.hpp>
-/* Header file for the servo motor  */
-#include <drivers/speedingmotor.hpp>
-/* Header file for the burshless motor  */
-#include <drivers/steeringmotor.hpp>
+/* Header file for the serial communication functionality */
+#include <drivers/serialmonitor.hpp>
 /* Header file for the robot state machine, which deals with the cars movement (steering and speed) */
 #include <brain/robotstatemachine.hpp>
-/* Header file for the serial communication functionality */
-#include <utils/serialmonitor.hpp>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/taskmanager.hpp>
+/* Header file for the task manager library, which  applies periodically the fun function of it's children*/
+#include <utils/task.hpp>

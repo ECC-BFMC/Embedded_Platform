@@ -1,29 +1,19 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2017, ARM Limited
- * All rights reserved.
+/*
+ * Copyright (c) 2017, Arm Limited and affiliates.
+ * Copyright (c) 2017, STMicroelectronics.
+ * SPDX-License-Identifier: Apache-2.0
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. Neither the name of STMicroelectronics nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #if DEVICE_QSPI
@@ -35,7 +25,15 @@
 #include "pinmap.h"
 #include "PeripheralPins.h"
 
-// activate / de-activate debug
+#include "mbed-trace/mbed_trace.h"
+
+#if defined(OCTOSPI1)
+#define TRACE_GROUP "STOS"
+#else
+#define TRACE_GROUP "STQS"
+#endif /* OCTOSPI1 */
+
+// activate / de-activate extra debug
 #define qspi_api_c_debug 0
 
 /* Max amount of flash size is 4Gbytes */
@@ -260,7 +258,9 @@ qspi_status_t qspi_prepare_command(const qspi_command_t *command, QSPI_CommandTy
     // these are target specific settings, use default values
     st_command->SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
     st_command->DdrMode = QSPI_DDR_MODE_DISABLE;
+#if defined(QSPI_DDR_HHC_ANALOG_DELAY)
     st_command->DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+#endif
 
     if (command->address.disabled == true) {
         st_command->AddressMode = QSPI_ADDRESS_NONE;
@@ -381,47 +381,44 @@ qspi_status_t qspi_prepare_command(const qspi_command_t *command, QSPI_CommandTy
 
 
 #if defined(OCTOSPI1)
-qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinName io3, PinName sclk, PinName ssel, uint32_t hz, uint8_t mode)
+#if STATIC_PINMAP_READY
+#define QSPI_INIT_DIRECT qspi_init_direct
+qspi_status_t qspi_init_direct(qspi_t *obj, const qspi_pinmap_t *pinmap, uint32_t hz, uint8_t mode)
+#else
+#define QSPI_INIT_DIRECT _qspi_init_direct
+static qspi_status_t _qspi_init_direct(qspi_t *obj, const qspi_pinmap_t *pinmap, uint32_t hz, uint8_t mode)
+#endif
 {
-    OSPIM_CfgTypeDef OSPIM_Cfg_Struct = {0};
-    debug_if(qspi_api_c_debug, "qspi_init mode %u\n", mode);
+    tr_debug("qspi_init mode %u", mode);
 
     // Reset handle internal state
     obj->handle.State = HAL_OSPI_STATE_RESET;
 
     // Set default OCTOSPI handle values
     obj->handle.Init.DualQuad = HAL_OSPI_DUALQUAD_DISABLE;
-    obj->handle.Init.MemoryType = HAL_OSPI_MEMTYPE_MICRON;
+#if defined(TARGET_MX25LM51245G)
+    obj->handle.Init.MemoryType = HAL_OSPI_MEMTYPE_MACRONIX; // Read sequence in DTR mode: D1-D0-D3-D2
+#else
+    obj->handle.Init.MemoryType = HAL_OSPI_MEMTYPE_MICRON;   // Read sequence in DTR mode: D0-D1-D2-D3
+#endif
     obj->handle.Init.ClockPrescaler = 4; // default value, will be overwritten in qspi_frequency
     obj->handle.Init.FifoThreshold = 4;
     obj->handle.Init.SampleShifting = HAL_OSPI_SAMPLE_SHIFTING_NONE;
     obj->handle.Init.DeviceSize = POSITION_VAL(QSPI_FLASH_SIZE_DEFAULT) - 1;
     obj->handle.Init.ChipSelectHighTime = 3;
     obj->handle.Init.FreeRunningClock = HAL_OSPI_FREERUNCLK_DISABLE;
+#if defined(HAL_OSPI_WRAP_NOT_SUPPORTED) // removed in STM32L4
     obj->handle.Init.WrapSize = HAL_OSPI_WRAP_NOT_SUPPORTED;
+#endif
     obj->handle.Init.ClockMode = mode == 0 ? HAL_OSPI_CLOCK_MODE_0 : HAL_OSPI_CLOCK_MODE_3;
     obj->handle.Init.DelayHoldQuarterCycle = HAL_OSPI_DHQC_ENABLE;
     obj->handle.Init.ChipSelectBoundary = 0;
-
-    QSPIName qspiio0name = (QSPIName)pinmap_peripheral(io0, PinMap_QSPI_DATA0);
-    QSPIName qspiio1name = (QSPIName)pinmap_peripheral(io1, PinMap_QSPI_DATA1);
-    QSPIName qspiio2name = (QSPIName)pinmap_peripheral(io2, PinMap_QSPI_DATA2);
-    QSPIName qspiio3name = (QSPIName)pinmap_peripheral(io3, PinMap_QSPI_DATA3);
-    QSPIName qspiclkname = (QSPIName)pinmap_peripheral(sclk, PinMap_QSPI_SCLK);
-    QSPIName qspisselname = (QSPIName)pinmap_peripheral(ssel, PinMap_QSPI_SSEL);
-
-    QSPIName qspi_data_first = (QSPIName)pinmap_merge(qspiio0name, qspiio1name);
-    QSPIName qspi_data_second = (QSPIName)pinmap_merge(qspiio2name, qspiio3name);
-    QSPIName qspi_data_third = (QSPIName)pinmap_merge(qspiclkname, qspisselname);
-
-    if (qspi_data_first != qspi_data_second || qspi_data_second != qspi_data_third ||
-            qspi_data_first != qspi_data_third) {
-        debug_if(qspi_api_c_debug, "QSPI_STATUS_INVALID_PARAMETER error\n");
-        return QSPI_STATUS_INVALID_PARAMETER;
-    }
+#if defined(HAL_OSPI_DELAY_BLOCK_USED) // STM32L5
+    obj->handle.Init.DelayBlockBypass = HAL_OSPI_DELAY_BLOCK_USED;
+#endif
 
     // tested all combinations, take first
-    obj->qspi = qspi_data_third;
+    obj->qspi = pinmap->peripheral;
 
 #if defined(OCTOSPI1)
     if (obj->qspi == QSPI_1) {
@@ -437,7 +434,6 @@ qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinN
 #if defined(OCTOSPI1)
     if (obj->qspi == QSPI_1) {
         __HAL_RCC_OSPI1_CLK_ENABLE();
-        __HAL_RCC_OSPIM_CLK_ENABLE();
         __HAL_RCC_OSPI1_FORCE_RESET();
         __HAL_RCC_OSPI1_RELEASE_RESET();
     }
@@ -445,26 +441,36 @@ qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinN
 #if defined(OCTOSPI2)
     if (obj->qspi == QSPI_2) {
         __HAL_RCC_OSPI2_CLK_ENABLE();
-        __HAL_RCC_OSPIM_CLK_ENABLE();
         __HAL_RCC_OSPI2_FORCE_RESET();
         __HAL_RCC_OSPI2_RELEASE_RESET();
     }
 #endif
 
     // pinmap for pins (enable clock)
-    obj->io0 = io0;
-    pinmap_pinout(io0, PinMap_QSPI_DATA0);
-    obj->io1 = io1;
-    pinmap_pinout(io1, PinMap_QSPI_DATA1);
-    obj->io2 = io2;
-    pinmap_pinout(io2, PinMap_QSPI_DATA2);
-    obj->io3 = io3;
-    pinmap_pinout(io3, PinMap_QSPI_DATA3);
+    obj->io0 = pinmap->data0_pin;
+    pin_function(pinmap->data0_pin, pinmap->data0_function);
+    pin_mode(pinmap->data0_pin, PullNone);
+    obj->io1 = pinmap->data1_pin;
+    pin_function(pinmap->data1_pin, pinmap->data1_function);
+    pin_mode(pinmap->data1_pin, PullNone);
+    obj->io2 = pinmap->data2_pin;
+    pin_function(pinmap->data2_pin, pinmap->data2_function);
+    pin_mode(pinmap->data2_pin, PullNone);
+    obj->io3 = pinmap->data3_pin;
+    pin_function(pinmap->data3_pin, pinmap->data3_function);
+    pin_mode(pinmap->data3_pin, PullNone);
 
-    obj->sclk = sclk;
-    pinmap_pinout(sclk, PinMap_QSPI_SCLK);
-    obj->ssel = ssel;
-    pinmap_pinout(ssel, PinMap_QSPI_SSEL);
+    obj->sclk  = pinmap->sclk_pin;
+    pin_function(pinmap->sclk_pin, pinmap->sclk_function);
+    pin_mode(pinmap->sclk_pin, PullNone);
+    obj->ssel = pinmap->ssel_pin;
+    pin_function(pinmap->ssel_pin, pinmap->ssel_function);
+    pin_mode(pinmap->ssel_pin, PullNone);
+
+#if defined(OCTOSPI2)
+    __HAL_RCC_OSPIM_CLK_ENABLE();
+
+    OSPIM_CfgTypeDef OSPIM_Cfg_Struct = {0};
 
     /* The OctoSPI IO Manager OCTOSPIM configuration is supported in a simplified mode in mbed-os
      * QSPI1 signals are mapped to port 1 and QSPI2 signals are mapped to port 2.
@@ -484,49 +490,16 @@ qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinN
     }
 
     if (HAL_OSPIM_Config(&obj->handle, &OSPIM_Cfg_Struct, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-        debug_if(qspi_api_c_debug, "HAL_OSPIM_Config error\n");
+        tr_error("HAL_OSPIM_Config error");
         return QSPI_STATUS_ERROR;
     }
+#endif
 
     return qspi_frequency(obj, hz);
 }
-#else /* OCTOSPI */
+
 qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinName io3, PinName sclk, PinName ssel, uint32_t hz, uint8_t mode)
 {
-    debug_if(qspi_api_c_debug, "qspi_init mode %u\n", mode);
-    // Enable interface clock for QSPI
-    __HAL_RCC_QSPI_CLK_ENABLE();
-
-    // Reset QSPI
-#if defined(DUAL_CORE)
-    uint32_t timeout = HSEM_TIMEOUT;
-    while (LL_HSEM_1StepLock(HSEM, CFG_HW_RCC_SEMID) && (--timeout != 0)) {
-    }
-#endif /* DUAL_CORE */
-    __HAL_RCC_QSPI_FORCE_RESET();
-    __HAL_RCC_QSPI_RELEASE_RESET();
-#if defined(DUAL_CORE)
-    LL_HSEM_ReleaseLock(HSEM, CFG_HW_RCC_SEMID, HSEM_CR_COREID_CURRENT);
-#endif /* DUAL_CORE */
-
-    // Reset handle internal state
-    obj->handle.State = HAL_QSPI_STATE_RESET;
-    obj->handle.Lock = HAL_UNLOCKED;
-
-    // Set default QSPI handle values
-    obj->handle.Init.ClockPrescaler = 1;
-    obj->handle.Init.FifoThreshold = 1;
-    obj->handle.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
-    obj->handle.Init.FlashSize = POSITION_VAL(QSPI_FLASH_SIZE_DEFAULT) - 1;
-    obj->handle.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_5_CYCLE;
-    obj->handle.Init.ClockMode = QSPI_CLOCK_MODE_0;
-#ifdef QSPI_DUALFLASH_ENABLE
-    obj->handle.Init.FlashID = QSPI_FLASH_ID_1;
-    obj->handle.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
-#endif
-
-    obj->handle.Init.ClockMode = mode == 0 ? QSPI_CLOCK_MODE_0 : QSPI_CLOCK_MODE_3;
-
     QSPIName qspiio0name = (QSPIName)pinmap_peripheral(io0, PinMap_QSPI_DATA0);
     QSPIName qspiio1name = (QSPIName)pinmap_peripheral(io1, PinMap_QSPI_DATA1);
     QSPIName qspiio2name = (QSPIName)pinmap_peripheral(io2, PinMap_QSPI_DATA2);
@@ -543,33 +516,129 @@ qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinN
         return QSPI_STATUS_INVALID_PARAMETER;
     }
 
+    int peripheral = (int)qspi_data_first;
+    int function_io0 = (int)pinmap_find_function(io0, PinMap_QSPI_DATA0);
+    int function_io1 = (int)pinmap_find_function(io1, PinMap_QSPI_DATA1);
+    int function_io2 = (int)pinmap_find_function(io2, PinMap_QSPI_DATA2);
+    int function_io3 = (int)pinmap_find_function(io3, PinMap_QSPI_DATA3);
+    int function_sclk = (int)pinmap_find_function(sclk, PinMap_QSPI_SCLK);
+    int function_ssel = (int)pinmap_find_function(ssel, PinMap_QSPI_SSEL);
+
+    const qspi_pinmap_t static_pinmap = {peripheral, io0, function_io0, io1, function_io1, io2, function_io2, io3, function_io3, sclk, function_sclk, ssel, function_ssel};
+
+    return QSPI_INIT_DIRECT(obj, &static_pinmap, hz, mode);
+}
+#else /* OCTOSPI */
+#if STATIC_PINMAP_READY
+#define QSPI_INIT_DIRECT qspi_init_direct
+qspi_status_t qspi_init_direct(qspi_t *obj, const qspi_pinmap_t *pinmap, uint32_t hz, uint8_t mode)
+#else
+#define QSPI_INIT_DIRECT _qspi_init_direct
+static qspi_status_t _qspi_init_direct(qspi_t *obj, const qspi_pinmap_t *pinmap, uint32_t hz, uint8_t mode)
+#endif
+{
+    tr_debug("qspi_init mode %u", mode);
+    // Enable interface clock for QSPI
+    __HAL_RCC_QSPI_CLK_ENABLE();
+
+    // Reset QSPI
+#if defined(DUAL_CORE) && (TARGET_STM32H7)
+    while (LL_HSEM_1StepLock(HSEM, CFG_HW_RCC_SEMID)) {
+    }
+#endif /* DUAL_CORE */
+    __HAL_RCC_QSPI_FORCE_RESET();
+    __HAL_RCC_QSPI_RELEASE_RESET();
+#if defined(DUAL_CORE) && (TARGET_STM32H7)
+    LL_HSEM_ReleaseLock(HSEM, CFG_HW_RCC_SEMID, HSEM_CR_COREID_CURRENT);
+#endif /* DUAL_CORE */
+
+    // Reset handle internal state
+    obj->handle.State = HAL_QSPI_STATE_RESET;
+    obj->handle.Lock = HAL_UNLOCKED;
+
+    // Set default QSPI handle values
+    obj->handle.Init.ClockPrescaler = 1;
+    obj->handle.Init.FifoThreshold = 1;
+#if defined(QSPI_NO_SAMPLE_SHIFT)
+    obj->handle.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
+#else
+    obj->handle.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
+#endif
+    obj->handle.Init.FlashSize = POSITION_VAL(QSPI_FLASH_SIZE_DEFAULT) - 1;
+    obj->handle.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_5_CYCLE;
+    obj->handle.Init.ClockMode = QSPI_CLOCK_MODE_0;
+#ifdef QSPI_DUALFLASH_ENABLE
+    obj->handle.Init.FlashID = QSPI_FLASH_ID_1;
+    obj->handle.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
+#endif
+
+    obj->handle.Init.ClockMode = mode == 0 ? QSPI_CLOCK_MODE_0 : QSPI_CLOCK_MODE_3;
+
     // tested all combinations, take first
-    obj->handle.Instance = (QUADSPI_TypeDef *)qspi_data_first;
+    obj->handle.Instance = (QUADSPI_TypeDef *)pinmap->peripheral;
 
     // pinmap for pins (enable clock)
-    obj->io0 = io0;
-    pinmap_pinout(io0, PinMap_QSPI_DATA0);
-    obj->io1 = io1;
-    pinmap_pinout(io1, PinMap_QSPI_DATA1);
-    obj->io2 = io2;
-    pinmap_pinout(io2, PinMap_QSPI_DATA2);
-    obj->io3 = io3;
-    pinmap_pinout(io3, PinMap_QSPI_DATA3);
+    obj->io0 = pinmap->data0_pin;
+    pin_function(pinmap->data0_pin, pinmap->data0_function);
+    pin_mode(pinmap->data0_pin, PullNone);
+    obj->io1 = pinmap->data1_pin;
+    pin_function(pinmap->data1_pin, pinmap->data1_function);
+    pin_mode(pinmap->data1_pin, PullNone);
+    obj->io2 = pinmap->data2_pin;
+    pin_function(pinmap->data2_pin, pinmap->data2_function);
+    pin_mode(pinmap->data2_pin, PullNone);
+    obj->io3 = pinmap->data3_pin;
+    pin_function(pinmap->data3_pin, pinmap->data3_function);
+    pin_mode(pinmap->data3_pin, PullNone);
 
-    obj->sclk = sclk;
-    pinmap_pinout(sclk, PinMap_QSPI_SCLK);
-    obj->ssel = ssel;
-    pinmap_pinout(ssel, PinMap_QSPI_SSEL);
+    obj->sclk  = pinmap->sclk_pin;
+    pin_function(pinmap->sclk_pin, pinmap->sclk_function);
+    pin_mode(pinmap->sclk_pin, PullNone);
+    obj->ssel = pinmap->ssel_pin;
+    pin_function(pinmap->ssel_pin, pinmap->ssel_function);
+    pin_mode(pinmap->ssel_pin, PullNone);
 
     return qspi_frequency(obj, hz);
 }
+
+qspi_status_t qspi_init(qspi_t *obj, PinName io0, PinName io1, PinName io2, PinName io3, PinName sclk, PinName ssel, uint32_t hz, uint8_t mode)
+{
+    QSPIName qspiio0name = (QSPIName)pinmap_peripheral(io0, PinMap_QSPI_DATA0);
+    QSPIName qspiio1name = (QSPIName)pinmap_peripheral(io1, PinMap_QSPI_DATA1);
+    QSPIName qspiio2name = (QSPIName)pinmap_peripheral(io2, PinMap_QSPI_DATA2);
+    QSPIName qspiio3name = (QSPIName)pinmap_peripheral(io3, PinMap_QSPI_DATA3);
+    QSPIName qspiclkname = (QSPIName)pinmap_peripheral(sclk, PinMap_QSPI_SCLK);
+    QSPIName qspisselname = (QSPIName)pinmap_peripheral(ssel, PinMap_QSPI_SSEL);
+
+    QSPIName qspi_data_first = (QSPIName)pinmap_merge(qspiio0name, qspiio1name);
+    QSPIName qspi_data_second = (QSPIName)pinmap_merge(qspiio2name, qspiio3name);
+    QSPIName qspi_data_third = (QSPIName)pinmap_merge(qspiclkname, qspisselname);
+
+    if (qspi_data_first != qspi_data_second || qspi_data_second != qspi_data_third ||
+            qspi_data_first != qspi_data_third) {
+        return QSPI_STATUS_INVALID_PARAMETER;
+    }
+
+    int peripheral = (int)qspi_data_first;
+    int function_io0 = (int)pinmap_find_function(io0, PinMap_QSPI_DATA0);
+    int function_io1 = (int)pinmap_find_function(io1, PinMap_QSPI_DATA1);
+    int function_io2 = (int)pinmap_find_function(io2, PinMap_QSPI_DATA2);
+    int function_io3 = (int)pinmap_find_function(io3, PinMap_QSPI_DATA3);
+    int function_sclk = (int)pinmap_find_function(sclk, PinMap_QSPI_SCLK);
+    int function_ssel = (int)pinmap_find_function(ssel, PinMap_QSPI_SSEL);
+
+    const qspi_pinmap_t static_pinmap = {peripheral, io0, function_io0, io1, function_io1, io2, function_io2, io3, function_io3, sclk, function_sclk, ssel, function_ssel};
+
+    return QSPI_INIT_DIRECT(obj, &static_pinmap, hz, mode);
+}
+
 #endif /* OCTOSPI */
 
 
 #if defined(OCTOSPI1)
 qspi_status_t qspi_free(qspi_t *obj)
 {
-    debug_if(qspi_api_c_debug, "qspi_free\n");
+    tr_debug("qspi_free");
     if (HAL_OSPI_DeInit(&obj->handle) != HAL_OK) {
         return QSPI_STATUS_ERROR;
     }
@@ -587,13 +656,13 @@ qspi_status_t qspi_free(qspi_t *obj)
     }
 #endif
 
-    // Configure GPIOs
-    pin_function(obj->io0, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->io1, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->io2, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->io3, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->sclk, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->ssel, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
+    // Configure GPIOs back to reset value
+    pin_function(obj->io0, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->io1, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->io2, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->io3, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->sclk, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->ssel, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
 
     (void)(obj);
     return QSPI_STATUS_OK;
@@ -601,19 +670,20 @@ qspi_status_t qspi_free(qspi_t *obj)
 #else /* OCTOSPI */
 qspi_status_t qspi_free(qspi_t *obj)
 {
+    tr_debug("qspi_free");
+
     if (HAL_QSPI_DeInit(&obj->handle) != HAL_OK) {
         return QSPI_STATUS_ERROR;
     }
 
     // Reset QSPI
-#if defined(DUAL_CORE)
-    uint32_t timeout = HSEM_TIMEOUT;
-    while (LL_HSEM_1StepLock(HSEM, CFG_HW_RCC_SEMID) && (--timeout != 0)) {
+#if defined(DUAL_CORE) && (TARGET_STM32H7)
+    while (LL_HSEM_1StepLock(HSEM, CFG_HW_RCC_SEMID)) {
     }
 #endif /* DUAL_CORE */
     __HAL_RCC_QSPI_FORCE_RESET();
     __HAL_RCC_QSPI_RELEASE_RESET();
-#if defined(DUAL_CORE)
+#if defined(DUAL_CORE) && (TARGET_STM32H7)
     LL_HSEM_ReleaseLock(HSEM, CFG_HW_RCC_SEMID, HSEM_CR_COREID_CURRENT);
 #endif /* DUAL_CORE */
 
@@ -621,12 +691,12 @@ qspi_status_t qspi_free(qspi_t *obj)
     __HAL_RCC_QSPI_CLK_DISABLE();
 
     // Configure GPIOs
-    pin_function(obj->io0, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->io1, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->io2, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->io3, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->sclk, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
-    pin_function(obj->ssel, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0));
+    pin_function(obj->io0, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->io1, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->io2, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->io3, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->sclk, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
+    pin_function(obj->ssel, STM_PIN_DATA(STM_MODE_ANALOG, GPIO_NOPULL, 0));
 
     (void)(obj);
     return QSPI_STATUS_OK;
@@ -637,7 +707,7 @@ qspi_status_t qspi_free(qspi_t *obj)
 #if defined(OCTOSPI1)
 qspi_status_t qspi_frequency(qspi_t *obj, int hz)
 {
-    debug_if(qspi_api_c_debug, "qspi_frequency hz %d\n", hz);
+    tr_debug("qspi_frequency hz %d", hz);
     qspi_status_t status = QSPI_STATUS_OK;
 
     /* HCLK drives QSPI. QSPI clock depends on prescaler value:
@@ -650,16 +720,12 @@ qspi_status_t qspi_frequency(qspi_t *obj, int hz)
     int div = HAL_RCC_GetHCLKFreq() / hz;
     if (div > 255) {
         div = 255;
-    } else {
-        if ((HAL_RCC_GetHCLKFreq() % hz) == 0) {
-            div = div - 1;
-        }
     }
 
     obj->handle.Init.ClockPrescaler = div;
 
     if (HAL_OSPI_Init(&obj->handle) != HAL_OK) {
-        debug_if(qspi_api_c_debug, "HAL_OSPI_Init error\n");
+        tr_error("HAL_OSPI_Init error");
         status = QSPI_STATUS_ERROR;
     }
 
@@ -668,7 +734,7 @@ qspi_status_t qspi_frequency(qspi_t *obj, int hz)
 #else /* OCTOSPI */
 qspi_status_t qspi_frequency(qspi_t *obj, int hz)
 {
-    debug_if(qspi_api_c_debug, "qspi_frequency hz %d\n", hz);
+    tr_debug("qspi_frequency hz %d", hz);
     qspi_status_t status = QSPI_STATUS_OK;
 
     /* HCLK drives QSPI. QSPI clock depends on prescaler value:
@@ -712,11 +778,11 @@ qspi_status_t qspi_write(qspi_t *obj, const qspi_command_t *command, const void 
     st_command.NbData = *length;
 
     if (HAL_OSPI_Command(&obj->handle, &st_command, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-        debug_if(qspi_api_c_debug, "HAL_OSPI_Command error\n");
+        tr_error("HAL_OSPI_Command error");
         status = QSPI_STATUS_ERROR;
     } else {
         if (HAL_OSPI_Transmit(&obj->handle, (uint8_t *)data, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            debug_if(qspi_api_c_debug, "HAL_OSPI_Transmit error\n");
+            tr_error("HAL_OSPI_Transmit error");
             status = QSPI_STATUS_ERROR;
         }
     }
@@ -726,6 +792,8 @@ qspi_status_t qspi_write(qspi_t *obj, const qspi_command_t *command, const void 
 #else /* OCTOSPI */
 qspi_status_t qspi_write(qspi_t *obj, const qspi_command_t *command, const void *data, size_t *length)
 {
+    debug_if(qspi_api_c_debug, "qspi_write size %u\n", *length);
+
     QSPI_CommandTypeDef st_command;
     qspi_status_t status = qspi_prepare_command(command, &st_command);
     if (status != QSPI_STATUS_OK) {
@@ -734,15 +802,13 @@ qspi_status_t qspi_write(qspi_t *obj, const qspi_command_t *command, const void 
 
     st_command.NbData = *length;
 
-    if (HAL_QSPI_Command(&obj->handle, &st_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (HAL_QSPI_Command(&obj->handle, &st_command, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         status = QSPI_STATUS_ERROR;
     } else {
-        if (HAL_QSPI_Transmit(&obj->handle, (uint8_t *)data, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        if (HAL_QSPI_Transmit(&obj->handle, (uint8_t *)data, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             status = QSPI_STATUS_ERROR;
         }
     }
-
-    debug_if(qspi_api_c_debug, "qspi_write size %u\n", *length);
 
     return status;
 }
@@ -761,11 +827,11 @@ qspi_status_t qspi_read(qspi_t *obj, const qspi_command_t *command, void *data, 
     st_command.NbData = *length;
 
     if (HAL_OSPI_Command(&obj->handle, &st_command, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-        debug_if(qspi_api_c_debug, "HAL_OSPI_Command error\n");
+        tr_error("HAL_OSPI_Command error");
         status = QSPI_STATUS_ERROR;
     } else {
         if (HAL_OSPI_Receive(&obj->handle, data, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-            debug_if(qspi_api_c_debug, "HAL_OSPI_Receive error\n");
+            tr_error("HAL_OSPI_Receive error %d", obj->handle.ErrorCode);
             status = QSPI_STATUS_ERROR;
         }
     }
@@ -785,10 +851,10 @@ qspi_status_t qspi_read(qspi_t *obj, const qspi_command_t *command, void *data, 
 
     st_command.NbData = *length;
 
-    if (HAL_QSPI_Command(&obj->handle, &st_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (HAL_QSPI_Command(&obj->handle, &st_command, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         status = QSPI_STATUS_ERROR;
     } else {
-        if (HAL_QSPI_Receive(&obj->handle, data, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        if (HAL_QSPI_Receive(&obj->handle, data, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             status = QSPI_STATUS_ERROR;
         }
     }
@@ -803,7 +869,8 @@ qspi_status_t qspi_read(qspi_t *obj, const qspi_command_t *command, void *data, 
 #if defined(OCTOSPI1)
 qspi_status_t qspi_command_transfer(qspi_t *obj, const qspi_command_t *command, const void *tx_data, size_t tx_size, void *rx_data, size_t rx_size)
 {
-    debug_if(qspi_api_c_debug, "qspi_command_transfer tx %u rx %u command %x\n", tx_size, rx_size, command->instruction.value);
+    tr_debug("qspi_command_transfer tx %u rx %u command %#04x", tx_size, rx_size, command->instruction.value);
+
     qspi_status_t status = QSPI_STATUS_OK;
 
     if ((tx_data == NULL || tx_size == 0) && (rx_data == NULL || rx_size == 0)) {
@@ -818,7 +885,7 @@ qspi_status_t qspi_command_transfer(qspi_t *obj, const qspi_command_t *command, 
         st_command.DataMode = HAL_OSPI_DATA_NONE; /* Instruction only */
         if (HAL_OSPI_Command(&obj->handle, &st_command, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             status = QSPI_STATUS_ERROR;
-            debug_if(qspi_api_c_debug, "HAL_OSPI_Command error\n");
+            tr_error("HAL_OSPI_Command error");
             return status;
         }
     } else {
@@ -827,7 +894,7 @@ qspi_status_t qspi_command_transfer(qspi_t *obj, const qspi_command_t *command, 
             size_t tx_length = tx_size;
             status = qspi_write(obj, command, tx_data, &tx_length);
             if (status != QSPI_STATUS_OK) {
-                debug_if(qspi_api_c_debug, "qspi_write error\n");
+                tr_error("qspi_write error");
                 return status;
             }
         }
@@ -835,7 +902,6 @@ qspi_status_t qspi_command_transfer(qspi_t *obj, const qspi_command_t *command, 
         if (rx_data != NULL && rx_size) {
             size_t rx_length = rx_size;
             status = qspi_read(obj, command, rx_data, &rx_length);
-            // debug_if(qspi_api_c_debug, "qspi_read %d\n", status);
         }
     }
     return status;
@@ -843,7 +909,7 @@ qspi_status_t qspi_command_transfer(qspi_t *obj, const qspi_command_t *command, 
 #else /* OCTOSPI */
 qspi_status_t qspi_command_transfer(qspi_t *obj, const qspi_command_t *command, const void *tx_data, size_t tx_size, void *rx_data, size_t rx_size)
 {
-    debug_if(qspi_api_c_debug, "qspi_command_transfer tx %u rx %u command %x\n", tx_size, rx_size, command->instruction.value);
+    tr_debug("qspi_command_transfer tx %u rx %u command %#04x", tx_size, rx_size, command->instruction.value);
     qspi_status_t status = QSPI_STATUS_OK;
 
     if ((tx_data == NULL || tx_size == 0) && (rx_data == NULL || rx_size == 0)) {
@@ -856,7 +922,7 @@ qspi_status_t qspi_command_transfer(qspi_t *obj, const qspi_command_t *command, 
 
         st_command.NbData = 1;
         st_command.DataMode = QSPI_DATA_NONE; /* Instruction only */
-        if (HAL_QSPI_Command(&obj->handle, &st_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        if (HAL_QSPI_Command(&obj->handle, &st_command, HAL_QSPI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             status = QSPI_STATUS_ERROR;
             return status;
         }

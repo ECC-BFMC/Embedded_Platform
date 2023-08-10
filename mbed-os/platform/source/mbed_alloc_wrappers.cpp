@@ -46,24 +46,33 @@ typedef struct {
     uint32_t signature;
 } alloc_info_t;
 
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
 #define MBED_HEAP_STATS_SIGNATURE       (0xdeadbeef)
 
 static SingletonPtr<PlatformMutex> malloc_stats_mutex;
 static mbed_stats_heap_t heap_stats = {0, 0, 0, 0, 0, 0, 0};
 
-typedef struct  {
-    size_t size;
+typedef struct mbed_heap_overhead  {
+    int size; // Size of the allocated memory block, including internal overhead size
+    struct mbed_heap_overhead *next; // The memory is either the next free block, or allocated memory block
 } mbed_heap_overhead_t;
 
-#define MALLOC_HEADER_SIZE          (sizeof(mbed_heap_overhead_t))
-#define MALLOC_HEADER_PTR(p)        (mbed_heap_overhead_t *)((char *)(p) - MALLOC_HEADER_SIZE)
-#define MALLOC_HEAP_TOTAL_SIZE(p)   (((p)->size) & (~0x1))
+static int get_malloc_block_total_size(void *ptr)
+{
+    mbed_heap_overhead_t *c = (mbed_heap_overhead_t *)((char *)ptr - offsetof(mbed_heap_overhead, next));
+
+    // Skip the padding area
+    if (c->size < 0) {
+        c = (mbed_heap_overhead_t *)((char *)c + c->size);
+    }
+    //  Mask LSB as it is used for usage flags
+    return (c->size & ~0x1);
+}
 #endif
 
 void mbed_stats_heap_get(mbed_stats_heap_t *stats)
 {
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     extern uint32_t mbed_heap_size;
     heap_stats.reserved_size = mbed_heap_size;
 
@@ -100,12 +109,15 @@ extern "C" void *__wrap__malloc_r(struct _reent *r, size_t size)
 extern "C" void *malloc_wrapper(struct _reent *r, size_t size, void *caller)
 {
     void *ptr = NULL;
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_lock();
 #endif
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     malloc_stats_mutex->lock();
-    alloc_info_t *alloc_info = (alloc_info_t *)__real__malloc_r(r, size + sizeof(alloc_info_t));
+    alloc_info_t *alloc_info = NULL;
+    if (size <= SIZE_MAX - sizeof(alloc_info_t)) {
+        alloc_info = (alloc_info_t *)__real__malloc_r(r, size + sizeof(alloc_info_t));
+    }
     if (alloc_info != NULL) {
         alloc_info->size = size;
         alloc_info->signature = MBED_HEAP_STATS_SIGNATURE;
@@ -116,28 +128,28 @@ extern "C" void *malloc_wrapper(struct _reent *r, size_t size, void *caller)
         if (heap_stats.current_size > heap_stats.max_size) {
             heap_stats.max_size = heap_stats.current_size;
         }
-        heap_stats.overhead_size += MALLOC_HEAP_TOTAL_SIZE(MALLOC_HEADER_PTR(alloc_info)) - size;
+        heap_stats.overhead_size += get_malloc_block_total_size((void *)alloc_info) - size;
     } else {
         heap_stats.alloc_fail_cnt += 1;
     }
     malloc_stats_mutex->unlock();
-#else // #ifdef MBED_HEAP_STATS_ENABLED
+#else // #if MBED_HEAP_STATS_ENABLED
     ptr = __real__malloc_r(r, size);
-#endif // #ifdef MBED_HEAP_STATS_ENABLED
-#ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_HEAP_STATS_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_malloc(ptr, size, caller);
     mbed_mem_trace_unlock();
-#endif // #ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_MEM_TRACING_ENABLED
     return ptr;
 }
 
 extern "C" void *__wrap__realloc_r(struct _reent *r, void *ptr, size_t size)
 {
     void *new_ptr = NULL;
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_lock();
 #endif
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     // Implement realloc_r with malloc and free.
     // The function realloc_r can't be used here directly since
     // it can call into __wrap__malloc_r (returns ptr + 4) or
@@ -164,13 +176,13 @@ extern "C" void *__wrap__realloc_r(struct _reent *r, void *ptr, size_t size)
         memcpy(new_ptr, (void *)ptr, copy_size);
         free(ptr);
     }
-#else // #ifdef MBED_HEAP_STATS_ENABLED
+#else // #if MBED_HEAP_STATS_ENABLED
     new_ptr = __real__realloc_r(r, ptr, size);
-#endif // #ifdef MBED_HEAP_STATS_ENABLED
-#ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_HEAP_STATS_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_realloc(new_ptr, ptr, size, MBED_CALLER_ADDR());
     mbed_mem_trace_unlock();
-#endif // #ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_MEM_TRACING_ENABLED
     return new_ptr;
 }
 
@@ -181,17 +193,17 @@ extern "C" void __wrap__free_r(struct _reent *r, void *ptr)
 
 extern "C" void free_wrapper(struct _reent *r, void *ptr, void *caller)
 {
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_lock();
 #endif
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     malloc_stats_mutex->lock();
     alloc_info_t *alloc_info = NULL;
     if (ptr != NULL) {
         alloc_info = ((alloc_info_t *)ptr) - 1;
         if (MBED_HEAP_STATS_SIGNATURE == alloc_info->signature) {
             size_t user_size = alloc_info->size;
-            size_t alloc_size = MALLOC_HEAP_TOTAL_SIZE(MALLOC_HEADER_PTR(alloc_info));
+            size_t alloc_size = get_malloc_block_total_size((void *)alloc_info);
             alloc_info->signature = 0x0;
             heap_stats.current_size -= user_size;
             heap_stats.alloc_cnt -= 1;
@@ -203,35 +215,35 @@ extern "C" void free_wrapper(struct _reent *r, void *ptr, void *caller)
     }
 
     malloc_stats_mutex->unlock();
-#else // #ifdef MBED_HEAP_STATS_ENABLED
+#else // #if MBED_HEAP_STATS_ENABLED
     __real__free_r(r, ptr);
-#endif // #ifdef MBED_HEAP_STATS_ENABLED
-#ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_HEAP_STATS_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_free(ptr, caller);
     mbed_mem_trace_unlock();
-#endif // #ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_MEM_TRACING_ENABLED
 }
 
 extern "C" void *__wrap__calloc_r(struct _reent *r, size_t nmemb, size_t size)
 {
     void *ptr = NULL;
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_lock();
 #endif
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     // Note - no lock needed since malloc is thread safe
 
     ptr = malloc(nmemb * size);
     if (ptr != NULL) {
         memset(ptr, 0, nmemb * size);
     }
-#else // #ifdef MBED_HEAP_STATS_ENABLED
+#else // #if MBED_HEAP_STATS_ENABLED
     ptr = __real__calloc_r(r, nmemb, size);
-#endif // #ifdef MBED_HEAP_STATS_ENABLED
-#ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_HEAP_STATS_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_calloc(ptr, nmemb, size, MBED_CALLER_ADDR());
     mbed_mem_trace_unlock();
-#endif // #ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_MEM_TRACING_ENABLED
     return ptr;
 }
 
@@ -287,12 +299,15 @@ extern "C" void *SUB_MALLOC(size_t size)
 extern "C" void *malloc_wrapper(size_t size, void *caller)
 {
     void *ptr = NULL;
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_lock();
 #endif
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     malloc_stats_mutex->lock();
-    alloc_info_t *alloc_info = (alloc_info_t *)SUPER_MALLOC(size + sizeof(alloc_info_t));
+    alloc_info_t *alloc_info = NULL;
+    if (size <= SIZE_MAX - sizeof(alloc_info_t)) {
+        alloc_info = (alloc_info_t *)SUPER_MALLOC(size + sizeof(alloc_info_t));
+    }
     if (alloc_info != NULL) {
         alloc_info->size = size;
         alloc_info->signature = MBED_HEAP_STATS_SIGNATURE;
@@ -303,18 +318,18 @@ extern "C" void *malloc_wrapper(size_t size, void *caller)
         if (heap_stats.current_size > heap_stats.max_size) {
             heap_stats.max_size = heap_stats.current_size;
         }
-        heap_stats.overhead_size += MALLOC_HEAP_TOTAL_SIZE(MALLOC_HEADER_PTR(alloc_info)) - size;
+        heap_stats.overhead_size += get_malloc_block_total_size((void *)alloc_info) - size;
     } else {
         heap_stats.alloc_fail_cnt += 1;
     }
     malloc_stats_mutex->unlock();
-#else // #ifdef MBED_HEAP_STATS_ENABLED
+#else // #if MBED_HEAP_STATS_ENABLED
     ptr = SUPER_MALLOC(size);
-#endif // #ifdef MBED_HEAP_STATS_ENABLED
-#ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_HEAP_STATS_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_malloc(ptr, size, caller);
     mbed_mem_trace_unlock();
-#endif // #ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_MEM_TRACING_ENABLED
     return ptr;
 }
 
@@ -322,10 +337,10 @@ extern "C" void *malloc_wrapper(size_t size, void *caller)
 extern "C" void *SUB_REALLOC(void *ptr, size_t size)
 {
     void *new_ptr = NULL;
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_lock();
 #endif
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     // Note - no lock needed since malloc and free are thread safe
 
     // Get old size
@@ -347,35 +362,55 @@ extern "C" void *SUB_REALLOC(void *ptr, size_t size)
         memcpy(new_ptr, (void *)ptr, copy_size);
         free(ptr);
     }
-#else // #ifdef MBED_HEAP_STATS_ENABLED
+
+    {
+        volatile uint8_t dummy = 0;
+        if (dummy != 0) { // always false
+            // this code will never be executed
+            // it's just to tell the compiler/linker to preserve SUB_REALLOC symbol
+            // when LTO enabled
+            SUPER_REALLOC(NULL, 0);
+        }
+    }
+#else // #if MBED_HEAP_STATS_ENABLED
     new_ptr = SUPER_REALLOC(ptr, size);
-#endif // #ifdef MBED_HEAP_STATS_ENABLED
-#ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_HEAP_STATS_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_realloc(new_ptr, ptr, size, MBED_CALLER_ADDR());
     mbed_mem_trace_unlock();
-#endif // #ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_MEM_TRACING_ENABLED
     return new_ptr;
 }
 
 extern "C" void *SUB_CALLOC(size_t nmemb, size_t size)
 {
     void *ptr = NULL;
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_lock();
 #endif
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     // Note - no lock needed since malloc is thread safe
     ptr = malloc(nmemb * size);
     if (ptr != NULL) {
         memset(ptr, 0, nmemb * size);
     }
-#else // #ifdef MBED_HEAP_STATS_ENABLED
+
+    {
+        volatile uint8_t dummy = 0;
+        if (dummy != 0) { // always false
+            // this code will never be executed
+            // it's just to tell the compiler/linker to preserve SUB_CALLOC symbol
+            // when LTO enabled
+            SUPER_CALLOC(NULL, 0);
+        }
+    }
+#else // #if MBED_HEAP_STATS_ENABLED
     ptr = SUPER_CALLOC(nmemb, size);
-#endif // #ifdef MBED_HEAP_STATS_ENABLED
-#ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_HEAP_STATS_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_calloc(ptr, nmemb, size, MBED_CALLER_ADDR());
     mbed_mem_trace_unlock();
-#endif // #ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_MEM_TRACING_ENABLED
     return ptr;
 }
 
@@ -386,17 +421,17 @@ extern "C" void SUB_FREE(void *ptr)
 
 extern "C" void free_wrapper(void *ptr, void *caller)
 {
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_lock();
 #endif
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
     malloc_stats_mutex->lock();
     alloc_info_t *alloc_info = NULL;
     if (ptr != NULL) {
         alloc_info = ((alloc_info_t *)ptr) - 1;
         if (MBED_HEAP_STATS_SIGNATURE == alloc_info->signature) {
             size_t user_size = alloc_info->size;
-            size_t alloc_size = MALLOC_HEAP_TOTAL_SIZE(MALLOC_HEADER_PTR(alloc_info));
+            size_t alloc_size = get_malloc_block_total_size((void *)alloc_info);
             alloc_info->signature = 0x0;
             heap_stats.current_size -= user_size;
             heap_stats.alloc_cnt -= 1;
@@ -408,13 +443,13 @@ extern "C" void free_wrapper(void *ptr, void *caller)
     }
 
     malloc_stats_mutex->unlock();
-#else // #ifdef MBED_HEAP_STATS_ENABLED
+#else // #if MBED_HEAP_STATS_ENABLED
     SUPER_FREE(ptr);
-#endif // #ifdef MBED_HEAP_STATS_ENABLED
-#ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_HEAP_STATS_ENABLED
+#if MBED_MEM_TRACING_ENABLED
     mbed_mem_trace_free(ptr, caller);
     mbed_mem_trace_unlock();
-#endif // #ifdef MBED_MEM_TRACING_ENABLED
+#endif // #if MBED_MEM_TRACING_ENABLED
 }
 
 #endif // #if defined(MBED_MEM_TRACING_ENABLED) || defined(MBED_HEAP_STATS_ENABLED)
@@ -425,11 +460,11 @@ extern "C" void free_wrapper(void *ptr, void *caller)
 
 #else
 
-#ifdef MBED_MEM_TRACING_ENABLED
+#if MBED_MEM_TRACING_ENABLED
 #error Memory tracing is not supported with the current toolchain.
 #endif
 
-#ifdef MBED_HEAP_STATS_ENABLED
+#if MBED_HEAP_STATS_ENABLED
 #error Heap statistics are not supported with the current toolchain.
 #endif
 

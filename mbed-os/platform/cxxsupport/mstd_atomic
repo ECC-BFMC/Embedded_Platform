@@ -23,7 +23,6 @@
 #include <mstd_memory>
 #include <mstd_type_traits>
 #include <mstd_utility>
-#include "platform/mbed_assert.h"
 #include "platform/mbed_atomic.h"
 #include "platform/mbed_critical.h"
 #include "platform/CriticalSectionLock.h"
@@ -187,7 +186,7 @@ struct AtomicBaseRaw {
             T val;
         } ret;
         {
-            CriticalSectionLock lock;
+            mbed::CriticalSectionLock lock;
             memcpy(std::addressof(ret.val), const_cast<const T *>(std::addressof(data)), sizeof(T));
         }
         return std::move(ret.val);
@@ -195,19 +194,19 @@ struct AtomicBaseRaw {
     T load(memory_order order = memory_order_seq_cst) const noexcept
     {
         MBED_CHECK_LOAD_ORDER(order);
-        CriticalSectionLock lock;
+        mbed::CriticalSectionLock lock;
         return data;
     }
     void store(T desired, memory_order order = memory_order_seq_cst) volatile noexcept
     {
         MBED_CHECK_STORE_ORDER(order);
-        CriticalSectionLock lock;
+        mbed::CriticalSectionLock lock;
         memcpy(const_cast<T *>(std::addressof(data)), std::addressof(desired), sizeof(T));
     }
     void store(T desired, memory_order order = memory_order_seq_cst) noexcept
     {
         MBED_CHECK_STORE_ORDER(order);
-        CriticalSectionLock lock;
+        mbed::CriticalSectionLock lock;
         data = std::move(desired); // MoveAssignable
     }
     T exchange(T desired, memory_order = memory_order_seq_cst) volatile noexcept
@@ -218,7 +217,7 @@ struct AtomicBaseRaw {
             T val;
         } old;
         {
-            CriticalSectionLock lock;
+            mbed::CriticalSectionLock lock;
             memcpy(std::addressof(old.val), const_cast<const T *>(std::addressof(data)), sizeof(T));
             memcpy(const_cast<T *>(std::addressof(data)), std::addressof(desired), sizeof(T));
         }
@@ -226,7 +225,7 @@ struct AtomicBaseRaw {
     }
     T exchange(T desired, memory_order = memory_order_seq_cst) noexcept
     {
-        CriticalSectionLock lock;
+        mbed::CriticalSectionLock lock;
         T old = std::move(data); // MoveConstructible
         data = std::move(desired); // MoveAssignable
         return old;
@@ -234,7 +233,7 @@ struct AtomicBaseRaw {
     bool compare_exchange_strong(T &expected, T desired, memory_order success, memory_order failure) volatile noexcept
     {
         MBED_CHECK_CAS_ORDER(success, failure);
-        CriticalSectionLock lock;
+        mbed::CriticalSectionLock lock;
         if (memcmp(const_cast<const T *>(std::addressof(data)), std::addressof(expected), sizeof(T)) == 0) {
             memcpy(const_cast<T *>(std::addressof(data)), std::addressof(desired), sizeof(T));
             return true;
@@ -246,7 +245,7 @@ struct AtomicBaseRaw {
     bool compare_exchange_strong(T &expected, T desired, memory_order success, memory_order failure) noexcept
     {
         MBED_CHECK_CAS_ORDER(success, failure);
-        CriticalSectionLock lock;
+        mbed::CriticalSectionLock lock;
         if (memcmp(std::addressof(data), std::addressof(expected), sizeof(T)) == 0) {
             data = std::move(desired); // MoveAssignable
             return true;
@@ -477,7 +476,7 @@ protected:
  */
 template<typename T, typename A = atomic_container_t<T>>
 struct AtomicBaseInt {
-    MBED_STRUCT_STATIC_ASSERT(sizeof(T) == sizeof(A), "AtomicBaseInt size mismatch");
+    static_assert(sizeof(T) == sizeof(A), "AtomicBaseInt size mismatch");
     using value_type = T;
     AtomicBaseInt() noexcept = default;
     constexpr AtomicBaseInt(T v) noexcept : u(A(v))
@@ -576,14 +575,8 @@ protected:
 template<typename T, typename DiffT = T, typename StrideT = char, typename A = atomic_container_t<T>>
 struct AtomicWithAdd : public AtomicBaseInt<T, A> {
     using difference_type = DiffT;
-#ifdef __CC_ARM
-    AtomicWithAdd() noexcept = default;
-    constexpr AtomicWithAdd(T v) noexcept : AtomicBaseInt<T, A>(v)
-    {
-    }
-#else
     using AtomicBaseInt<T, A>::AtomicBaseInt;
-#endif
+
     T operator++() volatile noexcept
     {
         A d = static_cast<A>(sizeof(StrideT));
@@ -640,14 +633,8 @@ struct AtomicWithAdd : public AtomicBaseInt<T, A> {
  */
 template<typename T, typename A = atomic_container_t<T>>
 struct AtomicWithBitwise : public AtomicWithAdd<T, A> {
-#ifdef __CC_ARM
-    AtomicWithBitwise() noexcept = default;
-    constexpr AtomicWithBitwise(T v) noexcept : AtomicWithAdd<T, A>(v)
-    {
-    }
-#else
     using AtomicWithAdd<T, A>::AtomicWithAdd;
-#endif
+
     T fetch_and(T arg) volatile noexcept
     {
         A d = static_cast<A>(arg);

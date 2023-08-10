@@ -23,7 +23,6 @@
 
 namespace mbed {
 
-QSPI *QSPI::_owner = NULL;
 SingletonPtr<PlatformMutex> QSPI::_mutex;
 
 uint8_t convert_bus_width_to_line_count(qspi_bus_width_t width)
@@ -49,6 +48,7 @@ QSPI::QSPI(PinName io0, PinName io1, PinName io2, PinName io3, PinName sclk, Pin
     _qspi_io3 = io3;
     _qspi_clk = sclk;
     _qspi_cs = ssel;
+    _static_pinmap = NULL;
     _inst_width = QSPI_CFG_BUS_SINGLE;
     _address_width = QSPI_CFG_BUS_SINGLE;
     _address_size = QSPI_CFG_ADDR_SIZE_24;
@@ -59,10 +59,44 @@ QSPI::QSPI(PinName io0, PinName io1, PinName io2, PinName io3, PinName sclk, Pin
     _mode = mode;
     _hz = ONE_MHZ;
     _initialized = false;
+    _init_func = &QSPI::_initialize;
 
     //Go ahead init the device here with the default config
-    bool success = _initialize();
+    bool success = (this->*_init_func)();
     MBED_ASSERT(success);
+}
+
+QSPI::QSPI(const qspi_pinmap_t &pinmap, int mode) : _qspi()
+{
+    _qspi_io0 = pinmap.data0_pin;
+    _qspi_io1 = pinmap.data1_pin;
+    _qspi_io2 = pinmap.data2_pin;
+    _qspi_io3 = pinmap.data3_pin;
+    _qspi_clk = pinmap.sclk_pin;
+    _qspi_cs = pinmap.ssel_pin;
+    _static_pinmap = &pinmap;
+    _inst_width = QSPI_CFG_BUS_SINGLE;
+    _address_width = QSPI_CFG_BUS_SINGLE;
+    _address_size = QSPI_CFG_ADDR_SIZE_24;
+    _alt_width = QSPI_CFG_BUS_SINGLE;
+    _alt_size = QSPI_CFG_ALT_SIZE_8;
+    _data_width = QSPI_CFG_BUS_SINGLE;
+    _num_dummy_cycles = 0;
+    _mode = mode;
+    _hz = ONE_MHZ;
+    _initialized = false;
+    _init_func = &QSPI::_initialize_direct;
+
+    //Go ahead init the device here with the default config
+    bool success = (this->*_init_func)();
+    MBED_ASSERT(success);
+}
+
+QSPI::~QSPI()
+{
+    lock();
+    qspi_free(&_qspi);
+    unlock();
 }
 
 qspi_status_t QSPI::configure_format(qspi_bus_width_t inst_width, qspi_bus_width_t address_width, qspi_address_size_t address_size, qspi_bus_width_t alt_width, qspi_alt_size_t alt_size, qspi_bus_width_t data_width, int dummy_cycles)
@@ -96,14 +130,8 @@ qspi_status_t QSPI::set_frequency(int hz)
     if (_initialized) {
         lock();
         _hz = hz;
-        //If the same owner, just change freq.
-        //Otherwise we may have to change mode as well, so call _acquire
-        if (_owner == this) {
-            if (QSPI_STATUS_OK != qspi_frequency(&_qspi, _hz)) {
-                ret_status = QSPI_STATUS_ERROR;
-            }
-        } else {
-            _acquire();
+        if (QSPI_STATUS_OK != qspi_frequency(&_qspi, _hz)) {
+            ret_status = QSPI_STATUS_ERROR;
         }
         unlock();
     } else {
@@ -121,11 +149,9 @@ qspi_status_t QSPI::read(int address, char *rx_buffer, size_t *rx_length)
         if ((rx_length != NULL) && (rx_buffer != NULL)) {
             if (*rx_length != 0) {
                 lock();
-                if (true == _acquire()) {
-                    _build_qspi_command(QSPI_NO_INST, address, -1);
-                    if (QSPI_STATUS_OK == qspi_read(&_qspi, &_qspi_command, rx_buffer, rx_length)) {
-                        ret_status = QSPI_STATUS_OK;
-                    }
+                _build_qspi_command(QSPI_NO_INST, address, -1);
+                if (QSPI_STATUS_OK == qspi_read(&_qspi, &_qspi_command, rx_buffer, rx_length)) {
+                    ret_status = QSPI_STATUS_OK;
                 }
                 unlock();
             }
@@ -145,11 +171,9 @@ qspi_status_t QSPI::write(int address, const char *tx_buffer, size_t *tx_length)
         if ((tx_length != NULL) && (tx_buffer != NULL)) {
             if (*tx_length != 0) {
                 lock();
-                if (true == _acquire()) {
-                    _build_qspi_command(QSPI_NO_INST, address, -1);
-                    if (QSPI_STATUS_OK == qspi_write(&_qspi, &_qspi_command, tx_buffer, tx_length)) {
-                        ret_status = QSPI_STATUS_OK;
-                    }
+                _build_qspi_command(QSPI_NO_INST, address, -1);
+                if (QSPI_STATUS_OK == qspi_write(&_qspi, &_qspi_command, tx_buffer, tx_length)) {
+                    ret_status = QSPI_STATUS_OK;
                 }
                 unlock();
             }
@@ -169,11 +193,9 @@ qspi_status_t QSPI::read(qspi_inst_t instruction, int alt, int address, char *rx
         if ((rx_length != NULL) && (rx_buffer != NULL)) {
             if (*rx_length != 0) {
                 lock();
-                if (true == _acquire()) {
-                    _build_qspi_command(instruction, address, alt);
-                    if (QSPI_STATUS_OK == qspi_read(&_qspi, &_qspi_command, rx_buffer, rx_length)) {
-                        ret_status = QSPI_STATUS_OK;
-                    }
+                _build_qspi_command(instruction, address, alt);
+                if (QSPI_STATUS_OK == qspi_read(&_qspi, &_qspi_command, rx_buffer, rx_length)) {
+                    ret_status = QSPI_STATUS_OK;
                 }
                 unlock();
             }
@@ -193,11 +215,9 @@ qspi_status_t QSPI::write(qspi_inst_t instruction, int alt, int address, const c
         if ((tx_length != NULL) && (tx_buffer != NULL)) {
             if (*tx_length != 0) {
                 lock();
-                if (true == _acquire()) {
-                    _build_qspi_command(instruction, address, alt);
-                    if (QSPI_STATUS_OK == qspi_write(&_qspi, &_qspi_command, tx_buffer, tx_length)) {
-                        ret_status = QSPI_STATUS_OK;
-                    }
+                _build_qspi_command(instruction, address, alt);
+                if (QSPI_STATUS_OK == qspi_write(&_qspi, &_qspi_command, tx_buffer, tx_length)) {
+                    ret_status = QSPI_STATUS_OK;
                 }
                 unlock();
             }
@@ -215,11 +235,9 @@ qspi_status_t QSPI::command_transfer(qspi_inst_t instruction, int address, const
 
     if (_initialized) {
         lock();
-        if (true == _acquire()) {
-            _build_qspi_command(instruction, address, -1); //We just need the command
-            if (QSPI_STATUS_OK == qspi_command_transfer(&_qspi, &_qspi_command, (const void *)tx_buffer, tx_length, (void *)rx_buffer, rx_length)) {
-                ret_status = QSPI_STATUS_OK;
-            }
+        _build_qspi_command(instruction, address, -1); //We just need the command
+        if (QSPI_STATUS_OK == qspi_command_transfer(&_qspi, &_qspi_command, (const void *)tx_buffer, tx_length, (void *)rx_buffer, rx_length)) {
+            ret_status = QSPI_STATUS_OK;
         }
         unlock();
     }
@@ -255,13 +273,19 @@ bool QSPI::_initialize()
     return _initialized;
 }
 
-// Note: Private function with no locking
-bool QSPI::_acquire()
+// Note: Private helper function to initialize qspi HAL
+bool QSPI::_initialize_direct()
 {
-    if (_owner != this) {
-        //This will set freq as well
-        _initialize();
-        _owner = this;
+    if (_mode != 0 && _mode != 1) {
+        _initialized = false;
+        return _initialized;
+    }
+
+    qspi_status_t ret = qspi_init_direct(&_qspi, _static_pinmap, _hz, _mode);
+    if (QSPI_STATUS_OK == ret) {
+        _initialized = true;
+    } else {
+        _initialized = false;
     }
 
     return _initialized;

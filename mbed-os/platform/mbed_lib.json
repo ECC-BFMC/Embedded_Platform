@@ -3,16 +3,21 @@
     "config": {
         "stdio-convert-newlines": {
             "help": "Enable conversion to standard newlines on stdin/stdout/stderr",
-            "value": false
+            "value": true
         },
 
         "stdio-convert-tty-newlines": {
             "help": "Enable conversion to standard newlines on any tty FILE stream",
-            "value": false
+            "value": true
         },
 
         "stdio-buffered-serial": {
-            "help": "(Applies if target.console-uart is true.) Use UARTSerial driver to obtain buffered serial I/O on stdin/stdout/stderr. If false, unbuffered serial_getc and serial_putc are used directly.",
+            "help": "(Applies if target.console-uart is true and stdio-minimal-console-only is false.) Use BufferedSerial driver to obtain buffered serial I/O on stdin/stdout/stderr. If false, unbuffered serial_getc and serial_putc are used directly.",
+            "value": false
+        },
+
+        "stdio-minimal-console-only": {
+            "help": "(Ignores stdio-buffered-serial) Creates a console for basic unbuffered I/O operations. Enable if your application does not require file handles to access the serial interface. The POSIX `fsync` function will always an error.",
             "value": false
         },
 
@@ -27,13 +32,8 @@
         },
 
         "default-serial-baud-rate": {
-            "help": "Default baud rate for a Serial or RawSerial instance (if not specified in the constructor)",
+            "help": "Default baud rate for a serial object (if not specified in the constructor)",
             "value": 9600
-        },
-
-        "force-non-copyable-error": {
-            "help": "Force compile time error when a NonCopyable object is copied",
-            "value": false
         },
 
         "poll-use-lowpower-timer": {
@@ -90,6 +90,12 @@
             "value": null
         },
 
+        "stack-dump-enabled": {
+            "macro_name": "MBED_STACK_DUMP_ENABLED",
+            "help": "Set to true to enable stack dump.",
+            "value": false
+        },
+
         "cpu-stats-enabled": {
             "macro_name": "MBED_CPU_STATS_ENABLED",
             "help": "Set to 1 to enable cpu stats. When enabled the function mbed_stats_cpu_get returns non-zero data. See mbed_stats.h for more information",
@@ -108,9 +114,28 @@
             "value": null
         },
 
+        "deepsleep-stats-enabled": {
+            "macro_name": "MBED_SLEEP_TRACING_ENABLED",
+            "help": "Set to 1 to enable deepsleep lock stats",
+            "value": null
+        },
+
+        "deepsleep-stats-verbose": {
+            "help": "Stats are logged at each step (need deepsleep-stats-enable)",
+            "value": true
+        },
+
         "cthunk_count_max": {
             "help": "The maximum CThunk objects used at the same time. This must be greater than 0 and less 256",
             "value": 8
+        },
+        "callback-nontrivial": {
+            "help": "Enables support for non-trivial callable objects in Callback. Can be disabled to save ROM if no-one is using non-trivial types. Changing this value may cause incompatibility with pre-built binaries. Choice not available with IAR, value forced to true.",
+            "value": false
+        },
+        "callback-comparable": {
+            "help": "Enables support for comparing two Callbacks. See notes on operator== for limitations. Can be disabled to save ROM if not required.",
+            "value": true
         },
         "crash-capture-enabled": {
             "help": "Enables crash context capture when the system enters a fatal error/crash.",
@@ -129,24 +154,21 @@
             "value": true
         },
         "minimal-printf-enable-64-bit": {
-            "help": "Enable printing 64 bit integers when using mprintf profile",
+            "help": "Enable printing 64 bit integers when using minimal printf library",
             "value": true
         },
         "minimal-printf-enable-floating-point": {
-            "help": "Enable floating point printing when using mprintf profile",
+            "help": "Enable floating point printing when using minimal printf library",
             "value": false
         },
         "minimal-printf-set-floating-point-max-decimals": {
-            "help": "Maximum number of decimals to be printed",
+            "help": "Maximum number of decimals to be printed when using minimal printf library",
             "value": 6
         }
     },
     "target_overrides": {
-        "ARM_MUSCA_A1_NS": {
-            "stdio-baud-rate": 115200
-        },
-        "ARM_MUSCA_A1_S": {
-            "stdio-baud-rate": 115200
+        "STM": {
+            "deepsleep-stats-verbose": false
         },
         "EFM32": {
             "stdio-baud-rate": 115200
@@ -156,7 +178,7 @@
         },
         "UNO_91H": {
             "stdio-baud-rate": 115200
-        }, 
+        },
         "DISCO_L475VG_IOT01A": {
             "crash-capture-enabled": true,
             "fatal-error-auto-reboot-enabled": true
@@ -189,14 +211,6 @@
             "crash-capture-enabled": true,
             "fatal-error-auto-reboot-enabled": true
         },
-        "UBLOX_EVK_ODIN_W2": {
-            "crash-capture-enabled": true,
-            "fatal-error-auto-reboot-enabled": true
-        },
-        "UBLOX_C030_U201": {
-            "crash-capture-enabled": true,
-            "fatal-error-auto-reboot-enabled": true
-        },
         "NUMAKER_PFM_M487": {
             "crash-capture-enabled": true,
             "fatal-error-auto-reboot-enabled": true
@@ -204,6 +218,12 @@
         "NUMAKER_PFM_NUC472": {
             "crash-capture-enabled": true,
             "fatal-error-auto-reboot-enabled": true
+        },
+        "NU_PFM_M2351": {
+            "stdio-baud-rate": 115200
+        },
+        "NU_M2354": {
+            "stdio-baud-rate": 115200
         },
         "NRF52840_DK": {
             "crash-capture-enabled": true,
@@ -217,13 +237,35 @@
             "crash-capture-enabled": true,
             "fatal-error-auto-reboot-enabled": true
         },
-        "DISCO_F407VG": {
+        "NUCLEO_F412ZG": {
             "crash-capture-enabled": true,
             "fatal-error-auto-reboot-enabled": true
         },
         "DISCO_F413ZH": {
             "crash-capture-enabled": true,
             "fatal-error-auto-reboot-enabled": true
+        },
+        "S5JS100": {
+            "stdio-baud-rate": 115200
+        },
+        "NUCLEO_L452RE-P": {
+            "crash-capture-enabled": true,
+            "fatal-error-auto-reboot-enabled": true
+        },
+        "ARM_MUSCA_B1": {
+            "stdio-convert-newlines": true,
+            "stdio-baud-rate": 115200
+        },
+        "ARM_MUSCA_S1": {
+            "stdio-convert-newlines": true,
+            "stdio-baud-rate": 115200
+        },
+        "MTS_DRAGONFLY_L471QG": {
+            "crash-capture-enabled": true,
+            "fatal-error-auto-reboot-enabled": true
+        },
+        "CY8CKIT064B0S2_4343W": {
+            "stdio-baud-rate": 115200
         }
     }
 }

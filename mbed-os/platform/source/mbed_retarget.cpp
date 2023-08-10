@@ -1,5 +1,5 @@
 /* mbed Microcontroller Library
- * Copyright (c) 2006-2019 ARM Limited
+ * Copyright (c) 2006-2020 ARM Limited
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,12 @@
  * limitations under the License.
  */
 
+// Workaround for CMSIS 5.8.0, compat header must be placed before any CMSIS header inclusion
+#if defined(__ARMCC_VERSION)
+#   include <arm_compat.h>
+#endif
+
+#include <mstd_mutex>
 #include <time.h>
 #include "platform/platform.h"
 #include "platform/FilePath.h"
@@ -29,9 +35,10 @@
 #include "platform/mbed_atomic.h"
 #include "platform/mbed_critical.h"
 #include "platform/mbed_poll.h"
-#include "drivers/UARTSerial.h"
+#include "drivers/BufferedSerial.h"
 #include "hal/us_ticker_api.h"
 #include "hal/lp_ticker_api.h"
+#include "hal/static_pinmap.h"
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -44,21 +51,20 @@
 
 static SingletonPtr<PlatformMutex> _mutex;
 
+/* DIR is typedeffed to struct DIR_impl in header */
+struct DIR_impl {
+    mbed::DirHandle *handle;
+    struct dirent entry;
+};
+
 #if defined(__ARMCC_VERSION)
-#   if __ARMCC_VERSION >= 6010050
-#      include <arm_compat.h>
-#   endif
 #   include <rt_sys.h>
 #   include <rt_misc.h>
 #   include <stdint.h>
 #   define PREFIX(x)    _sys##x
 #   define OPEN_MAX     _SYS_OPEN
 #   ifdef __MICROLIB
-#       if __ARMCC_VERSION >= 6010050
 asm(" .global __use_full_stdio\n");
-#       else
-#           pragma import(__use_full_stdio)
-#       endif
 #   endif
 
 #elif defined(__ICCARM__)
@@ -75,6 +81,12 @@ asm(" .global __use_full_stdio\n");
 #   define PREFIX(x)    x
 #endif
 
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+#   define RETARGET_OPEN_MAX OPEN_MAX
+#else
+#   define RETARGET_OPEN_MAX        3
+#endif // MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+
 #define FILE_HANDLE_RESERVED    ((FileHandle*)0xFFFFFFFF)
 
 /**
@@ -89,13 +101,11 @@ asm(" .global __use_full_stdio\n");
 
 using namespace mbed;
 
-#if defined(__MICROLIB) && (__ARMCC_VERSION>5030000)
-// Before version 5.03, we were using a patched version of microlib with proper names
-extern const char __stdin_name[]  = ":tt";
-extern const char __stdout_name[] = ":tt";
-extern const char __stderr_name[] = ":tt";
-
-#else
+// Microlib currently does not allow re-defining the pathnames for the
+// standard I/O device handles (STDIN, STDOUT, and STDERR).
+// It uses the default pathname ":tt" at library initialization to identify
+// them all.
+#if !defined(__MICROLIB)
 extern const char __stdin_name[]  = "/stdin";
 extern const char __stdout_name[] = "/stdout";
 extern const char __stderr_name[] = "/stderr";
@@ -104,20 +114,25 @@ extern const char __stderr_name[] = "/stderr";
 unsigned char *mbed_heap_start = 0;
 uint32_t mbed_heap_size = 0;
 
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+
 /* newlib has the filehandle field in the FILE struct as a short, so
  * we can't just return a Filehandle* from _open and instead have to
  * put it in a filehandles array and return the index into that array
  */
-static FileHandle *filehandles[OPEN_MAX] = { FILE_HANDLE_RESERVED, FILE_HANDLE_RESERVED, FILE_HANDLE_RESERVED };
-static char stdio_in_prev[OPEN_MAX];
-static char stdio_out_prev[OPEN_MAX];
+static FileHandle *filehandles[RETARGET_OPEN_MAX] = { FILE_HANDLE_RESERVED, FILE_HANDLE_RESERVED, FILE_HANDLE_RESERVED };
 static SingletonPtr<PlatformMutex> filehandle_mutex;
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+
+static char stdio_in_prev[RETARGET_OPEN_MAX];
+static char stdio_out_prev[RETARGET_OPEN_MAX];
 
 namespace mbed {
 void mbed_set_unbuffered_stream(std::FILE *_file);
 
 void remove_filehandle(FileHandle *file)
 {
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     filehandle_mutex->lock();
     /* Remove all open filehandles for this */
     for (unsigned int fh_i = 0; fh_i < sizeof(filehandles) / sizeof(*filehandles); fh_i++) {
@@ -126,6 +141,7 @@ void remove_filehandle(FileHandle *file)
         }
     }
     filehandle_mutex->unlock();
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 }
 }
 
@@ -136,11 +152,12 @@ extern serial_t stdio_uart;
 /* Private FileHandle to implement backwards-compatible functionality of
  * direct HAL serial access for default stdin/stdout/stderr.
  * This is not a particularly well-behaved FileHandle for a stream, which
- * is why it's not public. People should be using UARTSerial.
+ * is why it's not public. People should be using BufferedSerial.
  */
 class DirectSerial : public FileHandle {
 public:
     DirectSerial(PinName tx, PinName rx, int baud);
+    DirectSerial(const serial_pinmap_t &static_pinmap, int baud);
     virtual ssize_t write(const void *buffer, size_t size);
     virtual ssize_t read(void *buffer, size_t size);
     virtual off_t seek(off_t offset, int whence = SEEK_SET)
@@ -167,14 +184,40 @@ DirectSerial::DirectSerial(PinName tx, PinName rx, int baud)
     if (stdio_uart_inited) {
         return;
     }
-    serial_init(&stdio_uart, tx, rx);
+
+    static const serial_pinmap_t console_pinmap = get_uart_pinmap(CONSOLE_TX, CONSOLE_RX);
+    serial_init_direct(&stdio_uart, &console_pinmap);
     serial_baud(&stdio_uart, baud);
+
 #if   CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTS
-    serial_set_flow_control(&stdio_uart, FlowControlRTS, STDIO_UART_RTS, NC);
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(STDIO_UART_RTS, NC);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlRTS, &fc_pinmap);
 #elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_CTS
-    serial_set_flow_control(&stdio_uart, FlowControlCTS, NC, STDIO_UART_CTS);
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(NC, STDIO_UART_CTS);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlCTS, &fc_pinmap);
 #elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTSCTS
-    serial_set_flow_control(&stdio_uart, FlowControlRTSCTS, STDIO_UART_RTS, STDIO_UART_CTS);
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(STDIO_UART_RTS, STDIO_UART_CTS);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlRTSCTS, &fc_pinmap);
+#endif
+}
+
+DirectSerial::DirectSerial(const serial_pinmap_t &static_pinmap, int baud)
+{
+    if (stdio_uart_inited) {
+        return;
+    }
+    serial_init_direct(&stdio_uart, &static_pinmap);
+    serial_baud(&stdio_uart, baud);
+
+#if   CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTS
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(STDIO_UART_RTS, NC);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlRTS, &fc_pinmap);
+#elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_CTS
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(NC, STDIO_UART_CTS);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlCTS, &fc_pinmap);
+#elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTSCTS
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(STDIO_UART_RTS, STDIO_UART_CTS);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlRTSCTS, &fc_pinmap);
 #endif
 }
 
@@ -208,7 +251,40 @@ short DirectSerial::poll(short events) const
     }
     return revents;
 }
+#if MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+#   if MBED_CONF_TARGET_CONSOLE_UART
+
+static void do_serial_init()
+{
+    if (stdio_uart_inited) {
+        return;
+    }
+
+    static const serial_pinmap_t console_pinmap = get_uart_pinmap(CONSOLE_TX, CONSOLE_RX);
+    serial_init_direct(&stdio_uart, &console_pinmap);
+    serial_baud(&stdio_uart, MBED_CONF_PLATFORM_STDIO_BAUD_RATE);
+#if   CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTS
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(STDIO_UART_RTS, NC);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlRTS, &fc_pinmap);
+#elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_CTS
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(NC, STDIO_UART_CTS);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlCTS, &fc_pinmap);
+#elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTSCTS
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(STDIO_UART_RTS, STDIO_UART_CTS);
+    serial_set_flow_control_direct(&stdio_uart, FlowControlRTSCTS, &fc_pinmap);
 #endif
+}
+
+static void do_serial_init_once()
+{
+    static mstd::once_flag once;
+    mstd::call_once(once, do_serial_init);
+}
+
+#endif // MBED_CONF_TARGET_CONSOLE_UART
+#endif // MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+
+#endif // DEVICE_SERIAL
 
 class Sink : public FileHandle {
 public:
@@ -247,7 +323,7 @@ ssize_t Sink::read(void *buffer, size_t size)
     return 1;
 }
 
-
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 MBED_WEAK FileHandle *mbed::mbed_target_override_console(int fd)
 {
     return NULL;
@@ -261,17 +337,23 @@ MBED_WEAK FileHandle *mbed::mbed_override_console(int fd)
 static FileHandle *default_console()
 {
 #if MBED_CONF_TARGET_CONSOLE_UART && DEVICE_SERIAL
+
 #  if MBED_CONF_PLATFORM_STDIO_BUFFERED_SERIAL
-    static UARTSerial console(STDIO_UART_TX, STDIO_UART_RX, MBED_CONF_PLATFORM_STDIO_BAUD_RATE);
+    static const serial_pinmap_t console_pinmap = get_uart_pinmap(CONSOLE_TX, CONSOLE_RX);
+    static BufferedSerial console(console_pinmap, MBED_CONF_PLATFORM_STDIO_BAUD_RATE);
 #   if   CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTS
-    console.set_flow_control(SerialBase::RTS, STDIO_UART_RTS, NC);
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(STDIO_UART_RTS, NC);
+    console.serial_set_flow_control(SerialBase::RTS, fc_pinmap);
 #   elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_CTS
-    console.set_flow_control(SerialBase::CTS, NC, STDIO_UART_CTS);
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(NC, STDIO_UART_CTS);
+    console.serial_set_flow_control(SerialBase::CTS, fc_pinmap);
 #   elif CONSOLE_FLOWCONTROL == CONSOLE_FLOWCONTROL_RTSCTS
-    console.set_flow_control(SerialBase::RTSCTS, STDIO_UART_RTS, STDIO_UART_CTS);
+    static const serial_fc_pinmap_t fc_pinmap = get_uart_fc_pinmap(STDIO_UART_RTS, STDIO_UART_CTS);
+    console.serial_set_flow_control(SerialBase::RTSCTS, fc_pinmap);
 #   endif
 #  else
-    static DirectSerial console(STDIO_UART_TX, STDIO_UART_RX, MBED_CONF_PLATFORM_STDIO_BAUD_RATE);
+    static const serial_pinmap_t console_pinmap = get_uart_pinmap(CONSOLE_TX, CONSOLE_RX);
+    static DirectSerial console(console_pinmap, MBED_CONF_PLATFORM_STDIO_BAUD_RATE);
 #  endif
 #else // MBED_CONF_TARGET_CONSOLE_UART && DEVICE_SERIAL
     static Sink console;
@@ -292,11 +374,14 @@ static FileHandle *get_console(int fd)
     }
     return default_console();
 }
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 
+namespace mbed {
 /* Deal with the fact C library may not _open descriptors 0, 1, 2 - auto bind */
-FileHandle *mbed::mbed_file_handle(int fd)
+FileHandle *mbed_file_handle(int fd)
 {
-    if (fd >= OPEN_MAX) {
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+    if (fd >= RETARGET_OPEN_MAX) {
         return NULL;
     }
     FileHandle *fh = filehandles[fd];
@@ -304,8 +389,14 @@ FileHandle *mbed::mbed_file_handle(int fd)
         filehandles[fd] = fh = get_console(fd);
     }
     return fh;
+#else
+    return nullptr;
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+}
 }
 
+
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 /**
  * Sets errno when file opening fails.
  * Wipes out the filehandle too.
@@ -374,13 +465,13 @@ static int reserve_filehandle()
     // find the first empty slot in filehandles, after the slots reserved for stdin/stdout/stderr
     filehandle_mutex->lock();
     int fh_i;
-    for (fh_i = 3; fh_i < OPEN_MAX; fh_i++) {
+    for (fh_i = 3; fh_i < RETARGET_OPEN_MAX; fh_i++) {
         /* Take a next free filehandle slot available. */
         if (filehandles[fh_i] == NULL) {
             break;
         }
     }
-    if (fh_i >= OPEN_MAX) {
+    if (fh_i >= RETARGET_OPEN_MAX) {
         /* Too many file handles have been opened */
         errno = EMFILE;
         filehandle_mutex->unlock();
@@ -391,6 +482,7 @@ static int reserve_filehandle()
 
     return fh_i;
 }
+
 
 int mbed::bind_to_fd(FileHandle *fh)
 {
@@ -423,7 +515,7 @@ extern "C" std::FILE *fdopen(int fildes, const char *mode)
 {
     // This is to avoid scanf and the bloat it brings.
     char buf[1 + sizeof fildes]; /* @(integer) */
-    MBED_STATIC_ASSERT(sizeof buf == 5, "Integers should be 4 bytes.");
+    static_assert(sizeof buf == 5, "Integers should be 4 bytes.");
     buf[0] = '@';
     memcpy(buf + 1, &fildes, sizeof fildes);
 
@@ -455,6 +547,8 @@ std::FILE *fdopen(FileHandle *fh, const char *mode)
     return stream;
 }
 }
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+
 
 /* @brief   standard c library fopen() retargeting function.
  *
@@ -469,29 +563,16 @@ std::FILE *fdopen(FileHandle *fh, const char *mode)
  * */
 extern "C" FILEHANDLE PREFIX(_open)(const char *name, int openflags)
 {
-#if defined(__MICROLIB) && (__ARMCC_VERSION>5030000)
-#if !defined(MBED_CONF_RTOS_PRESENT)
-    // valid only for mbed 2
-    // for ulib, this is invoked after RAM init, prior c++
-    // used as hook, as post stack/heap is not active there
-    extern void mbed_copy_nvic(void);
-    extern void mbed_sdk_init(void);
-
-    static int mbed_sdk_inited = 0;
-    if (!mbed_sdk_inited) {
-        mbed_copy_nvic();
-        mbed_sdk_init();
-#if DEVICE_USTICKER && MBED_CONF_TARGET_INIT_US_TICKER_AT_BOOT
-        us_ticker_init();
-#endif
-        mbed_sdk_inited = 1;
-    }
-#endif
-    // Before version 5.03, we were using a patched version of microlib with proper names
-    // This is the workaround that the microlib author suggested us
-    static int n = 0;
-    if (std::strcmp(name, ":tt") == 0 && n < 3) {
-        return n++;
+#if defined(__MICROLIB)
+    // Use the mode requested to select the standard I/O device handle to return.
+    if (std::strcmp(name, ":tt") == 0) {
+        if (openflags & OPEN_W) {
+            return STDOUT_FILENO;
+        } else if (openflags & OPEN_A) {
+            return STDERR_FILENO;
+        } else {
+            return STDIN_FILENO;
+        }
     }
 #else
     /* Use the posix convention that stdin,out,err are filehandles 0,1,2.
@@ -508,16 +589,23 @@ extern "C" FILEHANDLE PREFIX(_open)(const char *name, int openflags)
     }
 #endif
 #ifndef __IAR_SYSTEMS_ICC__
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     /* FILENAME: "@(integer)" gives an already-allocated descriptor */
     if (name[0] == '@') {
         int fd;
         memcpy(&fd, name + 1, sizeof fd);
         return fd;
     }
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 #endif
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     return open(name, openflags_to_posix(openflags));
+#else
+    return -1;
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 }
 
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 extern "C" int open(const char *name, int oflag, ...)
 {
     int fildes = reserve_filehandle();
@@ -554,12 +642,18 @@ extern "C" int open(const char *name, int oflag, ...)
 
     return fildes;
 }
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 
 extern "C" int PREFIX(_close)(FILEHANDLE fh)
 {
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     return close(fh);
+#else
+    return 0;
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 }
 
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 extern "C" int close(int fildes)
 {
     FileHandle *fhc = mbed_file_handle(fildes);
@@ -577,6 +671,7 @@ extern "C" int close(int fildes)
         return 0;
     }
 }
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 
 static bool convert_crlf(int fd)
 {
@@ -673,7 +768,20 @@ finish:
 
 extern "C" ssize_t write(int fildes, const void *buf, size_t length)
 {
+#if MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+    if (fildes != STDOUT_FILENO && fildes != STDERR_FILENO) {
+        errno = EBADF;
+        return -1;
+    }
 
+    const unsigned char *buffer = static_cast<const unsigned char *>(buf);
+
+    for (size_t i = 0; i < length; i++) {
+        mbed::minimal_console_putc(buffer[i]);
+    }
+
+    ssize_t ret = length;
+#else
     FileHandle *fhc = mbed_file_handle(fildes);
     if (fhc == NULL) {
         errno = EBADF;
@@ -681,6 +789,7 @@ extern "C" ssize_t write(int fildes, const void *buf, size_t length)
     }
 
     ssize_t ret = fhc->write(buf, length);
+#endif // MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     if (ret < 0) {
         errno = -ret;
         return -1;
@@ -689,7 +798,19 @@ extern "C" ssize_t write(int fildes, const void *buf, size_t length)
     }
 }
 
-#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+#if MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+/* Write one character to a serial interface */
+MBED_WEAK int mbed::minimal_console_putc(int c)
+{
+#if MBED_CONF_TARGET_CONSOLE_UART && DEVICE_SERIAL
+    do_serial_init_once();
+    serial_putc(&stdio_uart, c);
+#endif // MBED_CONF_TARGET_CONSOLE_UART && DEVICE_SERIAL
+    return c;
+}
+#endif // MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+
+#if defined (__ARMCC_VERSION)
 extern "C" void PREFIX(_exit)(int return_code)
 {
     while (1) {}
@@ -768,6 +889,23 @@ extern "C" int PREFIX(_read)(FILEHANDLE fh, unsigned char *buffer, unsigned int 
 
 extern "C" ssize_t read(int fildes, void *buf, size_t length)
 {
+#if MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+    if (fildes != STDIN_FILENO && fildes != STDERR_FILENO) {
+        errno = EBADF;
+        return -1;
+    }
+
+    if (length == 0) {
+        return 0;
+    }
+
+    unsigned char *buffer = static_cast<unsigned char *>(buf);
+
+    buffer[0] = minimal_console_getc();
+
+    ssize_t ret = 1;
+
+#else
     FileHandle *fhc = mbed_file_handle(fildes);
     if (fhc == NULL) {
         errno = EBADF;
@@ -775,6 +913,7 @@ extern "C" ssize_t read(int fildes, void *buf, size_t length)
     }
 
     ssize_t ret = fhc->read(buf, length);
+#endif // MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     if (ret < 0) {
         errno = -ret;
         return -1;
@@ -782,6 +921,19 @@ extern "C" ssize_t read(int fildes, void *buf, size_t length)
         return ret;
     }
 }
+
+#if MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
+/* Read a character from the serial interface */
+MBED_WEAK int mbed::minimal_console_getc()
+{
+#if MBED_CONF_TARGET_CONSOLE_UART && DEVICE_SERIAL
+    do_serial_init_once();
+    return serial_getc(&stdio_uart);
+#else
+    return 0;
+#endif // MBED_CONF_TARGET_CONSOLE_UART && DEVICE_SERIAL
+}
+#endif // MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 
 
 #ifdef __ARMCC_VERSION
@@ -793,8 +945,10 @@ extern "C" int _isatty(FILEHANDLE fh)
     return isatty(fh);
 }
 
+
 extern "C" int isatty(int fildes)
 {
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     FileHandle *fhc = mbed_file_handle(fildes);
     if (fhc == NULL) {
         errno = EBADF;
@@ -808,6 +962,10 @@ extern "C" int isatty(int fildes)
     } else {
         return tty;
     }
+#else
+    // Is attached to an interactive device
+    return 1;
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 }
 
 extern "C"
@@ -819,6 +977,7 @@ long __lseek(int fh, long offset, int whence)
 int _lseek(FILEHANDLE fh, int offset, int whence)
 #endif
 {
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 #if defined(__ARMCC_VERSION)
     int whence = SEEK_SET;
 #endif
@@ -832,8 +991,13 @@ int _lseek(FILEHANDLE fh, int offset, int whence)
         return -1;
     }
     return off;
+#else
+    // Not supported
+    return -1;
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 }
 
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 extern "C" off_t lseek(int fildes, off_t offset, int whence)
 {
     FileHandle *fhc = mbed_file_handle(fildes);
@@ -873,9 +1037,11 @@ extern "C" int PREFIX(_ensure)(FILEHANDLE fh)
     return fsync(fh);
 }
 #endif
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 
 extern "C" int fsync(int fildes)
 {
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     FileHandle *fhc = mbed_file_handle(fildes);
     if (fhc == NULL) {
         errno = EBADF;
@@ -889,11 +1055,16 @@ extern "C" int fsync(int fildes)
     } else {
         return 0;
     }
+#else
+    return -1;
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 }
+
 
 #ifdef __ARMCC_VERSION
 extern "C" long PREFIX(_flen)(FILEHANDLE fh)
 {
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
     FileHandle *fhc = mbed_file_handle(fh);
     if (fhc == NULL) {
         errno = EBADF;
@@ -910,24 +1081,23 @@ extern "C" long PREFIX(_flen)(FILEHANDLE fh)
         return -1;
     }
     return size;
+#else
+    // Not supported
+    return -1;
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 }
 
 // Do not compile this code for TFM secure target
-#if !defined(COMPONENT_SPE) || !defined(TARGET_TFM)
+#if !defined(TARGET_TFM)
 
 #if !defined(__MICROLIB)
-#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
 __asm(".global __use_two_region_memory\n\t");
 __asm(".global __use_no_semihosting\n\t");
-#else
-#pragma import(__use_two_region_memory)
-#endif
 #endif
 
 // Through weak-reference, we can check if ARM_LIB_HEAP is defined at run-time.
 // If ARM_LIB_HEAP is defined, we can fix heap allocation.
 extern MBED_WEAK uint32_t   Image$$ARM_LIB_HEAP$$ZI$$Base[];
-extern MBED_WEAK uint32_t   Image$$ARM_LIB_HEAP$$ZI$$Length[];
 extern MBED_WEAK uint32_t   Image$$ARM_LIB_HEAP$$ZI$$Limit[];
 
 // Heap here is considered starting after ZI ends to Stack start
@@ -942,7 +1112,7 @@ extern "C" MBED_WEAK __value_in_regs struct __initial_stackheap _mbed_user_setup
     struct __initial_stackheap r;
 
     // Fix heap if ARM_LIB_HEAP is defined
-    if (Image$$ARM_LIB_HEAP$$ZI$$Length) {
+    if (Image$$ARM_LIB_HEAP$$ZI$$Base != Image$$ARM_LIB_HEAP$$ZI$$Limit) {
         heap_base = (uint32_t) Image$$ARM_LIB_HEAP$$ZI$$Base;
         heap_limit = (uint32_t) Image$$ARM_LIB_HEAP$$ZI$$Limit;
     }
@@ -965,7 +1135,7 @@ extern "C" __value_in_regs struct __argc_argv $Sub$$__rt_lib_init(unsigned heapb
     uint32_t heap_limit = (uint32_t)Image$$ARM_LIB_STACK$$ZI$$Base;
 
     // Fix heap if ARM_LIB_HEAP is defined
-    if (Image$$ARM_LIB_HEAP$$ZI$$Length) {
+    if (Image$$ARM_LIB_HEAP$$ZI$$Base != Image$$ARM_LIB_HEAP$$ZI$$Limit) {
         heap_base = (uint32_t) Image$$ARM_LIB_HEAP$$ZI$$Base;
         heap_limit = (uint32_t) Image$$ARM_LIB_HEAP$$ZI$$Limit;
     }
@@ -974,16 +1144,16 @@ extern "C" __value_in_regs struct __argc_argv $Sub$$__rt_lib_init(unsigned heapb
 }
 #endif
 
-extern "C" __value_in_regs struct __initial_stackheap __user_setup_stackheap(uint32_t R0, uint32_t R1, uint32_t R2, uint32_t R3)
+MBED_USED extern "C" __value_in_regs struct __initial_stackheap __user_setup_stackheap(uint32_t R0, uint32_t R1, uint32_t R2, uint32_t R3)
 {
     return _mbed_user_setup_stackheap(R0, R1, R2, R3);
 }
 
-#endif // !defined(COMPONENT_SPE) || !defined(TARGET_TFM)
+#endif // !defined(FEATURE_PSA)
 
 #endif
 
-
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 #if !defined(__ARMCC_VERSION) && !defined(__ICCARM__)
 extern "C" int _fstat(int fh, struct stat *st)
 {
@@ -1015,7 +1185,7 @@ extern "C" int fcntl(int fildes, int cmd, ...)
     switch (cmd) {
         case F_GETFL: {
             int flags = 0;
-            if (fhc->is_blocking()) {
+            if (!fhc->is_blocking()) {
                 flags |= O_NONBLOCK;
             }
             return flags;
@@ -1025,11 +1195,12 @@ extern "C" int fcntl(int fildes, int cmd, ...)
             va_start(ap, cmd);
             int flags = va_arg(ap, int);
             va_end(ap);
-            int ret = fhc->set_blocking(flags & O_NONBLOCK);
+            int ret = fhc->set_blocking(!(flags & O_NONBLOCK));
             if (ret < 0) {
                 errno = -ret;
                 return -1;
             }
+
             return 0;
         }
 
@@ -1042,12 +1213,12 @@ extern "C" int fcntl(int fildes, int cmd, ...)
 
 extern "C" int poll(struct pollfd fds[], nfds_t nfds, int timeout)
 {
-    if (nfds > OPEN_MAX) {
+    if (nfds > RETARGET_OPEN_MAX) {
         errno = EINVAL;
         return -1;
     }
 
-    struct mbed::pollfh fhs[OPEN_MAX];
+    struct mbed::pollfh fhs[RETARGET_OPEN_MAX];
     for (nfds_t n = 0; n < nfds; n++) {
         // Underlying FileHandle poll returns POLLNVAL if given NULL, so
         // we don't need to take special action.
@@ -1060,6 +1231,7 @@ extern "C" int poll(struct pollfd fds[], nfds_t nfds, int timeout)
     }
     return ret;
 }
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 
 namespace std {
 extern "C" int remove(const char *path)
@@ -1127,6 +1299,7 @@ extern "C" char *_sys_command_string(char *cmd, int len)
 }
 #endif
 
+#if !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 extern "C" DIR *opendir(const char *path)
 {
     FilePath fp(path);
@@ -1136,9 +1309,15 @@ extern "C" DIR *opendir(const char *path)
         return NULL;
     }
 
-    DirHandle *dir;
-    int err = fs->open(&dir, fp.fileName());
+    DIR *dir = new (std::nothrow) DIR;
+    if (!dir) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    int err = fs->open(&dir->handle, fp.fileName());
     if (err < 0) {
+        delete dir;
         errno = -err;
         return NULL;
     }
@@ -1148,8 +1327,7 @@ extern "C" DIR *opendir(const char *path)
 
 extern "C" struct dirent *readdir(DIR *dir)
 {
-    static struct dirent ent;
-    int err = dir->read(&ent);
+    int err = dir->handle->read(&dir->entry);
     if (err < 1) {
         if (err < 0) {
             errno = -err;
@@ -1157,12 +1335,13 @@ extern "C" struct dirent *readdir(DIR *dir)
         return NULL;
     }
 
-    return &ent;
+    return &dir->entry;
 }
 
 extern "C" int closedir(DIR *dir)
 {
-    int err = dir->close();
+    int err = dir->handle->close();
+    delete dir;
     if (err < 0) {
         errno = -err;
         return -1;
@@ -1173,17 +1352,17 @@ extern "C" int closedir(DIR *dir)
 
 extern "C" void rewinddir(DIR *dir)
 {
-    dir->rewind();
+    dir->handle->rewind();
 }
 
 extern "C" off_t telldir(DIR *dir)
 {
-    return dir->tell();
+    return dir->handle->tell();
 }
 
 extern "C" void seekdir(DIR *dir, off_t off)
 {
-    dir->seek(off);
+    dir->handle->seek(off);
 }
 
 extern "C" int mkdir(const char *path, mode_t mode)
@@ -1239,6 +1418,7 @@ extern "C" int statvfs(const char *path, struct statvfs *buf)
         return 0;
     }
 }
+#endif // !MBED_CONF_PLATFORM_STDIO_MINIMAL_CONSOLE_ONLY
 
 #if defined(TOOLCHAIN_GCC)
 /* prevents the exception handling name demangling code getting pulled in */
@@ -1385,6 +1565,14 @@ extern "C" {
 
 } // end of extern "C"
 
+#if defined(__MICROLIB)
+extern "C" {
+    MBED_WEAK void __aeabi_assert(const char *expr, const char *file, int line)
+    {
+        mbed_assert_internal(expr, file, line);
+    }
+} // end of extern "C"
+#endif
 #endif
 
 
@@ -1457,8 +1645,6 @@ extern "C" WEAK void *__aeabi_read_tp(void)
     return __section_begin("__iar_tls$$DATA");
 }
 #endif
-#elif defined(__CC_ARM)
-// Do nothing
 #elif defined (__GNUC__)
 struct _reent;
 // Stub out locks when an rtos is not present
@@ -1751,4 +1937,299 @@ extern "C" MBED_WEAK long int _scanf_mbtowc(
 )
 {
     return 0;
+}
+
+static  void validate_errno_values(int value)
+{
+
+    switch (value) {
+        case EPERM:
+            break;
+        case ENOENT:
+            break;
+        case ESRCH:
+            break;
+        case EINTR:
+            break;
+        case EIO:
+            break;
+        case ENXIO:
+            break;
+        case E2BIG:
+            break;
+        case ENOEXEC:
+            break;
+        case EBADF:
+            break;
+        case ECHILD:
+            break;
+        case ENOMEM:
+            break;
+        case EACCES:
+            break;
+        case EFAULT:
+            break;
+        case ENOTBLK:
+            break;
+        case EBUSY:
+            break;
+        case EEXIST:
+            break;
+        case EXDEV:
+            break;
+        case ENODEV:
+            break;
+        case ENOTDIR:
+            break;
+        case EISDIR:
+            break;
+        case EINVAL:
+            break;
+        case ENFILE:
+            break;
+        case EMFILE:
+            break;
+        case ENOTTY:
+            break;
+        case ETXTBSY:
+            break;
+        case EFBIG:
+            break;
+        case ENOSPC:
+            break;
+        case ESPIPE:
+            break;
+        case EROFS:
+            break;
+        case EMLINK:
+            break;
+        case EPIPE:
+            break;
+        case EDOM:
+            break;
+        case ERANGE:
+            break;
+        case EDEADLK:
+            break;
+        case ENAMETOOLONG:
+            break;
+        case ENOLCK:
+            break;
+        case ENOSYS:
+            break;
+        case ENOTEMPTY:
+            break;
+        case ELOOP:
+            break;
+        case ENOMSG:
+            break;
+        case EIDRM:
+            break;
+        case ECHRNG:
+            break;
+        case EL2NSYNC:
+            break;
+        case EL3HLT:
+            break;
+        case EL3RST:
+            break;
+        case ELNRNG:
+            break;
+        case EUNATCH:
+            break;
+        case ENOCSI:
+            break;
+        case EL2HLT:
+            break;
+        case EBADE:
+            break;
+        case EBADR:
+            break;
+        case EXFULL:
+            break;
+        case ENOANO:
+            break;
+        case EBADRQC:
+            break;
+        case EBADSLT:
+            break;
+        case EBFONT:
+            break;
+        case ENOSTR:
+            break;
+        case ENODATA:
+            break;
+        case ETIME:
+            break;
+        case ENOSR:
+            break;
+        case ENONET:
+            break;
+        case ENOPKG:
+            break;
+        case EREMOTE:
+            break;
+        case ENOLINK:
+            break;
+        case EADV:
+            break;
+        case ESRMNT:
+            break;
+        case ECOMM:
+            break;
+        case EPROTO:
+            break;
+        case EMULTIHOP:
+            break;
+        case EDOTDOT:
+            break;
+        case EBADMSG:
+            break;
+        case EOVERFLOW:
+            break;
+        case ENOTUNIQ:
+            break;
+        case EBADFD:
+            break;
+        case EREMCHG:
+            break;
+        case ELIBACC:
+            break;
+        case ELIBBAD:
+            break;
+        case ELIBSCN:
+            break;
+        case ELIBMAX:
+            break;
+        case ELIBEXEC:
+            break;
+        case EILSEQ:
+            break;
+        case ERESTART:
+            break;
+        case ESTRPIPE:
+            break;
+        case EUSERS:
+            break;
+        case ENOTSOCK:
+            break;
+        case EDESTADDRREQ:
+            break;
+        case EMSGSIZE:
+            break;
+        case EPROTOTYPE:
+            break;
+        case ENOPROTOOPT:
+            break;
+        case EPROTONOSUPPORT:
+            break;
+        case ESOCKTNOSUPPORT:
+            break;
+        case EOPNOTSUPP:
+            break;
+        case EPFNOSUPPORT:
+            break;
+        case EAFNOSUPPORT:
+            break;
+        case EADDRINUSE:
+            break;
+        case EADDRNOTAVAIL:
+            break;
+        case ENETDOWN:
+            break;
+        case ENETUNREACH:
+            break;
+        case ENETRESET:
+            break;
+        case ECONNABORTED:
+            break;
+        case ECONNRESET:
+            break;
+        case ENOBUFS:
+            break;
+        case EISCONN:
+            break;
+        case ENOTCONN:
+            break;
+        case ESHUTDOWN:
+            break;
+        case ETOOMANYREFS:
+            break;
+        case ETIMEDOUT:
+            break;
+        case ECONNREFUSED:
+            break;
+        case EHOSTDOWN:
+            break;
+        case EHOSTUNREACH:
+            break;
+        case EALREADY:
+            break;
+        case EINPROGRESS:
+            break;
+        case ESTALE:
+            break;
+        case EUCLEAN:
+            break;
+        case ENOTNAM:
+            break;
+        case ENAVAIL:
+            break;
+        case EISNAM:
+            break;
+        case EREMOTEIO:
+            break;
+        case EDQUOT:
+            break;
+        case ENOMEDIUM:
+            break;
+        case EMEDIUMTYPE:
+            break;
+        case ECANCELED:
+            break;
+        case ENOKEY:
+            break;
+        case EKEYEXPIRED:
+            break;
+        case EKEYREVOKED:
+            break;
+        case EKEYREJECTED:
+            break;
+        case EOWNERDEAD:
+            break;
+        case ENOTRECOVERABLE:
+            break;
+#if EAGAIN != EWOULDBLOCK
+        case EAGAIN:
+#endif
+        case EWOULDBLOCK:
+            break;
+    };
+
+    switch (value) {
+        case O_RDONLY:
+            break;
+        case O_WRONLY:
+            break;
+        case O_RDWR:
+            break;
+        case O_NONBLOCK:
+            break;
+        case O_APPEND:
+            break;
+        case O_CREAT:
+            break;
+        case O_TRUNC:
+            break;
+        case O_EXCL:
+            break;
+        case O_BINARY:
+            break;
+        case O_ACCMODE:
+            break;
+    };
+
+
+    static_assert((O_ACCMODE & (O_NONBLOCK | O_APPEND | O_CREAT | O_TRUNC | O_EXCL | O_BINARY)) == 0, "O_ACCMODE clash");
+
 }

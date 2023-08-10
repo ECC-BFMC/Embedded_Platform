@@ -84,7 +84,7 @@ namespace drivers
             /** @brief 0 default */
             int8_t ms_period = 20;
             /** @brief step_value */
-            float step_value = 0.0009505;
+            float step_value = 0.002;
             /** @brief Inferior limit */
             const float m_inf_limit;
             /** @brief Superior limit */

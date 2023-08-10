@@ -35,10 +35,8 @@
 
 /* The mbed library */
 #include <mbed.h>
-/* Header file for the serial communication functionality */
-#include <utils/serialmonitor.hpp>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
-#include <utils/taskmanager.hpp>
+#include <utils/task.hpp>
 
 
 namespace periodics
@@ -54,17 +52,21 @@ namespace periodics
             CTotalVoltage(
                 uint32_t f_period,
                 mbed::AnalogIn f_pin, 
-                RawSerial& f_serial
+                UnbufferedSerial& f_serial
             );
             /* Destructor */
             ~CTotalVoltage();
+            /* Serial callback implementation */
+            void TotalPublisherCommand(char const * a, char * b);
         private:
             /* Run method */
             virtual void        _run();
             /* ADC input pin for instand consume */
             mbed::AnalogIn      m_pin;  
             /* @brief Serial communication obj.  */
-            RawSerial&          m_serial;
+            UnbufferedSerial&          m_serial;
+            /** @brief Active flag  */
+            bool                m_isActive;
     }; // class CTotalVoltage
 }; // namespace periodics
 

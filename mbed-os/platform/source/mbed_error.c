@@ -22,10 +22,14 @@
 #include "platform/mbed_atomic.h"
 #include "platform/mbed_critical.h"
 #include "platform/mbed_error.h"
-#include "platform/source/mbed_error_hist.h"
 #include "platform/mbed_interface.h"
 #include "platform/mbed_power_mgmt.h"
 #include "platform/mbed_stats.h"
+#include "platform/internal/mbed_fault_handler.h"
+#include "platform/internal/mbed_error_hist.h"
+#include "drivers/MbedCRC.h"
+#include "mbed_rtx.h"
+#include "cmsis_compiler.h"
 #ifdef MBED_CONF_RTOS_PRESENT
 #include "rtx_os.h"
 #endif
@@ -38,6 +42,10 @@
 #endif
 #include <inttypes.h>
 
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
 #ifndef NDEBUG
 #define ERROR_REPORT(ctx, error_msg, error_filename, error_line) print_error_report(ctx, error_msg, error_filename, error_line)
 static void print_error_report(const mbed_error_ctx *ctx, const char *, const char *error_filename, int error_line);
@@ -45,7 +53,7 @@ static void print_error_report(const mbed_error_ctx *ctx, const char *, const ch
 #define ERROR_REPORT(ctx, error_msg, error_filename, error_line) ((void) 0)
 #endif
 
-static bool error_in_progress;
+bool mbed_error_in_progress;
 static core_util_atomic_flag halt_in_progress = CORE_UTIL_ATOMIC_FLAG_INIT;
 static int error_count = 0;
 static mbed_error_ctx first_error_ctx = {0};
@@ -55,40 +63,11 @@ static mbed_error_hook_t error_hook = NULL;
 static mbed_error_status_t handle_error(mbed_error_status_t error_status, unsigned int error_value, const char *filename, int line_number, void *caller);
 
 #if MBED_CONF_PLATFORM_CRASH_CAPTURE_ENABLED
-//Global for populating the context in exception handler
-static mbed_error_ctx *const report_error_ctx = (mbed_error_ctx *)(ERROR_CONTEXT_LOCATION);
+#define report_error_ctx MBED_CRASH_DATA.error.context
 static bool is_reboot_error_valid = false;
-
-//Helper function to calculate CRC
-//NOTE: It would have been better to use MbedCRC implementation. But
-//MbedCRC uses table based calculation and we dont want to keep that table memory
-//used up for this purpose. Also we cannot force bitwise calculation in MbedCRC
-//and it also requires a new wrapper to be called from C implementation. Since
-//we dont have many uses cases to create a C wrapper for MbedCRC and the data
-//we calculate CRC on in this context is very less we will use a local
-//implementation here.
-static unsigned int compute_crc32(const void *data, int datalen)
-{
-    const unsigned int polynomial = 0x04C11DB7; /* divisor is 32bit */
-    unsigned int crc = 0; /* CRC value is 32bit */
-    unsigned char *buf = (unsigned char *)data;//use a temp variable to make code readable and to avoid typecasting issues.
-
-    for (; datalen > 0; datalen--) {
-        unsigned char b = *buf++;
-        crc ^= (unsigned int)(b << 24); /* move byte into upper 8bit */
-        for (int i = 0; i < 8; i++) {
-            /* is MSB 1 */
-            if ((crc & 0x80000000) != 0) {
-                crc = (unsigned int)((crc << 1) ^ polynomial);
-            } else {
-                crc <<= 1;
-            }
-        }
-    }
-
-    return crc;
-}
 #endif
+
+extern uint32_t __INITIAL_SP;
 
 //Helper function to halt the system
 static MBED_NORETURN void mbed_halt_system(void)
@@ -115,7 +94,7 @@ static MBED_NORETURN void mbed_halt_system(void)
 WEAK MBED_NORETURN void error(const char *format, ...)
 {
     // Prevent recursion if error is called again during store+print attempt
-    if (!core_util_atomic_exchange_bool(&error_in_progress, true)) {
+    if (!core_util_atomic_exchange_bool(&mbed_error_in_progress, true)) {
         handle_error(MBED_ERROR_UNKNOWN, 0, NULL, 0, MBED_CALLER_ADDR());
         ERROR_REPORT(&last_error_ctx, "Fatal Run-time error", NULL, 0);
 
@@ -132,6 +111,32 @@ WEAK MBED_NORETURN void error(const char *format, ...)
     mbed_halt_system();
 }
 
+static inline bool mbed_error_is_hw_fault(mbed_error_status_t error_status)
+{
+    return (error_status == MBED_ERROR_MEMMANAGE_EXCEPTION ||
+            error_status == MBED_ERROR_BUSFAULT_EXCEPTION ||
+            error_status == MBED_ERROR_USAGEFAULT_EXCEPTION ||
+            error_status == MBED_ERROR_HARDFAULT_EXCEPTION);
+}
+
+static bool mbed_error_is_handler(const mbed_error_ctx *ctx)
+{
+    bool is_handler = false;
+    if (ctx && mbed_error_is_hw_fault(ctx->error_status)) {
+        mbed_fault_context_t *mfc = (mbed_fault_context_t *)ctx->error_value;
+#ifdef TARGET_CORTEX_M
+        if (mfc && !(mfc->EXC_RETURN & 0x8)) {
+            is_handler = true;
+        }
+#elif defined TARGET_CORTEX_A
+        if (mfc && (mfc->CPSR & 0x1F) != 0x10) {
+            is_handler = true;
+        }
+#endif
+    }
+    return is_handler;
+}
+
 //Set an error status with the error handling system
 static mbed_error_status_t handle_error(mbed_error_status_t error_status, unsigned int error_value, const char *filename, int line_number, void *caller)
 {
@@ -146,18 +151,29 @@ static mbed_error_status_t handle_error(mbed_error_status_t error_status, unsign
 
     //Clear the context capturing buffer
     memset(&current_error_ctx, 0, sizeof(mbed_error_ctx));
+
     //Capture error information
     current_error_ctx.error_status = error_status;
-    current_error_ctx.error_address = (uint32_t)caller;
     current_error_ctx.error_value = error_value;
+    mbed_fault_context_t *mfc = NULL;
+    if (mbed_error_is_hw_fault(error_status)) {
+        mfc = (mbed_fault_context_t *)error_value;
+        current_error_ctx.error_address = (uint32_t)mfc->PC_reg;
+        // Note that this SP_reg is the correct SP value of the fault. PSP and MSP are slightly different due to HardFault_Handler.
+        current_error_ctx.thread_current_sp = (uint32_t)mfc->SP_reg;
+        // Note that the RTX thread itself is the same even under this fault exception handler.
+    } else {
+        current_error_ctx.error_address = (uint32_t)caller;
+        current_error_ctx.thread_current_sp = (uint32_t)&current_error_ctx; // Address local variable to get a stack pointer
+    }
+
 #ifdef MBED_CONF_RTOS_PRESENT
-    //Capture thread info
+    // Capture thread info in thread mode
     osRtxThread_t *current_thread = osRtxInfo.thread.run.curr;
     current_error_ctx.thread_id = (uint32_t)current_thread;
     current_error_ctx.thread_entry_address = (uint32_t)current_thread->thread_addr;
     current_error_ctx.thread_stack_size = current_thread->stack_size;
     current_error_ctx.thread_stack_mem = (uint32_t)current_thread->stack_mem;
-    current_error_ctx.thread_current_sp = (uint32_t)&current_error_ctx; // Address local variable to get a stack pointer
 #endif //MBED_CONF_RTOS_PRESENT
 
 #if MBED_CONF_PLATFORM_ERROR_FILENAME_CAPTURE_ENABLED
@@ -175,11 +191,11 @@ static mbed_error_status_t handle_error(mbed_error_status_t error_status, unsign
 
     //Capture the first system error and store it
     if (error_count == 1) { //first error
-        memcpy(&first_error_ctx, &current_error_ctx, sizeof(mbed_error_ctx));
+        first_error_ctx = current_error_ctx;
     }
 
     //copy this error to last error
-    memcpy(&last_error_ctx, &current_error_ctx, sizeof(mbed_error_ctx));
+    last_error_ctx = current_error_ctx;
 
 #if MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
     //Log the error with error log
@@ -189,11 +205,18 @@ static mbed_error_status_t handle_error(mbed_error_status_t error_status, unsign
     //Call the error hook if available
     if (error_hook != NULL) {
         error_hook(&last_error_ctx);
+    } else {
+        mbed_error_hook(&last_error_ctx);
     }
 
     core_util_critical_section_exit();
 
     return MBED_SUCCESS;
+}
+
+WEAK void mbed_error_hook(const mbed_error_ctx *error_context)
+{
+    //Dont do anything here, let application override this if required.
 }
 
 WEAK void mbed_error_reboot_callback(mbed_error_ctx *error_context)
@@ -208,25 +231,25 @@ mbed_error_status_t mbed_error_initialize(void)
     uint32_t crc_val = 0;
 
     //Just check if we have valid value for error_status, if error_status is positive(which is not valid), no need to check crc
-    if (report_error_ctx->error_status < 0) {
-        crc_val = compute_crc32(report_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
+    if (report_error_ctx.error_status < 0) {
+        crc_val = mbed_tiny_compute_crc32(&report_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
         //Read report_error_ctx and check if CRC is correct, and with valid status code
-        if ((report_error_ctx->crc_error_ctx == crc_val) && (report_error_ctx->is_error_processed == 0)) {
+        if ((report_error_ctx.crc_error_ctx == crc_val) && (report_error_ctx.is_error_processed == 0)) {
             is_reboot_error_valid = true;
 
             //Call the mbed_error_reboot_callback, this enables applications to do some handling before we do the handling
-            mbed_error_reboot_callback(report_error_ctx);
+            mbed_error_reboot_callback(&report_error_ctx);
 
             //We let the callback reset the error info, so check if its still valid and do the rest only if its still valid.
-            if (report_error_ctx->error_reboot_count > 0) {
+            if (report_error_ctx.error_reboot_count > 0) {
 
-                report_error_ctx->is_error_processed = 1;//Set the flag that we already processed this error
-                crc_val = compute_crc32(report_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
-                report_error_ctx->crc_error_ctx = crc_val;
+                report_error_ctx.is_error_processed = 1;//Set the flag that we already processed this error
+                crc_val = mbed_tiny_compute_crc32(&report_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
+                report_error_ctx.crc_error_ctx = crc_val;
 
                 //Enforce max-reboot only if auto reboot is enabled
 #if MBED_CONF_PLATFORM_FATAL_ERROR_AUTO_REBOOT_ENABLED
-                if (report_error_ctx->error_reboot_count >= MBED_CONF_PLATFORM_ERROR_REBOOT_MAX) {
+                if (report_error_ctx.error_reboot_count >= MBED_CONF_PLATFORM_ERROR_REBOOT_MAX) {
                     mbed_halt_system();
                 }
 #endif
@@ -261,7 +284,7 @@ int mbed_get_error_count(void)
 //Reads the fatal error occurred" flag
 bool mbed_get_error_in_progress(void)
 {
-    return core_util_atomic_load_bool(&error_in_progress);
+    return core_util_atomic_load_bool(&mbed_error_in_progress);
 }
 
 //Sets a non-fatal error
@@ -274,7 +297,7 @@ mbed_error_status_t mbed_warning(mbed_error_status_t error_status, const char *e
 WEAK MBED_NORETURN mbed_error_status_t mbed_error(mbed_error_status_t error_status, const char *error_msg, unsigned int error_value, const char *filename, int line_number)
 {
     // Prevent recursion if error is called again during store+print attempt
-    if (!core_util_atomic_exchange_bool(&error_in_progress, true)) {
+    if (!core_util_atomic_exchange_bool(&mbed_error_in_progress, true)) {
         //set the error reported
         (void) handle_error(error_status, error_value, filename, line_number, MBED_CALLER_ADDR());
 
@@ -284,28 +307,28 @@ WEAK MBED_NORETURN mbed_error_status_t mbed_error(mbed_error_status_t error_stat
 
 #if MBED_CONF_PLATFORM_CRASH_CAPTURE_ENABLED
     uint32_t crc_val = 0;
-    crc_val = compute_crc32(report_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
+    crc_val = mbed_tiny_compute_crc32(&report_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
     //Read report_error_ctx and check if CRC is correct for report_error_ctx
-    if (report_error_ctx->crc_error_ctx == crc_val) {
-        uint32_t current_reboot_count = report_error_ctx->error_reboot_count;
+    if (report_error_ctx.crc_error_ctx == crc_val) {
+        uint32_t current_reboot_count = report_error_ctx.error_reboot_count;
         last_error_ctx.error_reboot_count = current_reboot_count + 1;
     } else {
         last_error_ctx.error_reboot_count = 1;
     }
     last_error_ctx.is_error_processed = 0;//Set the flag that this is a new error
     //Update the struct with crc
-    last_error_ctx.crc_error_ctx = compute_crc32(&last_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
+    last_error_ctx.crc_error_ctx = mbed_tiny_compute_crc32(&last_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
     //Protect report_error_ctx while we update it
     core_util_critical_section_enter();
-    memcpy(report_error_ctx, &last_error_ctx, sizeof(mbed_error_ctx));
+    report_error_ctx = last_error_ctx;
     core_util_critical_section_exit();
     //We need not call delete_mbed_crc(crc_obj) here as we are going to reset the system anyway, and calling delete while handling a fatal error may cause nested exception
 #if MBED_CONF_PLATFORM_FATAL_ERROR_AUTO_REBOOT_ENABLED && (MBED_CONF_PLATFORM_ERROR_REBOOT_MAX > 0)
 #ifndef NDEBUG
     mbed_error_printf("\n= System will be rebooted due to a fatal error =\n");
-    if (report_error_ctx->error_reboot_count >= MBED_CONF_PLATFORM_ERROR_REBOOT_MAX) {
+    if (report_error_ctx.error_reboot_count >= MBED_CONF_PLATFORM_ERROR_REBOOT_MAX) {
         //We have rebooted more than enough, hold the system here.
-        mbed_error_printf("= Reboot count(=%" PRIi32") reached maximum, system will halt after rebooting =\n", report_error_ctx->error_reboot_count);
+        mbed_error_printf("= Reboot count(=%" PRIi32") reached maximum, system will halt after rebooting =\n", report_error_ctx.error_reboot_count);
     }
 #endif
     system_reset();//do a system reset to get the system rebooted
@@ -315,6 +338,7 @@ WEAK MBED_NORETURN mbed_error_status_t mbed_error(mbed_error_status_t error_stat
 }
 
 //Register an application defined callback with error handling
+MBED_DEPRECATED("Use an overridden mbed_error_hook() function instead")
 mbed_error_status_t mbed_set_error_hook(mbed_error_hook_t error_hook_in)
 {
     //register the new hook/callback
@@ -332,7 +356,7 @@ mbed_error_status_t mbed_reset_reboot_error_info()
 #if MBED_CONF_PLATFORM_CRASH_CAPTURE_ENABLED
     //Protect for thread safety
     core_util_critical_section_enter();
-    memset(report_error_ctx, 0, sizeof(mbed_error_ctx));
+    memset(&report_error_ctx, 0, sizeof(mbed_error_ctx));
     core_util_critical_section_exit();
 #endif
     return MBED_SUCCESS;
@@ -345,10 +369,10 @@ mbed_error_status_t mbed_reset_reboot_count()
     if (is_reboot_error_valid) {
         uint32_t crc_val = 0;
         core_util_critical_section_enter();
-        report_error_ctx->error_reboot_count = 0;//Set reboot count to 0
+        report_error_ctx.error_reboot_count = 0;//Set reboot count to 0
         //Update CRC
-        crc_val = compute_crc32(report_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
-        report_error_ctx->crc_error_ctx = crc_val;
+        crc_val = mbed_tiny_compute_crc32(&report_error_ctx, offsetof(mbed_error_ctx, crc_error_ctx));
+        report_error_ctx.crc_error_ctx = crc_val;
         core_util_critical_section_exit();
         return MBED_SUCCESS;
     }
@@ -363,7 +387,7 @@ mbed_error_status_t mbed_get_reboot_error_info(mbed_error_ctx *error_info)
 #if MBED_CONF_PLATFORM_CRASH_CAPTURE_ENABLED
     if (is_reboot_error_valid) {
         if (error_info != NULL) {
-            memcpy(error_info, report_error_ctx, sizeof(mbed_error_ctx));
+            *error_info = report_error_ctx;
             status = MBED_SUCCESS;
         } else {
             status = MBED_ERROR_INVALID_ARGUMENT;
@@ -376,14 +400,14 @@ mbed_error_status_t mbed_get_reboot_error_info(mbed_error_ctx *error_info)
 //Retrieve the first error context from error log
 mbed_error_status_t mbed_get_first_error_info(mbed_error_ctx *error_info)
 {
-    memcpy(error_info, &first_error_ctx, sizeof(first_error_ctx));
+    *error_info = first_error_ctx;
     return MBED_SUCCESS;
 }
 
 //Retrieve the last error context from error log
 mbed_error_status_t mbed_get_last_error_info(mbed_error_ctx *error_info)
 {
-    memcpy(error_info, &last_error_ctx, sizeof(mbed_error_ctx));
+    *error_info = last_error_ctx;
     return MBED_SUCCESS;
 }
 
@@ -440,16 +464,83 @@ mbed_error_status_t mbed_clear_all_errors(void)
     return status;
 }
 
-static inline const char *name_or_unnamed(const char *name)
+#ifdef MBED_CONF_RTOS_PRESENT
+static inline const char *name_or_unnamed(const osRtxThread_t *thread)
 {
-    return name ? name : "<unnamed>";
+    const char *unnamed = "<unnamed>";
+
+    if (!thread) {
+        return unnamed;
+    }
+
+    const char *name = thread->name;
+    return name ? name : unnamed;
 }
+#endif // MBED_CONF_RTOS_PRESENT
+
+#if MBED_STACK_DUMP_ENABLED
+/** Prints stack dump from given stack information.
+ * The arguments should be given in address raw value to check alignment.
+ * @param stack_start The address of stack start.
+ * @param stack_size The size of stack
+ * @param stack_sp The stack pointer currently at. */
+static void print_stack_dump_core(uint32_t stack_start, uint32_t stack_size, uint32_t stack_sp, const char *postfix)
+{
+#if MBED_STACK_DUMP_ENABLED
+#define STACK_DUMP_WIDTH    8
+#define INT_ALIGN_MASK      (~(sizeof(int) - 1))
+    mbed_error_printf("\nStack Dump: %s", postfix);
+    uint32_t st_end = (stack_start + stack_size) & INT_ALIGN_MASK;
+    uint32_t st     = (stack_sp) & INT_ALIGN_MASK;
+    for (; st < st_end; st += sizeof(int) * STACK_DUMP_WIDTH) {
+        mbed_error_printf("\n0x%08" PRIX32 ":", st);
+        for (int i = 0; i < STACK_DUMP_WIDTH; i++) {
+            uint32_t st_cur = st + i * sizeof(int);
+            if (st_cur >= st_end) {
+                break;
+            }
+            uint32_t st_val = *((uint32_t *)st_cur);
+            mbed_error_printf("0x%08" PRIX32 " ", st_val);
+        }
+    }
+    mbed_error_printf("\n");
+#endif  // MBED_STACK_DUMP_ENABLED
+}
+
+static void print_stack_dump(uint32_t stack_start, uint32_t stack_size, uint32_t stack_sp, const mbed_error_ctx *ctx)
+{
+    if (ctx && mbed_error_is_handler(ctx)) {
+        // Stack dump extra for handler stack which may have accessed MSP.
+        mbed_fault_context_t *mfc = (mbed_fault_context_t *)ctx->error_value;
+        uint32_t msp_sp = mfc->MSP;
+        uint32_t psp_sp = mfc->PSP;
+        if (mfc && !(mfc->EXC_RETURN & 0x4)) {
+            // MSP mode. Then SP_reg is more correct.
+            msp_sp = mfc->SP_reg;
+        } else {
+            // PSP mode. Then SP_reg is more correct.
+            psp_sp = mfc->SP_reg;
+        }
+        uint32_t msp_size = MAX(0, (int)__INITIAL_SP - (int)msp_sp);
+        print_stack_dump_core(msp_sp, msp_size, msp_sp, "MSP");
+
+        stack_sp = psp_sp;
+    }
+
+    print_stack_dump_core(stack_start, stack_size, stack_sp, "PSP");
+}
+#endif  // MBED_STACK_DUMP_ENABLED
 
 #if MBED_CONF_PLATFORM_ERROR_ALL_THREADS_INFO && defined(MBED_CONF_RTOS_PRESENT)
 /* Prints info of a thread(using osRtxThread_t struct)*/
 static void print_thread(const osRtxThread_t *thread)
 {
-    mbed_error_printf("\n%s  State: 0x%" PRIX8 " Entry: 0x%08" PRIX32 " Stack Size: 0x%08" PRIX32 " Mem: 0x%08" PRIX32 " SP: 0x%08" PRIX32, name_or_unnamed(thread->name), thread->state, thread->thread_addr, thread->stack_size, (uint32_t)thread->stack_mem, thread->sp);
+    uint32_t stack_mem = (uint32_t)thread->stack_mem;
+    mbed_error_printf("\n%s  State: 0x%" PRIX8 " Entry: 0x%08" PRIX32 " Stack Size: 0x%08" PRIX32 " Mem: 0x%08" PRIX32 " SP: 0x%08" PRIX32, name_or_unnamed(thread), thread->state, thread->thread_addr, thread->stack_size, stack_mem, thread->sp);
+
+#if MBED_STACK_DUMP_ENABLED
+    print_stack_dump(stack_mem, thread->stack_size, thread->sp, NULL);
+#endif
 }
 
 /* Prints thread info from a list */
@@ -532,9 +623,14 @@ static void print_error_report(const mbed_error_ctx *ctx, const char *error_msg,
 
     mbed_error_printf("\nError Value: 0x%" PRIX32, ctx->error_value);
 #ifdef MBED_CONF_RTOS_PRESENT
-    mbed_error_printf("\nCurrent Thread: %s  Id: 0x%" PRIX32 " Entry: 0x%" PRIX32 " StackSize: 0x%" PRIX32 " StackMem: 0x%" PRIX32 " SP: 0x%" PRIX32 " ",
-                      name_or_unnamed(((osRtxThread_t *)ctx->thread_id)->name),
+    bool is_handler = mbed_error_is_handler(ctx);
+    mbed_error_printf("\nCurrent Thread: %s%s Id: 0x%" PRIX32 " Entry: 0x%" PRIX32 " StackSize: 0x%" PRIX32 " StackMem: 0x%" PRIX32 " SP: 0x%" PRIX32 " ",
+                      name_or_unnamed((osRtxThread_t *)ctx->thread_id), is_handler ? " <handler>" : "",
                       ctx->thread_id, ctx->thread_entry_address, ctx->thread_stack_size, ctx->thread_stack_mem, ctx->thread_current_sp);
+#endif
+
+#if MBED_STACK_DUMP_ENABLED
+    print_stack_dump(ctx->thread_stack_mem, ctx->thread_stack_size, ctx->thread_current_sp, ctx);
 #endif
 
 #if MBED_CONF_PLATFORM_ERROR_ALL_THREADS_INFO && defined(MBED_CONF_RTOS_PRESENT)
@@ -557,6 +653,7 @@ static void print_error_report(const mbed_error_ctx *ctx, const char *error_msg,
     mbed_stats_sys_get(&sys_stats);
     mbed_error_printf("\nFor more info, visit: https://mbed.com/s/error?error=0x%08X&osver=%" PRId32 "&core=0x%08" PRIX32 "&comp=%d&ver=%" PRIu32 "&tgt=" GET_TARGET_NAME(TARGET_NAME), ctx->error_status, sys_stats.os_version, sys_stats.cpu_id, sys_stats.compiler_id, sys_stats.compiler_version);
 #endif
+
     mbed_error_printf("\n-- MbedOS Error Info --\n");
 }
 #endif //ifndef NDEBUG

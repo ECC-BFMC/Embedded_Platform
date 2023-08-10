@@ -1,31 +1,16 @@
 /* mbed Microcontroller Library
- *******************************************************************************
- * Copyright (c) 2017, STMicroelectronics
+ * SPDX-License-Identifier: BSD-3-Clause
+ ******************************************************************************
+ *
+ * Copyright (c) 2015-2021 STMicroelectronics.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
  *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. Neither the name of STMicroelectronics nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *******************************************************************************
+ ******************************************************************************
  */
 
 #if DEVICE_SERIAL
@@ -272,7 +257,16 @@ int serial_getc(serial_t *obj)
     UART_HandleTypeDef *huart = &uart_handlers[obj_s->index];
 
     while (!serial_readable(obj));
-    return (int)(huart->Instance->DR & 0x1FF);
+    if (obj_s->parity == UART_PARITY_NONE) {
+        return (int)(huart->Instance->DR & 0x1FF);
+    } else {
+        // When receiving with the parity enabled, the value read in the MSB bit is the received parity bit
+        if (obj_s->databits == UART_WORDLENGTH_8B) {
+            return (int)(huart->Instance->DR & 0x07F); // 7 data bits + 1 parity bit
+        } else {
+            return (int)(huart->Instance->DR & 0x0FF); // 8 data bits + 1 parity bit
+        }
+    }
 }
 
 void serial_putc(serial_t *obj, int c)
@@ -289,8 +283,9 @@ void serial_clear(serial_t *obj)
     struct serial_s *obj_s = SERIAL_S(obj);
     UART_HandleTypeDef *huart = &uart_handlers[obj_s->index];
 
-    huart->TxXferCount = 0;
-    huart->RxXferCount = 0;
+    /* Clear RXNE and error flags */
+    volatile uint32_t tmpval __attribute__((unused)) = huart->Instance->DR;
+    HAL_UART_ErrorCallback(huart);
 }
 
 void serial_break_set(serial_t *obj)
@@ -724,20 +719,17 @@ void serial_rx_abort_asynch(serial_t *obj)
  * Set HW Control Flow
  * @param obj    The serial object
  * @param type   The Control Flow type (FlowControlNone, FlowControlRTS, FlowControlCTS, FlowControlRTSCTS)
- * @param rxflow Pin for the rxflow
- * @param txflow Pin for the txflow
+ * @param pinmap Pointer to structure which holds static pinmap
  */
-void serial_set_flow_control(serial_t *obj, FlowControl type, PinName rxflow, PinName txflow)
+#if STATIC_PINMAP_READY
+#define SERIAL_SET_FC_DIRECT serial_set_flow_control_direct
+void serial_set_flow_control_direct(serial_t *obj, FlowControl type, const serial_fc_pinmap_t *pinmap)
+#else
+#define SERIAL_SET_FC_DIRECT _serial_set_flow_control_direct
+static void _serial_set_flow_control_direct(serial_t *obj, FlowControl type, const serial_fc_pinmap_t *pinmap)
+#endif
 {
     struct serial_s *obj_s = SERIAL_S(obj);
-
-    // Checked used UART name (UART_1, UART_2, ...)
-    UARTName uart_rts = (UARTName)pinmap_peripheral(rxflow, PinMap_UART_RTS);
-    UARTName uart_cts = (UARTName)pinmap_peripheral(txflow, PinMap_UART_CTS);
-    if (((UARTName)pinmap_merge(uart_rts, obj_s->uart) == (UARTName)NC) || ((UARTName)pinmap_merge(uart_cts, obj_s->uart) == (UARTName)NC)) {
-        MBED_ASSERT(0);
-        return;
-    }
 
     if (type == FlowControlNone) {
         // Disable hardware flow control
@@ -745,34 +737,67 @@ void serial_set_flow_control(serial_t *obj, FlowControl type, PinName rxflow, Pi
     }
     if (type == FlowControlRTS) {
         // Enable RTS
-        MBED_ASSERT(uart_rts != (UARTName)NC);
+        MBED_ASSERT(pinmap->rx_flow_pin != NC);
         obj_s->hw_flow_ctl = UART_HWCONTROL_RTS;
-        obj_s->pin_rts = rxflow;
+        obj_s->pin_rts = pinmap->rx_flow_pin;
         // Enable the pin for RTS function
-        pinmap_pinout(rxflow, PinMap_UART_RTS);
+        pin_function(pinmap->rx_flow_pin, pinmap->rx_flow_function);
+        pin_mode(pinmap->rx_flow_pin, PullNone);
     }
     if (type == FlowControlCTS) {
         // Enable CTS
-        MBED_ASSERT(uart_cts != (UARTName)NC);
+        MBED_ASSERT(pinmap->tx_flow_pin != NC);
         obj_s->hw_flow_ctl = UART_HWCONTROL_CTS;
-        obj_s->pin_cts = txflow;
+        obj_s->pin_cts = pinmap->tx_flow_pin;
         // Enable the pin for CTS function
-        pinmap_pinout(txflow, PinMap_UART_CTS);
+        pin_function(pinmap->tx_flow_pin, pinmap->tx_flow_function);
+        pin_mode(pinmap->tx_flow_pin, PullNone);
     }
     if (type == FlowControlRTSCTS) {
         // Enable CTS & RTS
-        MBED_ASSERT(uart_rts != (UARTName)NC);
-        MBED_ASSERT(uart_cts != (UARTName)NC);
+        MBED_ASSERT(pinmap->rx_flow_pin != NC);
+        MBED_ASSERT(pinmap->tx_flow_pin != NC);
         obj_s->hw_flow_ctl = UART_HWCONTROL_RTS_CTS;
-        obj_s->pin_rts = rxflow;
-        obj_s->pin_cts = txflow;
+        obj_s->pin_rts = pinmap->rx_flow_pin;;
+        obj_s->pin_cts = pinmap->tx_flow_pin;;
         // Enable the pin for CTS function
-        pinmap_pinout(txflow, PinMap_UART_CTS);
+        pin_function(pinmap->tx_flow_pin, pinmap->tx_flow_function);
+        pin_mode(pinmap->tx_flow_pin, PullNone);
         // Enable the pin for RTS function
-        pinmap_pinout(rxflow, PinMap_UART_RTS);
+        pin_function(pinmap->rx_flow_pin, pinmap->rx_flow_function);
+        pin_mode(pinmap->rx_flow_pin, PullNone);
     }
 
     init_uart(obj);
+}
+
+/**
+ * Set HW Control Flow
+ * @param obj    The serial object
+ * @param type   The Control Flow type (FlowControlNone, FlowControlRTS, FlowControlCTS, FlowControlRTSCTS)
+ * @param rxflow Pin for the rxflow
+ * @param txflow Pin for the txflow
+ */
+void serial_set_flow_control(serial_t *obj, FlowControl type, PinName rxflow, PinName txflow)
+{
+    struct serial_s *obj_s = SERIAL_S(obj);
+
+    UARTName uart_rts = (UARTName)pinmap_peripheral(rxflow, PinMap_UART_RTS);
+    UARTName uart_cts = (UARTName)pinmap_peripheral(txflow, PinMap_UART_CTS);
+
+    if (((UARTName)pinmap_merge(uart_rts, obj_s->uart) == (UARTName)NC) || ((UARTName)pinmap_merge(uart_cts, obj_s->uart) == (UARTName)NC)) {
+        MBED_ASSERT(0);
+        return;
+    }
+
+    int peripheral = (int)pinmap_merge(uart_rts, uart_cts);
+
+    int tx_flow_function = (int)pinmap_find_function(txflow, PinMap_UART_CTS);
+    int rx_flow_function = (int)pinmap_find_function(rxflow, PinMap_UART_RTS);
+
+    const serial_fc_pinmap_t explicit_uart_fc_pinmap = {peripheral, txflow, tx_flow_function, rxflow, rx_flow_function};
+
+    SERIAL_SET_FC_DIRECT(obj, type, &explicit_uart_fc_pinmap);
 }
 
 #endif /* DEVICE_SERIAL_FC */

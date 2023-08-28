@@ -33,8 +33,8 @@
 /* Header file for the blinker functionality */
 #include <periodics/blinker.hpp>
 /* Header file for the IMU functionality */
-// #include <periodics/imu.hpp>
-#include <drivers/bno055_c.hpp>
+#include <periodics/imu.hpp>
+// #include <drivers/bno055_c.hpp>
 /* Header file for the instant consumption measurement functionality */
 #include <periodics/instantconsumption.hpp>
 /* Header file for the total voltage measurement functionality */

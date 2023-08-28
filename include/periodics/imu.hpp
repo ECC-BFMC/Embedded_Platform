@@ -54,7 +54,9 @@ namespace periodics
             /* Construnctor */
             CImu(
                 uint32_t    f_period, 
-                UnbufferedSerial& f_serial
+                UnbufferedSerial& f_serial,
+                PinName SDA,
+                PinName SCL
             );
             /* Destructor */
             ~CImu();
@@ -73,7 +75,13 @@ namespace periodics
             s32 bno055_data_readout_template(void);
             /* Run method */
             virtual void    _run();
-            
+
+            void updateVelocity(float linearAccX, float linearAccY, float linearAccZ);
+
+            float getVelocityX(void);
+            float getVelocityY(void);
+            float getVelocityZ(void);
+            void resetVelocity(void);
 
             /*----------------------------------------------------------------------------*
             *  struct bno055_t parameters can be accessed by using BNO055
@@ -87,11 +95,21 @@ namespace periodics
             *---------------------------------------------------------------------------*/
             struct bno055_t bno055;
 
+            /*---------------------------------------------------------------------------------------------*
+            *  The static pointer variable member i2c_instance will be used inside the I2C bus APIs 
+            *----------------------------------------------------------------------------------------------*/
+            static I2C* i2c_instance;
+
             /** @brief Active flag  */
             bool            m_isActive;
 
             /* @brief Serial communication obj.  */
             UnbufferedSerial&      m_serial;
+
+            float m_velocityX;
+            float m_velocityY;
+            float m_velocityZ;
+            int m_velocityStationaryCounter;
     }; // class CImu
 
 }; // namespace utils

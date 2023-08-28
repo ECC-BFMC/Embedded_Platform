@@ -30,6 +30,7 @@
 
 
 #include <periodics/imu.hpp>
+#include "imu.hpp"
 
 namespace periodics{
     /** \brief  Class constructor
@@ -39,12 +40,25 @@ namespace periodics{
      *  \param f_period       Toggling period of LED
      *  \param f_led          Digital output line to LED
      */
+
+    /*--------------------------------------------------------------------------------------------------*
+    *  Before initializiting with another value, the i2c_instance static pointer variable should be
+    *  initialized with a nullptr.
+    *---------------------------------------------------------------------------------------------------*/
+    I2C* periodics::CImu::i2c_instance = nullptr;
+
     CImu::CImu(
             uint32_t    f_period, 
-            UnbufferedSerial& f_serial) 
+            UnbufferedSerial& f_serial,
+            PinName SDA,
+            PinName SCL) 
         : utils::CTask(f_period)
+        , m_isActive(true)
         , m_serial(f_serial)
-        ,m_isActive(true)
+        , m_velocityX(0.0)
+        , m_velocityY(0.0)
+        , m_velocityZ(0.0)
+        , m_velocityStationaryCounter(0)
     {
         s32 comres = BNO055_ERROR;
         /* variable used to set the power mode of the sensor*/
@@ -53,6 +67,11 @@ namespace periodics{
         /*---------------------------------------------------------------------------*
         *********************** START INITIALIZATION ************************
         *--------------------------------------------------------------------------*/
+
+        /*--------------------------------------------------------------------------------------------------*
+        *  i2c_instance variable member will be initialized with the actual I2C of the target board.
+        *---------------------------------------------------------------------------------------------------*/      
+        i2c_instance = new I2C(SDA, SCL);
 
         /*  Based on the user need configure I2C interface.
         *  It is example code to explain how to use the bno055 API*/
@@ -122,23 +141,6 @@ namespace periodics{
         /*----------------------------------------------------------------*
         ************************* END INITIALIZATION *************************
         *-----------------------------------------------------------------*/
-
-        /*****************read gyro converted data************************/
-        // /* variable used to read the gyro x data output as dps or rps */
-        // double d_gyro_datax = BNO055_INIT_VALUE;
-
-        // /* variable used to read the gyro y data output as dps or rps */
-        // double d_gyro_datay = BNO055_INIT_VALUE;
-
-        // /* variable used to read the gyro z data output as dps or rps */
-        // double d_gyro_dataz = BNO055_INIT_VALUE;
-
-        // /*  API used to read gyro data output as double  - dps and rps
-        // * float functions also available in the BNO055 API */
-        // comres += bno055_convert_double_gyro_x_dps(&d_gyro_datax);
-        // comres += bno055_convert_double_gyro_y_dps(&d_gyro_datay);
-        // comres += bno055_convert_double_gyro_z_dps(&d_gyro_dataz);
-        // comres += bno055_convert_double_gyro_xyz_dps(&d_gyro_xyz);
     }
 
     /** @brief  CImu class destructor
@@ -162,6 +164,11 @@ namespace periodics{
         /* set the power mode as SUSPEND*/
         comres += bno055_set_power_mode(power_mode);
 
+        if(i2c_instance != nullptr)
+        {
+            delete i2c_instance;
+            i2c_instance = nullptr;
+        }
         /*---------------------------------------------------------------------*
         ************************* END DE-INITIALIZATION **********************
         *---------------------------------------------------------------------*/
@@ -521,20 +528,28 @@ namespace periodics{
         comres += bno055_convert_gravity_double_y_msq(&d_gravity_data_y);
         comres += bno055_convert_gravity_double_z_msq(&d_gravity_data_z);
         comres += bno055_convert_double_gravity_xyz_msq(&d_gravity_xyz);
-
         
         return comres;
     }
 
 
-    /* \Brief: The API is used as I2C bus write
-    *  \Return : Status of the I2C write
-    *  \param dev_addr : The device address of the sensor
-    *  \param reg_addr : Address of the first register,
-    *   will data is going to be written
-    *  \param reg_data : It is a value hold in the array,
-    *      will be used for write the value into the register
-    *  \param cnt : The no of byte of data to be write
+    /**
+    * \brief Writes data to the device over the I2C bus.
+    * 
+    * This function serves as a low-level I2C write routine tailored for the BNO055 sensor. 
+    * It packages the register address and data to be written into a single buffer and then 
+    * dispatches the write operation.
+    * 
+    * \param dev_addr   : I2C address of the BNO055 sensor.
+    * \param reg_addr   : Address of the target register where the data needs to be written.
+    * \param reg_data   : Pointer to an array containing the data bytes to be written to the sensor.
+    * \param cnt        : Number of data bytes to write from the \a reg_data array.
+    * 
+    * \return BNO055_SUCCESS (0) on successful write operation.
+    * \return BNO055_ERROR (-1) if the write operation encounters an error.
+    * 
+    * \note The actual data writing starts from the second position in the array, as the 
+    *       first position is reserved for the register address.
     */
     s8 CImu::BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
     {
@@ -548,33 +563,35 @@ namespace periodics{
             array[stringpos + BNO055_I2C_BUS_WRITE_ARRAY_INDEX] = *(reg_data + stringpos);
         }
 
-        /*
-        * Please take the below APIs as your reference for
-        * write the data using I2C communication
-        * "BNO055_iERROR = I2C_WRITE_STRING(DEV_ADDR, ARRAY, CNT+1)"
-        * add your I2C write APIs here
-        * BNO055_iERROR is an return value of I2C read API
-        * Please select your valid return value
-        * In the driver BNO055_SUCCESS defined as 0
-        * and FAILURE defined as -1
-        * Note :
-        * This is a full duplex operation,
-        * The first read data is discarded, for that extra write operation
-        * have to be initiated. For that cnt+1 operation done
-        * in the I2C write string function
-        * For more information please refer data sheet SPI communication:
-        */
+        if (i2c_instance->write(dev_addr, (const char*)array, cnt + 1) == 0)
+        {
+            BNO055_iERROR = BNO055_SUCCESS; // Return success (0)
+        }
+        else
+        {
+            BNO055_iERROR = BNO055_ERROR; // Return error (-1)
+        }
+
         return (s8)BNO055_iERROR;
     }
 
-    /*  \Brief: The API is used as I2C bus read
-    *  \Return : Status of the I2C read
-    *  \param dev_addr : The device address of the sensor
-    *  \param reg_addr : Address of the first register,
-    *  will data is going to be read
-    *  \param reg_data : This data read from the sensor,
-    *   which is hold in an array
-    *  \param cnt : The no of byte of data to be read
+    /**
+    * \brief Reads data from the device over the I2C bus.
+    * 
+    * This function facilitates reading data from a specific register of the BNO055 sensor 
+    * over the I2C communication protocol. It sends the desired register address to the sensor, 
+    * then reads back the requested amount of data bytes into a provided buffer.
+    * 
+    * \param dev_addr   : I2C address of the BNO055 sensor.
+    * \param reg_addr   : Address of the target register from which the data needs to be read.
+    * \param reg_data   : Pointer to an array where the read data bytes will be stored.
+    * \param cnt        : Number of data bytes to read into the \a reg_data array.
+    * 
+    * \return BNO055_SUCCESS (0) on successful read operation.
+    * \return BNO055_ERROR (-1) if the read operation encounters an error.
+    * 
+    * \note The function first writes the register address to the sensor to set the pointer 
+    *       to the desired location and then initiates the I2C read operation.
     */
     s8 CImu::BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
     {
@@ -599,42 +616,192 @@ namespace periodics{
             *(reg_data + stringpos) = array[stringpos];
         }
 
+        // Write the register address to set the pointer for reading
+        if (i2c_instance->write(dev_addr, (const char*)&reg_addr, 1) != 0)
+        {
+            BNO055_iERROR = BNO055_ERROR; // Return error (-1)
+            return (s8)BNO055_iERROR;
+        }
+
+        // Read the data from the specified register address
+        if (i2c_instance->read(dev_addr, (char*)reg_data, cnt) == 0)
+        {
+            BNO055_iERROR = BNO055_SUCCESS; // Return success (0)
+        }
+        else
+        {
+            BNO055_iERROR = BNO055_ERROR; // Return error (-1)
+        }
         return (s8)BNO055_iERROR;
     }
-
+    
     /*-------------------------------------------------------------------------*
-    *  By using bno055 the following structure parameter can be accessed
-    *  Bus write function pointer: BNO055_WR_FUNC_PTR
-    *  Bus read function pointer: BNO055_RD_FUNC_PTR
-    *  Delay function pointer: delay_msec
-    *  I2C address: dev_addr
-    *--------------------------------------------------------------------------*/
+     *  By using bno055 the following structure parameter can be accessed
+     *  Bus write function pointer: BNO055_WR_FUNC_PTR
+     *  Bus read function pointer: BNO055_RD_FUNC_PTR
+     *  Delay function pointer: delay_msec
+     *  I2C address: dev_addr
+     *--------------------------------------------------------------------------*/
     void CImu::I2C_routine(void)
     {
         bno055.bus_write = BNO055_I2C_bus_write;
         bno055.bus_read = BNO055_I2C_bus_read;
         bno055.delay_msec = BNO055_delay_msek;
-        bno055.dev_addr = BNO055_I2C_ADDR1;
+        bno055.dev_addr = BNO055_I2C_ADDR2 << 1;
     }
 
+    /**
+    * \brief Introduces a delay for the specified duration in milliseconds.
+    * 
+    * This function relies on the `ThisThread::sleep_for` method to create 
+    * a delay, making the current thread sleep for the specified duration.
+    * 
+    * \param msek The delay duration in milliseconds.
+    */
     void CImu::BNO055_delay_msek(u32 msek)
     {
         /*Here you can write your own delay routine*/
+        ThisThread::sleep_for(chrono::milliseconds(msek));
     }
 
-    /** \brief  Periodically applied method to get the sensor values
-     * 
-     */
+    void CImu::resetVelocity(void)
+    {
+        m_velocityX = 0.0;
+        m_velocityY = 0.0;
+        m_velocityZ = 0.0;
+        m_velocityStationaryCounter = 0;
+    }
+
+    float CImu::getVelocityX(void)
+    {
+        return m_velocityX;
+    }
+
+    float CImu::getVelocityY(void)
+    {
+        return m_velocityY;
+    }
+
+    float CImu::getVelocityZ(void)
+    {
+        return m_velocityZ;
+    }
+
+    void CImu::updateVelocity(float linearAccX, float linearAccY, float linearAccZ)
+    {
+        m_velocityX += linearAccX * 0.1; // Δt = f_period * g_baseTick
+        m_velocityY += linearAccY * 0.1;
+        m_velocityZ += linearAccZ * 0.1;
+    }
+
+    /**
+    * \brief Extracts the integer part of a floating-point value from the sensor.
+    * 
+    * Multiplies the input value by 100 to preserve two decimal places, 
+    * and then divides by 100 to extract the integer part. 
+    * 
+    * \param valueFromSensor The floating-point value retrieved from the sensor.
+    * \return The integer part of the input value.
+    */
+    static int extractIntegerPart(float valueFromSensor)
+    {
+        return ((int)(valueFromSensor*100))/100;
+    }
+
+    /**
+    * \brief Extracts the fractional part of a floating-point value from the sensor.
+    * 
+    * Multiplies the input value by 100 to preserve two decimal places, 
+    * and then takes modulus by 100 to extract the fractional part. 
+    * If the resultant value is negative, it returns the absolute value.
+    * 
+    * \param valueFromSensor The floating-point value retrieved from the sensor.
+    * \return The absolute value of the fractional part of the input value.
+    */
+    static int extractFractionalPart(float valueFromSensor)
+    {
+        
+        return ((int)(valueFromSensor*100))%100 < 0 ? -(((int)(valueFromSensor*100))%100) : ((int)(valueFromSensor*100))%100;
+    }
+
+    /** 
+    * \brief  Periodically retrieves and processes IMU sensor values.
+    * 
+    * This method is invoked periodically and handles:
+    * 1. Reading Euler angles (roll, pitch, yaw) from the BNO055 sensor.
+    * 2. Reading linear acceleration values in the x, y, and z axes from the sensor.
+    * 3. Based on the linear acceleration, it updates the current velocity of the device.
+    * 4. If the device appears to be stationary (based on x and y acceleration thresholds), 
+    *    a counter is incremented. If the device remains stationary for a certain duration 
+    *    (15 cycles in this case), the velocity is reset.
+    * 5. Formats and sends the acquired data over a serial connection.
+    * 
+    * \note If there are any issues reading from the BNO055 sensor, the method will exit early without sending data.
+    */
     void CImu::_run()
     {
         if(!m_isActive) return;
-        s32 comres = BNO055_ERROR;
-        struct bno055_euler_float_t eulerData;
-        comres = bno055_convert_float_euler_hpr_deg(&eulerData);
-
         char buffer[256];
-        snprintf(buffer, sizeof(buffer), "@7:%f;%f;%f;%d;;\r\n", eulerData.h, eulerData.r, eulerData.p, comres);
-        
+        s32 comres = BNO055_SUCCESS;
+
+        BNO055_delay_msek(5);
+
+        float converted_euler_h_deg = BNO055_INIT_VALUE;
+        float converted_euler_p_deg = BNO055_INIT_VALUE;
+        float converted_euler_r_deg = BNO055_INIT_VALUE;
+
+        comres += bno055_convert_float_euler_h_deg(&converted_euler_h_deg);
+        BNO055_delay_msek(5);
+
+        comres += bno055_convert_float_euler_p_deg(&converted_euler_p_deg);
+        BNO055_delay_msek(5);
+
+        comres += bno055_convert_float_euler_r_deg(&converted_euler_r_deg);
+        BNO055_delay_msek(5);
+
+        float converted_linear_accelX = BNO055_INIT_VALUE;
+        float converted_linear_accelY = BNO055_INIT_VALUE;
+        float converted_linear_accelZ = BNO055_INIT_VALUE;
+
+        comres += bno055_convert_float_linear_accel_x_msq(&converted_linear_accelX);
+        BNO055_delay_msek(5);
+
+        comres += bno055_convert_float_linear_accel_y_msq(&converted_linear_accelY);
+        BNO055_delay_msek(5);
+
+        comres += bno055_convert_float_linear_accel_z_msq(&converted_linear_accelZ);
+        BNO055_delay_msek(5);
+
+        if(converted_linear_accelX <= 0.09 && converted_linear_accelY <= 0.09)
+        {
+            updateVelocity(0.0, 0.0, converted_linear_accelZ);
+            m_velocityStationaryCounter += 1;
+            if (m_velocityStationaryCounter == 15)
+            {
+                snprintf(buffer, sizeof(buffer), "resetVelocity()");
+                m_serial.write(buffer,strlen(buffer));
+                resetVelocity();
+            }
+            
+        }
+        else{
+            updateVelocity(converted_linear_accelX, converted_linear_accelY, converted_linear_accelZ);
+            m_velocityStationaryCounter = 0;
+        }
+
+        if(comres != BNO055_SUCCESS)
+        {
+            // snprintf(buffer, sizeof(buffer), "@7:%f;%f;%f;%d;;\r\n", converted_eulerData.h, converted_eulerData.p, converted_eulerData.r, comres);
+            return;
+        }
+
+        snprintf(buffer, sizeof(buffer), "@7:%d.%02d;%d.%02d;%d.%02d;%d.%02d;%d.%02d;%d.%02d;;\r\n",
+            extractIntegerPart(converted_euler_r_deg), extractFractionalPart(converted_euler_r_deg),
+            extractIntegerPart(converted_euler_p_deg), extractFractionalPart(converted_euler_p_deg),
+            extractIntegerPart(converted_euler_h_deg), extractFractionalPart(converted_euler_h_deg),
+            extractIntegerPart(getVelocityX()), extractFractionalPart(getVelocityX()),
+            extractIntegerPart(getVelocityY()), extractFractionalPart(getVelocityY()),
+            extractIntegerPart(getVelocityZ()), extractFractionalPart(getVelocityZ()));
         m_serial.write(buffer,strlen(buffer));
     }
 

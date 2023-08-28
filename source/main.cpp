@@ -47,8 +47,8 @@ periodics::CBlinker g_blinker(0.5 / g_baseTick, LED1);
 // periodics::CTotalVoltage g_totalvoltage(3.0 / g_baseTick, D0, g_rpi);
 
 // It's a task for sending periodically the IMU values
-// periodics::CImu g_imu(5.0 / g_baseTick, g_rpi);
-drivers::BNO055 g_imu(5.0 / g_baseTick, I2C_SDA, I2C_SCL, g_rpi);
+periodics::CImu g_imu(0.1 / g_baseTick, g_rpi, I2C_SDA, I2C_SCL);
+//drivers::BNO055 g_imu(5.0 / g_baseTick, I2C_SDA, I2C_SCL, g_rpi);
 
 //PIN for angle in servo degrees, inferior and superior limit
 drivers::CSpeedingMotor g_speedingDriver(D3, -5.0, 5.0);   
@@ -66,8 +66,8 @@ drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"3",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
     // {"5",mbed::callback(&g_totalvoltage,&periodics::CTotalVoltage::TotalPublisherCommand)}
     // {"6",mbed::callback(&g_instantconsumption,&periodics::CInstantConsumption ::InstantPublisherCommand)},
-    // {"7",mbed::callback(&g_imu,&periodics::CImu::ImuPublisherCommand)}
-    {"7",mbed::callback(&g_imu,&drivers::BNO055::ImuPublisherCommand)}
+    {"7",mbed::callback(&g_imu,&periodics::CImu::ImuPublisherCommand)}
+    // {"7",mbed::callback(&g_imu,&drivers::BNO055::ImuPublisherCommand)}
 };
 
 // Create the serial monitor object, which decodes, redirects the messages and transmits the responses.

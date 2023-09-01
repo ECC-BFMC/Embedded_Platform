@@ -67,6 +67,8 @@ namespace periodics
             UnbufferedSerial&          m_serial;
             /** @brief Active flag  */
             bool                m_isActive;
+
+            float m_median;
     }; // class CTotalVoltage
 }; // namespace periodics
 

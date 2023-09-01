@@ -53,7 +53,7 @@ namespace periodics{
             PinName SDA,
             PinName SCL) 
         : utils::CTask(f_period)
-        , m_isActive(true)
+        , m_isActive(false)
         , m_serial(f_serial)
         , m_velocityX(0.0)
         , m_velocityY(0.0)
@@ -664,66 +664,6 @@ namespace periodics{
         ThisThread::sleep_for(chrono::milliseconds(msek));
     }
 
-    void CImu::resetVelocity(void)
-    {
-        m_velocityX = 0.0;
-        m_velocityY = 0.0;
-        m_velocityZ = 0.0;
-        m_velocityStationaryCounter = 0;
-    }
-
-    float CImu::getVelocityX(void)
-    {
-        return m_velocityX;
-    }
-
-    float CImu::getVelocityY(void)
-    {
-        return m_velocityY;
-    }
-
-    float CImu::getVelocityZ(void)
-    {
-        return m_velocityZ;
-    }
-
-    void CImu::updateVelocity(float linearAccX, float linearAccY, float linearAccZ)
-    {
-        m_velocityX += linearAccX * 0.1; // Δt = f_period * g_baseTick
-        m_velocityY += linearAccY * 0.1;
-        m_velocityZ += linearAccZ * 0.1;
-    }
-
-    /**
-    * \brief Extracts the integer part of a floating-point value from the sensor.
-    * 
-    * Multiplies the input value by 100 to preserve two decimal places, 
-    * and then divides by 100 to extract the integer part. 
-    * 
-    * \param valueFromSensor The floating-point value retrieved from the sensor.
-    * \return The integer part of the input value.
-    */
-    static int extractIntegerPart(float valueFromSensor)
-    {
-        return ((int)(valueFromSensor*100))/100;
-    }
-
-    /**
-    * \brief Extracts the fractional part of a floating-point value from the sensor.
-    * 
-    * Multiplies the input value by 100 to preserve two decimal places, 
-    * and then takes modulus by 100 to extract the fractional part. 
-    * If the resultant value is negative, it returns the absolute value.
-    * 
-    * \param valueFromSensor The floating-point value retrieved from the sensor.
-    * \return The absolute value of the fractional part of the input value.
-    */
-    static int extractFractionalPart(float valueFromSensor)
-    {
-        
-        return ((int)(valueFromSensor*100))%100 < 0 ? -(((int)(valueFromSensor*100))%100) : ((int)(valueFromSensor*100))%100;
-    }
-
     /** 
     * \brief  Periodically retrieves and processes IMU sensor values.
     * 
@@ -744,64 +684,55 @@ namespace periodics{
         char buffer[256];
         s32 comres = BNO055_SUCCESS;
 
-        BNO055_delay_msek(5);
-
         float converted_euler_h_deg = BNO055_INIT_VALUE;
         float converted_euler_p_deg = BNO055_INIT_VALUE;
         float converted_euler_r_deg = BNO055_INIT_VALUE;
 
         comres += bno055_convert_float_euler_h_deg(&converted_euler_h_deg);
-        BNO055_delay_msek(5);
 
         comres += bno055_convert_float_euler_p_deg(&converted_euler_p_deg);
-        BNO055_delay_msek(5);
 
         comres += bno055_convert_float_euler_r_deg(&converted_euler_r_deg);
-        BNO055_delay_msek(5);
 
         float converted_linear_accelX = BNO055_INIT_VALUE;
         float converted_linear_accelY = BNO055_INIT_VALUE;
         float converted_linear_accelZ = BNO055_INIT_VALUE;
 
         comres += bno055_convert_float_linear_accel_x_msq(&converted_linear_accelX);
-        BNO055_delay_msek(5);
 
         comres += bno055_convert_float_linear_accel_y_msq(&converted_linear_accelY);
-        BNO055_delay_msek(5);
 
         comres += bno055_convert_float_linear_accel_z_msq(&converted_linear_accelZ);
-        BNO055_delay_msek(5);
 
         if(converted_linear_accelX <= 0.09 && converted_linear_accelY <= 0.09)
         {
-            updateVelocity(0.0, 0.0, converted_linear_accelZ);
+            m_velocityX += 0.0 * 0.1; // Δt = f_period * g_baseTick
+            m_velocityY += 0.0 * 0.1;
+            m_velocityZ += converted_linear_accelZ * 0.1;
             m_velocityStationaryCounter += 1;
             if (m_velocityStationaryCounter == 15)
             {
-                snprintf(buffer, sizeof(buffer), "resetVelocity()");
-                m_serial.write(buffer,strlen(buffer));
-                resetVelocity();
+                m_velocityX = 0.0;
+                m_velocityY = 0.0;
+                m_velocityZ = 0.0;
+                m_velocityStationaryCounter = 0;
             }
             
         }
         else{
-            updateVelocity(converted_linear_accelX, converted_linear_accelY, converted_linear_accelZ);
+            m_velocityX += converted_linear_accelX * 0.1; // Δt = f_period * g_baseTick
+            m_velocityY += converted_linear_accelY * 0.1;
+            m_velocityZ += converted_linear_accelZ * 0.1;
             m_velocityStationaryCounter = 0;
         }
 
         if(comres != BNO055_SUCCESS)
         {
-            // snprintf(buffer, sizeof(buffer), "@7:%f;%f;%f;%d;;\r\n", converted_eulerData.h, converted_eulerData.p, converted_eulerData.r, comres);
             return;
         }
 
-        snprintf(buffer, sizeof(buffer), "@7:%d.%02d;%d.%02d;%d.%02d;%d.%02d;%d.%02d;%d.%02d;;\r\n",
-            extractIntegerPart(converted_euler_r_deg), extractFractionalPart(converted_euler_r_deg),
-            extractIntegerPart(converted_euler_p_deg), extractFractionalPart(converted_euler_p_deg),
-            extractIntegerPart(converted_euler_h_deg), extractFractionalPart(converted_euler_h_deg),
-            extractIntegerPart(getVelocityX()), extractFractionalPart(getVelocityX()),
-            extractIntegerPart(getVelocityY()), extractFractionalPart(getVelocityY()),
-            extractIntegerPart(getVelocityZ()), extractFractionalPart(getVelocityZ()));
+        snprintf(buffer, sizeof(buffer), "@7:%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;;\r\n",
+            converted_euler_r_deg, converted_euler_p_deg, converted_euler_h_deg, m_velocityX, m_velocityY, m_velocityZ);
         m_serial.write(buffer,strlen(buffer));
     }
 

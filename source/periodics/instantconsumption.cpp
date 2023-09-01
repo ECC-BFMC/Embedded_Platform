@@ -41,12 +41,13 @@ namespace periodics{
      */
     CInstantConsumption::CInstantConsumption(
             uint32_t        f_period, 
-            AnalogIn  f_pin, 
+            mbed::AnalogIn  f_pin, 
             UnbufferedSerial&      f_serial) 
         : utils::CTask(f_period)
         , m_pin(f_pin)
+        , m_isActive(false)
         , m_serial(f_serial)
-        , m_isActive(true)
+        , m_median(0.0)
     {
     }
 
@@ -75,15 +76,55 @@ namespace periodics{
         }
     }
 
-    /** \brief  Periodically applied method to check the ADC value
-     * 
-     */
+    /**
+    * @brief Computes the average consumption rate per second.
+    * 
+    * The function is called every 0.2 seconds (5 times per second) to receive new consumption values. After every 5 calls (which corresponds to 1 second), 
+    * it returns the average consumption for that second. If it hasn't yet accumulated 5 values, the function returns 0.0.
+    * 
+    * @param newValue The new consumption value to be added to the accumulation for the current second.
+    * @return The average consumption rate for the last second after every 5th call; otherwise, returns 0.0.
+    */
+    float CInstantConsumption::calculateMedian(float newValue)
+    {
+        static int i=0;
+        i += 1;
+
+        m_median += newValue;
+
+        if(i==5)
+        {
+            i = 0;
+            return m_median/5.0;
+        }
+        return 0.0;
+    }
+
+    /**
+    * @brief Periodically checks and sends the scaled value from the A2 pin over a serial connection.
+    * 
+    * When the function is active, it reads a 16-bit value from the A2 pin and scales it using the provided scale factor:
+    * For a 3.3V signal, the pin reads 65536, and for 1V it reads 19859.39.
+    * 
+    * After scaling the pin's reading, it calculates the average value using the `calculateMedian` method.
+    * 
+    * If there's a valid average for the past second, it formats the value and sends it over a serial connection.
+    * 
+    * Note: Despite the name `calculateMedian`, the function calculates the average.
+    */
     void CInstantConsumption::_run()
     {
         if(!m_isActive) return;
-        float l_rps = m_pin.read_u16();
-        m_serial.write("@6:1",1);
-        // m_serial.printf("@6:%.2f;;\r\n", l_rps);
+        char buffer[256];
+        float l_rps = m_pin.read_u16()/19859.39;
+        float l_median = calculateMedian(l_rps);
+
+        if(l_median != 0.0)
+        {
+            snprintf(buffer, sizeof(buffer), "@6:%.3f;;\r\n", l_median*10);
+            m_serial.write(buffer,strlen(buffer));
+            m_median = 0.0;
+        }
     }
 
 }; // namespace periodics

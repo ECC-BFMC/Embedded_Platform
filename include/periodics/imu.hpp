@@ -76,13 +76,6 @@ namespace periodics
             /* Run method */
             virtual void    _run();
 
-            void updateVelocity(float linearAccX, float linearAccY, float linearAccZ);
-
-            float getVelocityX(void);
-            float getVelocityY(void);
-            float getVelocityZ(void);
-            void resetVelocity(void);
-
             /*----------------------------------------------------------------------------*
             *  struct bno055_t parameters can be accessed by using BNO055
             *  BNO055_t having the following parameters

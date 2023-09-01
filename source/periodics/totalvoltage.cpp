@@ -30,7 +30,6 @@
 
 #include <periodics/totalvoltage.hpp>
 
-
 namespace periodics{
     /** \brief  Class constructor
      *
@@ -46,7 +45,8 @@ namespace periodics{
         : utils::CTask(f_period)
         , m_pin(f_pin)
         , m_serial(f_serial)
-        ,m_isActive(true)
+        , m_isActive(false)
+        , m_median(0.0)
     {
     }
 
@@ -75,15 +75,23 @@ namespace periodics{
         }
     }
 
-    /** \brief  Periodically applied method to check the ADC value
-     * 
-     */
+    /**
+    * @brief Periodically reads the battery voltage from A1 pin and sends the scaled value over a serial connection.
+    * 
+    * When the function is active, it reads a 16-bit value from the pin, which is connected to a battery.
+    * The reading is then scaled to represent the actual battery voltage using the provided scale factor: 
+    * When the battery voltage is 7.8V, the pin reads a value of 64983.
+    * 
+    * After obtaining the scaled battery voltage, the function formats this value and sends it over the serial connection.
+    */
     void CTotalVoltage::_run()
     {
         if(!m_isActive) return;
-        float l_rps = m_pin.read_u16();
-        m_serial.write("@5:1",1);
-        // m_serial.printf("@5:%.2f;;\r\n", l_rps);
+        char buffer[256];
+        float l_rps = m_pin.read_u16()/8331.15;
+        // snprintf(buffer, sizeof(buffer), "@5:%d.%01d;;\r\n", (int)(l_rps), ((int)(l_rps*10)%10));
+        snprintf(buffer, sizeof(buffer), "@5:%.1f;;\r\n", l_rps);
+        m_serial.write(buffer,strlen(buffer));
     }
 
 }; // namespace periodics

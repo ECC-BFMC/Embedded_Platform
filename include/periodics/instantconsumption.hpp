@@ -50,7 +50,7 @@ namespace periodics
             /* Construnctor */
             CInstantConsumption(
                 uint32_t f_period, 
-                AnalogIn f_pin, 
+                mbed::AnalogIn f_pin, 
                 UnbufferedSerial& f_serial
             );
             /* Destructor */
@@ -60,12 +60,16 @@ namespace periodics
         private:
             /* Run method */
             virtual void        _run();
+
+            float calculateMedian(float newValue);
             /* ADC input pin for instand consume */
-            AnalogIn      m_pin;    
+            mbed::AnalogIn      m_pin;    
             /** @brief Active flag  */
             bool            m_isActive;
             /* @brief Serial communication obj.  */
             UnbufferedSerial&          m_serial;
+
+            float m_median;
     }; // class CInstantConsumption
 }; // namespace periodics
 

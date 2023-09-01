@@ -41,10 +41,10 @@ UnbufferedSerial g_rpi(USBTX, USBRX, 19200);
 periodics::CBlinker g_blinker(0.5 / g_baseTick, LED1);
 
 // // It's a task for sending periodically the instant current consumption of the battery
-// periodics::CInstantConsumption g_instantconsumption(0.2 / g_baseTick, D1, g_rpi);
+periodics::CInstantConsumption g_instantconsumption(0.2 / g_baseTick, A2, g_rpi);
 
 // // It's a task for sending periodically the battery voltage, so to notice when discharging
-// periodics::CTotalVoltage g_totalvoltage(3.0 / g_baseTick, D0, g_rpi);
+periodics::CTotalVoltage g_totalvoltage(3.0 / g_baseTick, A1, g_rpi);
 
 // It's a task for sending periodically the IMU values
 periodics::CImu g_imu(0.1 / g_baseTick, g_rpi, I2C_SDA, I2C_SCL);
@@ -64,8 +64,8 @@ drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"1",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSPEEDcommand)},
     {"2",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSTEERcommand)},
     {"3",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
-    // {"5",mbed::callback(&g_totalvoltage,&periodics::CTotalVoltage::TotalPublisherCommand)}
-    // {"6",mbed::callback(&g_instantconsumption,&periodics::CInstantConsumption ::InstantPublisherCommand)},
+    {"5",mbed::callback(&g_totalvoltage,&periodics::CTotalVoltage::TotalPublisherCommand)},
+    {"6",mbed::callback(&g_instantconsumption,&periodics::CInstantConsumption ::InstantPublisherCommand)},
     {"7",mbed::callback(&g_imu,&periodics::CImu::ImuPublisherCommand)}
     // {"7",mbed::callback(&g_imu,&drivers::BNO055::ImuPublisherCommand)}
 };
@@ -76,8 +76,8 @@ drivers::CSerialMonitor g_serialMonitor(g_rpi, g_serialMonitorSubscribers);
 // List of the task, each task will be applied their own periodicity, defined by the initializing the objects.
 utils::CTask* g_taskList[] = {
     &g_blinker,
-    // &g_instantconsumption,
-    // &g_totalvoltage,
+    &g_instantconsumption,
+    &g_totalvoltage,
     &g_imu,
     &g_robotstatemachine,
     &g_serialMonitor

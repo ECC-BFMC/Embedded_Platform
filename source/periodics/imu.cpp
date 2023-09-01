@@ -53,7 +53,7 @@ namespace periodics{
             PinName SDA,
             PinName SCL) 
         : utils::CTask(f_period)
-        , m_isActive(false)
+        , m_isActive(true)
         , m_serial(f_serial)
         , m_velocityX(0.0)
         , m_velocityY(0.0)

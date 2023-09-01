@@ -85,7 +85,7 @@ namespace periodics{
     * @param newValue The new consumption value to be added to the accumulation for the current second.
     * @return The average consumption rate for the last second after every 5th call; otherwise, returns 0.0.
     */
-    float CInstantConsumption::calculateMedian(float newValue)
+    float CInstantConsumption::calculateAverageInstantConsumption(float newValue)
     {
         static int i=0;
         i += 1;
@@ -117,7 +117,7 @@ namespace periodics{
         if(!m_isActive) return;
         char buffer[256];
         float l_rps = m_pin.read_u16()/19859.39;
-        float l_median = calculateMedian(l_rps);
+        float l_median = calculateAverageInstantConsumption(l_rps);
 
         if(l_median != 0.0)
         {

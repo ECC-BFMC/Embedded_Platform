@@ -61,7 +61,7 @@ namespace periodics
             /* Run method */
             virtual void        _run();
 
-            float calculateMedian(float newValue);
+            float calculateAverageInstantConsumption(float newValue);
             /* ADC input pin for instand consume */
             mbed::AnalogIn      m_pin;    
             /** @brief Active flag  */

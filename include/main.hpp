@@ -39,6 +39,8 @@
 #include <periodics/instantconsumption.hpp>
 /* Header file for the total voltage measurement functionality */
 #include <periodics/totalvoltage.hpp>
+/* Header file for the velocity control duration functionality */
+#include <drivers/velocitycontrolduration.hpp>
 /* Header file for the serial communication functionality */
 #include <drivers/serialmonitor.hpp>
 /* Header file for the robot state machine, which deals with the cars movement (steering and speed) */

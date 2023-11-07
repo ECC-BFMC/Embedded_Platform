@@ -30,7 +30,6 @@
 
 #include <drivers/speedingmotor.hpp>
 
-
 namespace drivers{
     /**
      * @brief It initializes the pwm parameters and it sets the speed reference to zero position, and the limits of the car speed.
@@ -55,7 +54,6 @@ namespace drivers{
         m_pwm_pin.write(zero_default);
     };
 
-
     /** @brief  CSpeedingMotor class destructor
      */
     CSpeedingMotor::~CSpeedingMotor()
@@ -68,6 +66,8 @@ namespace drivers{
      */
     void CSpeedingMotor::setSpeed(float f_speed)
     {
+        step_value = interpolate(-f_speed, speedValuesP, speedValuesN, stepValues, 25);
+
         m_pwm_pin.write(conversion(f_speed));
     };
 
@@ -78,13 +78,60 @@ namespace drivers{
         m_pwm_pin.write(zero_default);
     };
 
+    /**
+    * @brief Interpolates values based on speed input.
+    *
+    * This function interpolates `stepValues` based on the provided `speed` input.
+    * The interpolation is made using `steeringValueP` and `steeringValueN` as reference values.
+    *
+    * @param speed The input speed value for which the values need to be interpolated.
+    * @param speedValuesP Positive reference values for speed.
+    * @param speedValuesN Negative reference values for speed.
+    * @param stepValues Step values corresponding to steeringValueP and steeringValueN which need to be interpolated.
+    * @param size The size of the arrays.
+    * @return The new value for the step value
+    */
+    float CSpeedingMotor::interpolate(float speed, const float speedValuesP[], const float speedValuesN[], const float stepValues[], int size)
+    {
+        if(speed <= speedValuesP[0]){
+            if (speed >= speedValuesN[0])
+            {
+                return stepValues[0];
+            }
+            else{
+                for(int i=1; i<size; i++)
+                {
+                    if (speed >= speedValuesN[i])
+                    {
+                        float slope = (stepValues[i] - stepValues[i-1]) / (speedValuesN[i] - speedValuesN[i-1]);
+                        return stepValues[i-1] + slope * (speed - speedValuesN[i-1]);
+                    }
+                }
+            }
+            
+        } 
+        if(speed >= speedValuesP[size-1]) return stepValues[size-1];
+        if(speed <= speedValuesN[size-1]) return stepValues[size-1];
+
+        for(int i=1; i<size; i++)
+        {
+            if (speed <= speedValuesP[i])
+            {
+                float slope = (stepValues[i] - stepValues[i-1]) / (speedValuesP[i] - speedValuesP[i-1]);
+                return stepValues[i-1] + slope * (speed - speedValuesP[i-1]);
+            }
+        }
+
+        return -1;
+    }
+
     /** @brief  It converts speed reference to duty cycle for pwm signal. 
      * 
      *  @param f_speed    speed
      *  \return         pwm value
      */
     float CSpeedingMotor::conversion(float f_speed)
-    {
+    {   
         return (step_value * f_speed + zero_default);
     };
 

@@ -31,7 +31,6 @@
 
 #include <drivers/serialmonitor.hpp>
 
-
 namespace drivers{
 
     /** @brief  CSerialMonitor class constructor

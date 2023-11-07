@@ -33,7 +33,7 @@
 #define STEERINGMOTOR_HPP
 
 #include <mbed.h>
-
+#include <utility>
 
 namespace drivers
 {
@@ -74,8 +74,8 @@ namespace drivers
             /** @brief PWM output pin */
             PwmOut m_pwm_pin;
             /** @brief 0 default */
-            float zero_default = 0.07525;
-            /** @brief 0 default */
+            float zero_default = 0.07672070;
+            /** @brief ms_period */
             int8_t ms_period = 20;
             /** @brief step_value */
             float step_value = 0.0009505;
@@ -85,6 +85,15 @@ namespace drivers
             const float m_sup_limit;
             /* convert angle degree to duty cycle for pwm signal */
             float conversion(float f_angle); //angle to duty cycle
+
+            /* interpolate the step value and the zero default based on the steering value */
+            std::pair<float, float> interpolate(float steering, const float steeringValueP[], const float steeringValueN[], const float stepValues[], const float zeroDefaultValues[], int size);
+
+            // Predefined values for steering reference and interpolation
+            const float steeringValueP[2] = {15.0, 20.0};
+            const float steeringValueN[2] = {-15.0, -20.0};
+            const float stepValues[2] = {0.0008594, 0.000951570};
+            const float zeroDefaultValues[2] = {0.07714891, 0.07672070};
     }; // class ISteeringCommand
 }; // namespace drivers
 

@@ -48,13 +48,15 @@ periodics::CTotalVoltage g_totalvoltage(3.0 / g_baseTick, A1, g_rpi);
 
 // It's a task for sending periodically the IMU values
 periodics::CImu g_imu(0.1 / g_baseTick, g_rpi, I2C_SDA, I2C_SCL);
-//drivers::BNO055 g_imu(5.0 / g_baseTick, I2C_SDA, I2C_SCL, g_rpi);
-
-//PIN for angle in servo degrees, inferior and superior limit
-drivers::CSpeedingMotor g_speedingDriver(D3, -5.0, 5.0);   
 
 //PIN for a motor speed in ms, inferior and superior limit
-drivers::CSteeringMotor g_steeringDriver(D4, -23.0, 23.0); //speed in m/s
+drivers::CSpeedingMotor g_speedingDriver(D3, -50.0, 50.0); //speed in cm/s
+
+//PIN for angle in servo degrees, inferior and superior limit
+drivers::CSteeringMotor g_steeringDriver(D4, -25.0, 25.0);
+
+// Task responsible for configuring the vehicle's speed and steering over a specified duration.
+drivers::CVelocityControlDuration g_velocityControlDuration(0.1/g_baseTick, g_steeringDriver, g_speedingDriver);
 
 // Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface. 
 brain::CRobotStateMachine g_robotstatemachine(0.1/g_baseTick, g_rpi, g_steeringDriver, g_speedingDriver);
@@ -64,10 +66,12 @@ drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"1",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSPEEDcommand)},
     {"2",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSTEERcommand)},
     {"3",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
+    // {"4",mbed::callback(&g_motorCalibration,&periodics::CTotalVoltage::SpeedMotorCalibration)},
     {"5",mbed::callback(&g_totalvoltage,&periodics::CTotalVoltage::TotalPublisherCommand)},
     {"6",mbed::callback(&g_instantconsumption,&periodics::CInstantConsumption ::InstantPublisherCommand)},
-    {"7",mbed::callback(&g_imu,&periodics::CImu::ImuPublisherCommand)}
-    // {"7",mbed::callback(&g_imu,&drivers::BNO055::ImuPublisherCommand)}
+    {"7",mbed::callback(&g_imu,&periodics::CImu::ImuPublisherCommand)},
+    // {"8",mbed::callback(&g_complexMoves, &drivers::CComplexMoves::serialCallbackComplexMovesCommand)},
+    {"9",mbed::callback(&g_velocityControlDuration, &drivers::CVelocityControlDuration::serialCallbackVCDCommand)}
 };
 
 // Create the serial monitor object, which decodes, redirects the messages and transmits the responses.
@@ -80,6 +84,7 @@ utils::CTask* g_taskList[] = {
     &g_totalvoltage,
     &g_imu,
     &g_robotstatemachine,
+    &g_velocityControlDuration,
     &g_serialMonitor
 }; 
 

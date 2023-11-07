@@ -117,6 +117,11 @@ namespace periodics{
         if(!m_isActive) return;
         char buffer[256];
         float l_rps = m_pin.read_u16()/19859.39;
+
+        // float l_rps2 = m_pin.read_u16()/1.0;
+        // snprintf(buffer, sizeof(buffer), "l_rps2=%.3f;;\r\n", l_rps2);
+        // m_serial.write(buffer,strlen(buffer));
+    
         float l_median = calculateAverageInstantConsumption(l_rps);
 
         if(l_median != 0.0)

@@ -72,6 +72,7 @@ namespace periodics{
         *  i2c_instance variable member will be initialized with the actual I2C of the target board.
         *---------------------------------------------------------------------------------------------------*/      
         i2c_instance = new I2C(SDA, SCL);
+        i2c_instance->frequency(400000);
 
         /*  Based on the user need configure I2C interface.
         *  It is example code to explain how to use the bno055 API*/
@@ -648,6 +649,7 @@ namespace periodics{
         bno055.bus_read = BNO055_I2C_bus_read;
         bno055.delay_msec = BNO055_delay_msek;
         bno055.dev_addr = BNO055_I2C_ADDR2 << 1;
+        // bno055.dev_addr = BNO055_I2C_ADDR1 << 1;
     }
 
     /**

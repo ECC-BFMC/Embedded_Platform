@@ -45,7 +45,7 @@ namespace periodics{
             UnbufferedSerial&      f_serial) 
         : utils::CTask(f_period)
         , m_pin(f_pin)
-        , m_isActive(false)
+        , m_isActive(true)
         , m_serial(f_serial)
         , m_median(0.0)
     {
@@ -117,10 +117,6 @@ namespace periodics{
         if(!m_isActive) return;
         char buffer[256];
         float l_rps = m_pin.read_u16()/19859.39;
-
-        // float l_rps2 = m_pin.read_u16()/1.0;
-        // snprintf(buffer, sizeof(buffer), "l_rps2=%.3f;;\r\n", l_rps2);
-        // m_serial.write(buffer,strlen(buffer));
     
         float l_median = calculateAverageInstantConsumption(l_rps);
 

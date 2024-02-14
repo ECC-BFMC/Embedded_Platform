@@ -45,7 +45,7 @@ namespace periodics{
         : utils::CTask(f_period)
         , m_pin(f_pin)
         , m_serial(f_serial)
-        , m_isActive(false)
+        , m_isActive(true)
         , m_median(0.0)
     {
     }

@@ -28,39 +28,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
-#include <periodics/blinker.hpp>
+#ifndef BATTERYMANAGER_HPP
+#define BATTERYMANAGER_HPP
 
+// TODO: Add your code here
 
-namespace periodics{
-    /** \brief  Class constructor
-     *
-     *  It initializes the task and the state of the led. 
-     *
-     *  \param f_period       Toggling period of LED
-     *  \param f_led          Digital output line to LED
-     */
-    CBlinker::CBlinker(
-            std::chrono::milliseconds            f_period, 
-            mbed::DigitalOut    f_led
-        ) 
-        : utils::CTask(f_period)
-        , m_led(f_led) 
+#include <mbed.h>
+#include <brain/globalsv.hpp>
+
+namespace drivers
+{
+   /**
+    * @brief Class batterymanager
+    *
+    */
+    class CBatterymanager
     {
-        m_led = 1;
-    }
+        public:
+            /* Construnctor */
+            CBatterymanager(
+                uint8_t dummy
+            );
+            /* Destructor */
+            ~CBatterymanager();
 
-    /** @brief  CBlinker class destructor
-     */
-    CBlinker::~CBlinker()
-    {
-    };
+            void batteryPublisherCommand(char const * a, char * b);
 
-    /** \brief  Periodically applied method to change the LED's state
-     * 
-     */
-    void CBlinker::_run()
-    {
-        m_led = !m_led;
-    }
+        private:
+            /* private variables & method member */
+    }; // class CBatterymanager
+}; // namespace drivers
 
-}; // namespace periodics
+#endif // BATTERYMANAGER_HPP

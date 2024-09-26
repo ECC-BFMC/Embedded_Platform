@@ -28,39 +28,28 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
-#include <periodics/blinker.hpp>
+#include "brain/globalsv.hpp"
 
+uint32_t uint32_globalsV_consumption_Total_mAmpsH = 0;
+uint32_t uint32_globalsV_numberOfMiliseconds_Total = 0;
+uint32_t uint32_globalsV_instant_mAmpsH = 0;
+uint32_t uint32_globalsV_range_left_shutdown = 0;
+uint32_t currentEMA = 0; // Valoarea inițială EMA
 
-namespace periodics{
-    /** \brief  Class constructor
-     *
-     *  It initializes the task and the state of the led. 
-     *
-     *  \param f_period       Toggling period of LED
-     *  \param f_led          Digital output line to LED
-     */
-    CBlinker::CBlinker(
-            std::chrono::milliseconds            f_period, 
-            mbed::DigitalOut    f_led
-        ) 
-        : utils::CTask(f_period)
-        , m_led(f_led) 
-    {
-        m_led = 1;
-    }
+uint16_t int_globalsV_battery_totalVoltage = 0;
+uint16_t int_globalsV_instantConsumption_Avg_Total_mAmpsH = 0;
+uint16_t uint16_globalsV_battery_mAmps_user = 0;
+uint16_t readings[11] = {0}; // Buffer pentru ultimele citiri
 
-    /** @brief  CBlinker class destructor
-     */
-    CBlinker::~CBlinker()
-    {
-    };
+uint8_t  int_globalsV_value_of_kl       = 0;
+// Variabile pentru filtrare
+uint8_t alpha_scaled = 25; // EMA coeficient scaled from 0.025
+uint8_t windowSize = 10; // Dimensiunea ferestrei pentru filtrul de mediere
+uint8_t indexul = 0; // Index pentru buffer
 
-    /** \brief  Periodically applied method to change the LED's state
-     * 
-     */
-    void CBlinker::_run()
-    {
-        m_led = !m_led;
-    }
-
-}; // namespace periodics
+bool bool_globalsV_imu_isActive     = false;
+bool bool_globalsV_instant_isActive = false;
+bool bool_globalsV_battery_isActive = false;
+bool bool_globalsV_resource_isActive= false;
+bool bool_globalsV_ShuttedDown = false;
+bool bool_globalsV_warningFlag = false;

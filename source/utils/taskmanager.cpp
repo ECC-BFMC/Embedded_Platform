@@ -44,9 +44,11 @@ namespace utils{
     CTaskManager::CTaskManager(
             utils::CTask** f_taskList, 
             uint32_t f_taskCount, 
-            float f_baseFreq)
+            std::chrono::milliseconds f_baseFreq, 
+            UnbufferedSerial& f_serial)
         : m_taskList(f_taskList)
-        , m_taskCount(f_taskCount) 
+        , m_taskCount(f_taskCount)
+        , m_serial(f_serial) 
     {
         m_ticker.attach(mbed::callback(this,&CTaskManager::timerCallback), f_baseFreq);
     }

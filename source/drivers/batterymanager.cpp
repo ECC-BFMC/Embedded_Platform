@@ -28,39 +28,36 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
-#include <periodics/blinker.hpp>
+#include "drivers/batterymanager.hpp"
 
-
-namespace periodics{
-    /** \brief  Class constructor
-     *
-     *  It initializes the task and the state of the led. 
-     *
-     *  \param f_period       Toggling period of LED
-     *  \param f_led          Digital output line to LED
-     */
-    CBlinker::CBlinker(
-            std::chrono::milliseconds            f_period, 
-            mbed::DigitalOut    f_led
-        ) 
-        : utils::CTask(f_period)
-        , m_led(f_led) 
+// TODO: Add your code here
+namespace drivers
+{
+   /**
+    * @brief Class constructorbatterymanager
+    *
+    */
+    CBatterymanager::CBatterymanager(uint8_t dummy)
     {
-        m_led = 1;
+        /* constructor behaviour */
     }
 
-    /** @brief  CBlinker class destructor
+    /** @brief  CBatterymanager class destructor
      */
-    CBlinker::~CBlinker()
+    CBatterymanager::~CBatterymanager()
     {
     };
 
-    /** \brief  Periodically applied method to change the LED's state
-     * 
-     */
-    void CBlinker::_run()
-    {
-        m_led = !m_led;
+    void CBatterymanager::batteryPublisherCommand(char const * a, char * b) {
+        uint16_t l_isActivate=0;
+        uint8_t l_res = sscanf(a,"%hd",&l_isActivate);
+
+        if(l_res==1){
+            uint16_globalsV_battery_mAmps_user = l_isActivate;
+            sprintf(b,"ack");
+        }else{
+            sprintf(b,"syntax error");
+        }
     }
 
 }; // namespace periodics

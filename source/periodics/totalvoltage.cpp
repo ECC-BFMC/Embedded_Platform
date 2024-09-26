@@ -30,6 +30,10 @@
 
 #include <periodics/totalvoltage.hpp>
 
+#define one_byte 256
+#define ref_A1_value_8925mV 65304
+#define ref_A1_voltage_mV 8925
+
 namespace periodics{
     /** \brief  Class constructor
      *
@@ -39,14 +43,13 @@ namespace periodics{
      *  \param f_led          Digital output line to LED
      */
     CTotalVoltage::CTotalVoltage(
-            uint32_t f_period, 
+            std::chrono::milliseconds f_period, 
             mbed::AnalogIn f_pin, 
             UnbufferedSerial& f_serial) 
         : utils::CTask(f_period)
         , m_pin(f_pin)
         , m_serial(f_serial)
-        , m_isActive(true)
-        , m_median(0.0)
+        , m_isActive(false)
     {
     }
 
@@ -65,14 +68,28 @@ namespace periodics{
      * 
      */
     void CTotalVoltage::TotalPublisherCommand(char const * a, char * b) {
-        int l_isActivate=0;
-        uint32_t l_res = sscanf(a,"%d",&l_isActivate);
+        uint8_t l_isActivate=0;
+        uint8_t l_res = sscanf(a,"%d",&l_isActivate);
+
         if(l_res==1){
-            m_isActive=(l_isActivate>=1);
-            sprintf(b,"ack;;");
+            if(int_globalsV_value_of_kl == 15 || int_globalsV_value_of_kl == 30)
+            {
+                m_isActive=(l_isActivate>=1);
+                bool_globalsV_battery_isActive = (l_isActivate>=1);
+                sprintf(b,"1");
+            }
+            else{
+                sprintf(b,"kl 15/30 is required!!");
+            }
         }else{
-            sprintf(b,"sintax error;;");
+            sprintf(b,"syntax error");
         }
+    }
+
+    void CTotalVoltage::void_TotalSafetyMeasure()
+    {
+        uint64_t l_rps = (m_pin.read_u16()*ref_A1_voltage_mV)/ref_A1_value_8925mV;
+        int_globalsV_battery_totalVoltage = (uint16_t)l_rps;
     }
 
     /**
@@ -80,16 +97,21 @@ namespace periodics{
     * 
     * When the function is active, it reads a 16-bit value from the pin, which is connected to a battery.
     * The reading is then scaled to represent the actual battery voltage using the provided scale factor: 
-    * When the battery voltage is 7.96V, the pin reads a value of 58574.
+    * When the battery voltage is 8.925V, the average value that pin reads is 65303.93.
+    * When the battery voltage is 8925mV, the average value that pin reads is 65304.
     * 
     * After obtaining the scaled battery voltage, the function formats this value and sends it over the serial connection.
     */
     void CTotalVoltage::_run()
     {
         if(!m_isActive) return;
-        char buffer[256];
-        float l_rps = m_pin.read_u16()/7358.54;
-        snprintf(buffer, sizeof(buffer), "@5:%.1f;;\r\n", l_rps);
+        char buffer[one_byte];
+
+        uint16_t pin_value = m_pin.read_u16();
+        uint64_t l_rps = (pin_value*ref_A1_voltage_mV)/ref_A1_value_8925mV;
+
+        int_globalsV_battery_totalVoltage = (uint16_t)l_rps;
+        snprintf(buffer, sizeof(buffer), "@battery:%d;;\r\n", int_globalsV_battery_totalVoltage);
         m_serial.write(buffer,strlen(buffer));
     }
 

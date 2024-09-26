@@ -28,39 +28,54 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
-#include <periodics/blinker.hpp>
+#ifndef POWERMANAGER_HPP
+#define POWERMANAGER_HPP
 
+// TODO: Add your code here
+#include <mbed.h>
+/* Header file for the task manager library, which  applies periodically the fun function of it's children*/
+#include <utils/task.hpp>
+#include <brain/globalsv.hpp>
+#include <brain/klmanager.hpp>
+#include <periodics/totalvoltage.hpp>
+#include <periodics/instantconsumption.hpp>
+#include <chrono>
 
-namespace periodics{
-    /** \brief  Class constructor
-     *
-     *  It initializes the task and the state of the led. 
-     *
-     *  \param f_period       Toggling period of LED
-     *  \param f_led          Digital output line to LED
-     */
-    CBlinker::CBlinker(
-            std::chrono::milliseconds            f_period, 
-            mbed::DigitalOut    f_led
-        ) 
-        : utils::CTask(f_period)
-        , m_led(f_led) 
+namespace brain
+{
+   /**
+    * @brief Class powermanager
+    *
+    */
+    class CPowermanager: public utils::CTask
     {
-        m_led = 1;
-    }
+        public:
+            /* Construnctor */
+            CPowermanager(
+                std::chrono::milliseconds f_period,
+                brain::CKlmanager& f_CKlmanager,
+                UnbufferedSerial& f_serial,
+                periodics::CTotalVoltage& f_totalVoltage,
+                periodics::CInstantConsumption& f_instantConsumption
+            );
+            /* Destructor */
+            ~CPowermanager();
+        private:
+            /* private variables & method member */
+            
+            /* Run method */
+            virtual void        _run();
 
-    /** @brief  CBlinker class destructor
-     */
-    CBlinker::~CBlinker()
-    {
-    };
+            brain::CKlmanager& m_CKlmanager;
 
-    /** \brief  Periodically applied method to change the LED's state
-     * 
-     */
-    void CBlinker::_run()
-    {
-        m_led = !m_led;
-    }
+            UnbufferedSerial& m_serial;
 
-}; // namespace periodics
+            periodics::CTotalVoltage& m_totalVoltage;
+
+            periodics::CInstantConsumption& m_instantConsumption;
+
+            uint64_t m_period;
+    }; // class CPowermanager
+}; // namespace brain
+
+#endif // POWERMANAGER_HPP

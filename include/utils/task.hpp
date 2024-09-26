@@ -33,6 +33,7 @@
 #define TASK_HPP
 
 #include <mbed.h>
+#include <chrono>
 
 namespace utils
 {
@@ -45,7 +46,7 @@ namespace utils
         public:
             /* Constructor */
             CTask(
-                uint32_t f_period
+                std::chrono::milliseconds f_period
             );
             /* Destructor */
             virtual ~CTask();
@@ -57,9 +58,9 @@ namespace utils
             /** @brief  main application logic - It's a pure function for application logic and has to override in the derivered class to implement the appl.*/
             virtual void _run() = 0;
             /** @brief period of the task */
-            const uint32_t m_period;
+            const std::chrono::milliseconds m_period;
             /** @brief  ticks */
-            uint32_t m_ticks;
+            std::chrono::milliseconds m_ticks;
             /** @brief  trigger flag */
             bool m_triggered;
     }; // class CTask

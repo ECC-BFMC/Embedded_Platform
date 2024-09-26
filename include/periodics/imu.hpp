@@ -40,6 +40,8 @@
 #include <drivers/bno055.hpp>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/task.hpp>
+#include <brain/globalsv.hpp>
+#include <chrono>
 
 namespace periodics
 {
@@ -52,8 +54,9 @@ namespace periodics
     {
         public:
             /* Construnctor */
+            // brain::CKlmanager& f_klmanager
             CImu(
-                uint32_t    f_period, 
+                std::chrono::milliseconds    f_period, 
                 UnbufferedSerial& f_serial,
                 PinName SDA,
                 PinName SCL
@@ -99,10 +102,13 @@ namespace periodics
             /* @brief Serial communication obj.  */
             UnbufferedSerial&      m_serial;
 
-            float m_velocityX;
-            float m_velocityY;
-            float m_velocityZ;
-            int m_velocityStationaryCounter;
+            // brain::CKlmanager& m_klmanager;
+
+            s32 m_velocityX;
+            s32 m_velocityY;
+            s32 m_velocityZ;
+            uint8_t m_velocityStationaryCounter;
+            uint64_t m_delta_time;
     }; // class CImu
 
 }; // namespace utils

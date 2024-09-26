@@ -30,6 +30,8 @@
 
 #include <drivers/steeringmotor.hpp>
 
+#define scaling_factor_1 10
+#define scaling_factor_2 100
 
 namespace drivers{
     /**
@@ -42,8 +44,8 @@ namespace drivers{
      */
     CSteeringMotor::CSteeringMotor(
             PinName f_pwm_pin, 
-            float f_inf_limit, 
-            float f_sup_limit
+            int f_inf_limit, 
+            int f_sup_limit
         )
         :m_pwm_pin(f_pwm_pin)
         ,m_inf_limit(f_inf_limit)
@@ -51,8 +53,8 @@ namespace drivers{
     {
         // Set the ms_period on the pwm_pin
         m_pwm_pin.period_ms(ms_period); 
-        // Set position to zero   
-        m_pwm_pin.write(zero_default);
+        // Set position to zero
+        m_pwm_pin.pulsewidth_us(zero_default/scaling_factor_2);
     };
 
 
@@ -76,7 +78,7 @@ namespace drivers{
     * @param size The size of the arrays.
     * @return A pair of interpolated values: { interpolated stepValue, interpolated zeroDefaultValue }.
     */
-    std::pair<float, float> CSteeringMotor::interpolate(float steering, const float steeringValueP[], const float steeringValueN[], const float stepValues[], const float zeroDefaultValues[], int size)
+    std::pair<int, int> CSteeringMotor::interpolate(int steering, const int steeringValueP[], const int steeringValueN[], const int stepValues[], const int zeroDefaultValues[], int size)
     {
         // If steering is within the bounds of the first positive and negative reference values
         if(steering <= steeringValueP[0]){
@@ -85,21 +87,20 @@ namespace drivers{
                 return {stepValues[0], zeroDefaultValues[0]};
             }
             else{
-                for(int i=1; i<size; i++)
+                for(uint8_t i=1; i<size; i++)
                 {
                     // Find the interval of negative reference values where steering falls into
                     if (steering >= steeringValueN[i])
                     {
                         // Calculate slopes for interpolation
-                        float slopeStepValue = (stepValues[i] - stepValues[i-1]) / (steeringValueN[i] - steeringValueN[i-1]);
-                        float slopeZeroDefault = (zeroDefaultValues[i] - zeroDefaultValues[i-1]) / (steeringValueN[i] - steeringValueN[i-1]);
+                        int slopeStepValue = (stepValues[i] - stepValues[i-1]) / (steeringValueN[i] - steeringValueN[i-1]);
+                        int slopeZeroDefault = (zeroDefaultValues[i] - zeroDefaultValues[i-1]) / (steeringValueN[i] - steeringValueN[i-1]);
 
                         // Return the interpolated values
                         return {stepValues[i-1] + slopeStepValue * (steering - steeringValueN[i-1]), zeroDefaultValues[i-1] + slopeZeroDefault * (steering - steeringValueN[i-1])};
                     }
                 }
             }
-            
         }
 
         // Boundary conditions for positive and negative reference values
@@ -107,13 +108,13 @@ namespace drivers{
         if(steering <= steeringValueN[size-1]) return {stepValues[size-1], zeroDefaultValues[size-1]};
 
         // Interpolation for values between positive reference values
-        for(int i=1; i<size; i++)
+        for(uint8_t i=1; i<size; i++)
         {
             if (steering <= steeringValueP[i])
             {
                 // Calculate slopes for interpolation
-                float slopeStepValue = (stepValues[i] - stepValues[i-1]) / (steeringValueP[i] - steeringValueP[i-1]);
-                float slopeZeroDefault = (zeroDefaultValues[i] - zeroDefaultValues[i-1]) / (steeringValueP[i] - steeringValueP[i-1]);
+                int slopeStepValue = (stepValues[i] - stepValues[i-1]) / (steeringValueP[i] - steeringValueP[i-1]);
+                int slopeZeroDefault = (zeroDefaultValues[i] - zeroDefaultValues[i-1]) / (steeringValueP[i] - steeringValueP[i-1]);
 
                 // Return the interpolated values
                 return {stepValues[i-1] + slopeStepValue * (steering - steeringValueP[i-1]), zeroDefaultValues[i-1] + slopeZeroDefault * (steering - steeringValueP[i-1])};
@@ -128,15 +129,17 @@ namespace drivers{
      *
      *  @param f_angle      angle degree, where the positive value means right direction and negative value the left direction. 
      */
-    void CSteeringMotor::setAngle(float f_angle)
+    void CSteeringMotor::setAngle(int f_angle)
     {
-        std::pair<float, float> interpolationResult;
+        std::pair<int, int> interpolationResult;
 
         interpolationResult = interpolate(f_angle, steeringValueP, steeringValueN, stepValues, zeroDefaultValues, 2);
+        // interpolationResult = interpolate(f_angle-2200, steeringValueP, steeringValueN, stepValues, zeroDefaultValues, 2);
+        // interpolationResult = interpolate(f_angle-22.0, steeringValueP, steeringValueN, stepValues, zeroDefaultValues, 2);
         step_value = interpolationResult.first;
         zero_default = interpolationResult.second;
 
-        m_pwm_pin.write(conversion(f_angle));
+        m_pwm_pin.pulsewidth_us(conversion(f_angle));
     };
 
     /** @brief  It converts angle degree to duty cycle for pwm signal. 
@@ -144,9 +147,9 @@ namespace drivers{
      *  @param f_angle    angle degree
      *  \return         duty cycle in interval [0,1]
      */
-    float CSteeringMotor::conversion(float f_angle)
+    int CSteeringMotor::conversion(int f_angle)
     {
-        return (step_value * f_angle + zero_default);
+        return (((step_value * f_angle)/(scaling_factor_1*scaling_factor_2)) + (zero_default/scaling_factor_2));
     };
 //
     /**
@@ -156,7 +159,7 @@ namespace drivers{
      * @return true means, that the value is in the range
      * @return false means, that the value isn't in the range
      */
-    bool CSteeringMotor::inRange(float f_angle){
+    bool CSteeringMotor::inRange(int f_angle){
         return m_inf_limit<=f_angle && f_angle<=m_sup_limit;
     };
 }; // namespace hardware::drivers

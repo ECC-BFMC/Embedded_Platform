@@ -41,8 +41,8 @@ namespace drivers{
      */
     CSpeedingMotor::CSpeedingMotor(
             PinName f_pwm_pin, 
-            float f_inf_limit, 
-            float f_sup_limit
+            int f_inf_limit, 
+            int f_sup_limit
         )
         : m_pwm_pin(f_pwm_pin)
         , m_inf_limit(f_inf_limit)
@@ -50,8 +50,8 @@ namespace drivers{
     {
         // Set the ms_period on the pwm_pin
         m_pwm_pin.period_ms(ms_period); 
-        // Set position to zero   
-        m_pwm_pin.write(zero_default);
+        // Set position to zero
+        m_pwm_pin.pulsewidth_us(zero_default);
     };
 
     /** @brief  CSpeedingMotor class destructor
@@ -64,11 +64,11 @@ namespace drivers{
      *
      *  @param f_speed      speed in m/s, where the positive value means forward direction and negative value the backward direction. 
      */
-    void CSpeedingMotor::setSpeed(float f_speed)
+    void CSpeedingMotor::setSpeed(int f_speed)
     {
         step_value = interpolate(-f_speed, speedValuesP, speedValuesN, stepValues, 25);
 
-        m_pwm_pin.write(conversion(f_speed));
+        m_pwm_pin.pulsewidth_us(conversion(f_speed));
     };
 
     /** @brief  It puts the brushless motor into brake state, 
@@ -87,11 +87,11 @@ namespace drivers{
     * @param speed The input speed value for which the values need to be interpolated.
     * @param speedValuesP Positive reference values for speed.
     * @param speedValuesN Negative reference values for speed.
-    * @param stepValues Step values corresponding to steeringValueP and steeringValueN which need to be interpolated.
+    * @param stepValues Step values corresponding to speedValueP and speedValueN which need to be interpolated.
     * @param size The size of the arrays.
     * @return The new value for the step value
     */
-    float CSpeedingMotor::interpolate(float speed, const float speedValuesP[], const float speedValuesN[], const float stepValues[], int size)
+    int16_t CSpeedingMotor::interpolate(int speed, const int speedValuesP[], const int speedValuesN[], const int stepValues[], int size)
     {
         if(speed <= speedValuesP[0]){
             if (speed >= speedValuesN[0])
@@ -99,11 +99,11 @@ namespace drivers{
                 return stepValues[0];
             }
             else{
-                for(int i=1; i<size; i++)
+                for(uint8_t i=1; i<size; i++)
                 {
                     if (speed >= speedValuesN[i])
                     {
-                        float slope = (stepValues[i] - stepValues[i-1]) / (speedValuesN[i] - speedValuesN[i-1]);
+                        int slope = (stepValues[i] - stepValues[i-1]) / (speedValuesN[i] - speedValuesN[i-1]);
                         return stepValues[i-1] + slope * (speed - speedValuesN[i-1]);
                     }
                 }
@@ -113,11 +113,11 @@ namespace drivers{
         if(speed >= speedValuesP[size-1]) return stepValues[size-1];
         if(speed <= speedValuesN[size-1]) return stepValues[size-1];
 
-        for(int i=1; i<size; i++)
+        for(uint8_t i=1; i<size; i++)
         {
             if (speed <= speedValuesP[i])
             {
-                float slope = (stepValues[i] - stepValues[i-1]) / (speedValuesP[i] - speedValuesP[i-1]);
+                int slope = (stepValues[i] - stepValues[i-1]) / (speedValuesP[i] - speedValuesP[i-1]);
                 return stepValues[i-1] + slope * (speed - speedValuesP[i-1]);
             }
         }
@@ -130,9 +130,9 @@ namespace drivers{
      *  @param f_speed    speed
      *  \return         pwm value
      */
-    float CSpeedingMotor::conversion(float f_speed)
+    int CSpeedingMotor::conversion(int f_speed)
     {   
-        return (step_value * f_speed + zero_default);
+        return ((step_value * f_speed)/10 + zero_default);
     };
 
     /**
@@ -142,7 +142,7 @@ namespace drivers{
      * @return true means, that the value is in the range
      * @return false means, that the value isn't in the range
      */
-    bool CSpeedingMotor::inRange(float f_speed){
-        return m_inf_limit<=f_speed && f_speed<=m_sup_limit;
+    bool CSpeedingMotor::inRange(int f_speed){
+        return (m_inf_limit<=f_speed) && (f_speed<=m_sup_limit);
     };
 }; // namespace hardware::drivers

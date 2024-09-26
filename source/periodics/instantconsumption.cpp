@@ -30,6 +30,14 @@
 
 #include <periodics/instantconsumption.hpp>
 
+#define g_baseTick 0.0001
+#define v_ref_ADC 3.3
+#define r_shunt 0.002
+#define one_byte 256
+#define ref_A2_value_250mAmps 548
+#define ref_A2_current_mA 250
+#define miliseconds_in_H 3600000
+#define scaleFactor 1000
 
 namespace periodics{
     /** \brief  Class constructor
@@ -40,15 +48,16 @@ namespace periodics{
      *  \param f_led          Digital output line to LED
      */
     CInstantConsumption::CInstantConsumption(
-            uint32_t        f_period, 
+            std::chrono::milliseconds        f_period, 
             mbed::AnalogIn  f_pin, 
             UnbufferedSerial&      f_serial) 
         : utils::CTask(f_period)
         , m_pin(f_pin)
-        , m_isActive(true)
+        , m_isActive(false)
         , m_serial(f_serial)
-        , m_median(0.0)
+        , m_period(f_period.count())
     {
+        
     }
 
     /** @brief  CInstantConsumption class destructor
@@ -66,66 +75,98 @@ namespace periodics{
      * 
      */
     void CInstantConsumption::InstantPublisherCommand(char const * a, char * b) {
-        int l_isActivate=0;
-        uint32_t l_res = sscanf(a,"%d",&l_isActivate);
+        uint8_t l_isActivate=0;
+        uint8_t l_res = sscanf(a,"%d",&l_isActivate);
+
         if(l_res==1){
-            m_isActive=(l_isActivate>=1);
-            sprintf(b,"ack;;");
+            if(int_globalsV_value_of_kl == 15 || int_globalsV_value_of_kl == 30)
+            {
+                m_isActive=(l_isActivate>=1);
+                bool_globalsV_instant_isActive = (l_isActivate>=1);
+                sprintf(b,"1");
+            }
+            else{
+                sprintf(b,"kl 15/30 is required!!");
+            }
         }else{
-            sprintf(b,"sintax error;;");
+            sprintf(b,"syntax error");
         }
     }
 
     /**
-    * @brief Computes the average consumption rate per second.
+    * @brief Measures and filters the instantaneous current consumption, updating global tracking variables.
     * 
-    * The function is called every 0.2 seconds (5 times per second) to receive new consumption values. After every 5 calls (which corresponds to 1 second), 
-    * it returns the average consumption for that second. If it hasn't yet accumulated 5 values, the function returns 0.0.
+    * This function reads an analog input value representing current consumption, scales it to milliamps, and stores it in a circular buffer.
+    * A moving average of the last `windowSize` readings is computed to smooth out short-term fluctuations. Additionally, an Exponential Moving Average (EMA)
+    * is updated to provide a weighted average of the current consumption over time. The total consumption and elapsed time are accumulated for further processing.
+    *
+    * The function is called periodically according to the task period (in milliseconds). It calculates both the raw instantaneous current and the smoothed
+    * values (via moving average and EMA), which can be used for safety measures or consumption monitoring.
     * 
-    * @param newValue The new consumption value to be added to the accumulation for the current second.
-    * @return The average consumption rate for the last second after every 5th call; otherwise, returns 0.0.
+    * @param task_period The interval (in milliseconds) between each call to the function, used to accumulate total elapsed time.
+    * 
+    * Global Variables:
+    * - `uint32_globalsV_instant_mAmpsH`: Stores the most recent instantaneous current value, scaled in milliamps.
+    * - `uint32_globalsV_consumption_Total_mAmpsH`: Accumulates the total current consumption in milliamps over time.
+    * - `uint32_globalsV_numberOfMiliseconds_Total`: Accumulates the total time passed (in milliseconds) for consumption calculations.
+    * 
+    * Steps:
+    * 1. Read the current sensor (pin_value) and scale the result to milliamps.
+    * 2. Store the current value in a circular buffer (size = `windowSize`).
+    * 3. Calculate the moving average (mean) over the last `windowSize` readings.
+    * 4. Update the Exponential Moving Average (EMA) to smooth fluctuations over time.
+    * 5. Accumulate total current consumption and elapsed time for further analysis.
     */
-    float CInstantConsumption::calculateAverageInstantConsumption(float newValue)
+    void CInstantConsumption::void_InstantSafetyMeasure(uint16_t task_period)
     {
-        static int i=0;
-        i += 1;
+        uint16_t pin_value = m_pin.read_u16();
 
-        m_median += newValue;
+        uint32_globalsV_instant_mAmpsH  = (pin_value*ref_A2_current_mA/ref_A2_value_250mAmps);
 
-        if(i==5)
-        {
-            i = 0;
-            return m_median/5.0;
+        readings[indexul % windowSize] = (uint16_t)uint32_globalsV_instant_mAmpsH;
+        indexul++;
+
+        int sum = 0;
+        for (uint8_t i = 0; i < windowSize; i++) {
+            sum += readings[i];
         }
-        return 0.0;
+        
+        int medianCurrent = sum / windowSize;
+
+        currentEMA = ((alpha_scaled * medianCurrent) + ((scaleFactor - alpha_scaled) * currentEMA))/scaleFactor;
+
+        uint32_globalsV_consumption_Total_mAmpsH += uint32_globalsV_instant_mAmpsH;
+        uint32_globalsV_numberOfMiliseconds_Total += task_period;
     }
 
     /**
-    * @brief Periodically checks and sends the scaled value from the A2 pin over a serial connection.
+    * @brief Periodically computes and sends the exponentially smoothed instantaneous consumption value over the serial connection.
     * 
-    * When the function is active, it reads a 16-bit value from the A2 pin and scales it using the provided scale factor:
-    * For a 3.3V signal, the pin reads 65536, and for 1V it reads 19859.39.
+    * When this function is active, it calculates the consumption value based on the Exponential Moving Average (EMA) of the instantaneous current readings.
+    * The EMA is multiplied by the configured period (`m_period`) to scale the value to the desired time frame (milliseconds).
     * 
-    * After scaling the pin's reading, it calculates the average value using the `calculateMedian` method.
+    * The result is then formatted and sent over a serial connection in a specific string format. The transmitted value represents the 
+    * smoothed instantaneous consumption rate in milliamp-hours (mAh), converted from the EMA and task period.
     * 
-    * If there's a valid average for the past second, it formats the value and sends it over a serial connection.
+    * Key Steps:
+    * 1. Check if the component is active (`m_isActive`). If not, the function returns without performing any operations.
+    * 2. Compute the scaled consumption value by multiplying the current Exponential Moving Average (`currentEMA`) by the period (`m_period`).
+    * 3. Format the calculated value in milliamp-hours (mAh) as a string and send it over the serial connection.
     * 
-    * Note: Despite the name `calculateMedian`, the function calculates the average.
+    * @note This function is part of a periodic task and does not include any direct measurement or scaling from the A2 pin. It relies on the previously 
+    *       updated `currentEMA` to smooth short-term fluctuations in consumption readings.
+    * 
+    * @param None
+    * @return None
     */
     void CInstantConsumption::_run()
     {
         if(!m_isActive) return;
-        char buffer[256];
-        float l_rps = m_pin.read_u16()/19859.39;
-    
-        float l_median = calculateAverageInstantConsumption(l_rps);
 
-        if(l_median != 0.0)
-        {
-            snprintf(buffer, sizeof(buffer), "@6:%.3f;;\r\n", l_median*10);
-            m_serial.write(buffer,strlen(buffer));
-            m_median = 0.0;
-        }
+        char buffer[one_byte];
+
+        snprintf(buffer, sizeof(buffer), "@instant:%d;;\r\n", (int)((currentEMA*m_period)/miliseconds_in_H));
+        m_serial.write(buffer,strlen(buffer));
     }
 
 }; // namespace periodics

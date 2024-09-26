@@ -37,7 +37,8 @@
 #include <mbed.h>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/task.hpp>
-
+#include <brain/globalsv.hpp>
+#include <chrono>
 
 namespace periodics
 {
@@ -50,7 +51,7 @@ namespace periodics
         public:
             /* Construnctor */
             CTotalVoltage(
-                uint32_t f_period,
+                std::chrono::milliseconds f_period,
                 mbed::AnalogIn f_pin, 
                 UnbufferedSerial& f_serial
             );
@@ -58,6 +59,8 @@ namespace periodics
             ~CTotalVoltage();
             /* Serial callback implementation */
             void TotalPublisherCommand(char const * a, char * b);
+
+            void void_TotalSafetyMeasure();
         private:
             /* Run method */
             virtual void        _run();
@@ -67,8 +70,7 @@ namespace periodics
             UnbufferedSerial&          m_serial;
             /** @brief Active flag  */
             bool                m_isActive;
-
-            float m_median;
+            
     }; // class CTotalVoltage
 }; // namespace periodics
 

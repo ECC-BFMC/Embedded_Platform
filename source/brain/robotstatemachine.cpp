@@ -42,7 +42,7 @@ namespace brain{
      * @param f_speedingControl     reference to brushless motor control interface
      */
     CRobotStateMachine::CRobotStateMachine(
-            uint32_t                      f_period,
+            std::chrono::milliseconds                      f_period,
             UnbufferedSerial&             f_serialPort,
             drivers::ISteeringCommand&    f_steeringControl,
             drivers::ISpeedingCommand&    f_speedingControl
@@ -96,23 +96,29 @@ namespace brain{
      */
     void CRobotStateMachine::serialCallbackSPEEDcommand(char const * a, char * b)
     {
-        float l_speed;
-        uint32_t l_res = sscanf(a,"%f",&l_speed);
+        int l_speed;
+        uint32_t l_res = sscanf(a,"%d",&l_speed);
         if (1 == l_res)
         {
-            if( !m_speedingControl.inRange(l_speed)){ // Check the received reference speed is within range
-                sprintf(b,"The reference speed command is too high");
-                return;
+            if(int_globalsV_value_of_kl == 30)
+            {
+                if(!m_speedingControl.inRange(l_speed)){ // Check the received reference speed is within range
+                    sprintf(b,"The reference speed command is too high");
+                    return;
+                }
+
+                m_state = 1;
+
+                m_speedingControl.setSpeed(-l_speed); // Set the reference speed
+                sprintf(b,"%d",l_speed);
             }
-
-            m_state = 1;
-
-            m_speedingControl.setSpeed(-l_speed); // Set the reference speed
-            sprintf(b,"ack");
+            else{
+                sprintf(b,"kl 30 is required!!");
+            }
         }
         else
         {
-            sprintf(b,"sintax error");
+            sprintf(b,"syntax error");
         }
     }
 
@@ -127,23 +133,29 @@ namespace brain{
      */
     void CRobotStateMachine::serialCallbackSTEERcommand(char const * a, char * b)
     {
-        float l_angle;
-        uint32_t l_res = sscanf(a,"%f",&l_angle);
+        int l_angle;
+        uint32_t l_res = sscanf(a,"%d",&l_angle);
         if (1 == l_res)
         {
-            if( !m_steeringControl.inRange(l_angle)){ // Check the received steering angle
-                sprintf(b,"The steering angle command is too high");
-                return;
+            if(int_globalsV_value_of_kl == 30)
+            {
+                if( !m_steeringControl.inRange(l_angle)){ // Check the received steering angle
+                    sprintf(b,"The steering angle command is too high");
+                    return;
+                }
+
+                m_state = 2;
+
+                m_steeringControl.setAngle(l_angle); // control the steering angle 
+                sprintf(b,"%d", l_angle);
             }
-
-            m_state = 2;
-
-            m_steeringControl.setAngle(l_angle); // control the steering angle 
-            sprintf(b,"ack");
+            else{
+                sprintf(b,"kl 30 is required!!");
+            }
         }
         else
         {
-            sprintf(b,"sintax error");
+            sprintf(b,"syntax error");
         }
     }
 
@@ -157,11 +169,11 @@ namespace brain{
      */
     void CRobotStateMachine::serialCallbackBRAKEcommand(char const * a, char * b)
     {
-        float l_angle;
-        uint32_t l_res = sscanf(a,"%f",&l_angle);
+        int l_angle;
+        uint32_t l_res = sscanf(a,"%d",&l_angle);
         if(1 == l_res)
         {
-            if( !m_steeringControl.inRange(l_angle)){
+            if(!m_steeringControl.inRange(l_angle)){
                 sprintf(b,"The steering angle command is too high");
                 return;
             }
@@ -170,11 +182,11 @@ namespace brain{
             m_state = 3;
             m_steeringControl.setAngle(l_angle); // control the steering angle 
             m_speedingControl.setBrake();
-            sprintf(b,"ack");           
+            sprintf(b,"%d", l_angle);           
         }
         else
         {
-            sprintf(b,"sintax error");
+            sprintf(b,"syntax error");
         }
     }
 

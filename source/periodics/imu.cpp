@@ -32,6 +32,11 @@
 #include <periodics/imu.hpp>
 #include "imu.hpp"
 
+#define one_byte                        256
+#define BNO055_EULER_DIV_DEG_int        16
+#define BNO055_LINEAR_ACCEL_DIV_MSQ_int 100
+#define precision_scaling_factor        1000
+
 namespace periodics{
     /** \brief  Class constructor
      *
@@ -48,17 +53,18 @@ namespace periodics{
     I2C* periodics::CImu::i2c_instance = nullptr;
 
     CImu::CImu(
-            uint32_t    f_period, 
+            std::chrono::milliseconds    f_period, 
             UnbufferedSerial& f_serial,
             PinName SDA,
-            PinName SCL) 
+            PinName SCL)
         : utils::CTask(f_period)
-        , m_isActive(true)
+        , m_isActive(false)
         , m_serial(f_serial)
-        , m_velocityX(0.0)
-        , m_velocityY(0.0)
-        , m_velocityZ(0.0)
+        , m_velocityX(0)
+        , m_velocityY(0)
+        , m_velocityZ(0)
         , m_velocityStationaryCounter(0)
+        , m_delta_time(f_period.count())
     {
         s32 comres = BNO055_ERROR;
         /* variable used to set the power mode of the sensor*/
@@ -73,6 +79,8 @@ namespace periodics{
         *---------------------------------------------------------------------------------------------------*/      
         i2c_instance = new I2C(SDA, SCL);
         i2c_instance->frequency(400000);
+
+        ThisThread::sleep_for(chrono::milliseconds(300));
 
         /*  Based on the user need configure I2C interface.
         *  It is example code to explain how to use the bno055 API*/
@@ -142,6 +150,16 @@ namespace periodics{
         /*----------------------------------------------------------------*
         ************************* END INITIALIZATION *************************
         *-----------------------------------------------------------------*/
+        u8 euler_unit_u8 = BNO055_INIT_VALUE;
+
+        /* Read the current Euler unit and set the
+        * unit as degree if the unit is in radians */
+        comres = bno055_get_euler_unit(&euler_unit_u8);
+        if (euler_unit_u8 != BNO055_EULER_UNIT_DEG)
+        {
+            comres += bno055_set_euler_unit(BNO055_EULER_UNIT_DEG);
+        }
+
     }
 
     /** @brief  CImu class destructor
@@ -184,13 +202,22 @@ namespace periodics{
      * 
      */
     void CImu::ImuPublisherCommand(char const * a, char * b) {
-        int l_isActivate=0;
-        uint32_t l_res = sscanf(a,"%d",&l_isActivate);
+        uint8_t l_isActivate=0;
+        uint8_t l_res = sscanf(a,"%d",&l_isActivate);
+
         if(l_res==1){
-            m_isActive=(l_isActivate>=1);
-            sprintf(b,"ack");
+            if(int_globalsV_value_of_kl == 15 || int_globalsV_value_of_kl == 30)
+            {
+                m_isActive=(l_isActivate>=1);
+                bool_globalsV_imu_isActive = (l_isActivate>=1);
+                sprintf(b,"1");
+            }
+            else{
+                sprintf(b,"kl 15/30 is required!!");
+            }
+            
         }else{
-            sprintf(b,"sintax error");
+            sprintf(b,"syntax error");
         }
     }
 
@@ -239,8 +266,6 @@ namespace periodics{
         comres += bno055_read_accel_z(&accel_dataz);
         comres += bno055_read_accel_xyz(&accel_xyz);
 
-
-
         /*********read raw mag data***********/
         /* variable used to read the mag x data */
         s16 mag_datax = BNO055_INIT_VALUE;
@@ -261,8 +286,6 @@ namespace periodics{
         comres += bno055_read_mag_y(&mag_datay);
         comres += bno055_read_mag_z(&mag_dataz);
         comres += bno055_read_mag_xyz(&mag_xyz);
-
-
 
         /***********read raw gyro data***********/
         /* variable used to read the gyro x data */
@@ -285,8 +308,6 @@ namespace periodics{
         comres += bno055_read_gyro_z(&gyro_dataz);
         comres += bno055_read_gyro_xyz(&gyro_xyz);
 
-
-
         /*************read raw Euler data************/
         /* variable used to read the euler h data */
         s16 euler_data_h = BNO055_INIT_VALUE;
@@ -307,8 +328,6 @@ namespace periodics{
         comres += bno055_read_euler_r(&euler_data_r);
         comres += bno055_read_euler_p(&euler_data_p);
         comres += bno055_read_euler_hrp(&euler_hrp);
-
-
 
         /************read raw quaternion data**************/
         /* variable used to read the quaternion w data */
@@ -335,8 +354,6 @@ namespace periodics{
         comres += bno055_read_quaternion_z(&quaternion_data_z);
         comres += bno055_read_quaternion_wxyz(&quaternion_wxyz);
 
-
-
         /************read raw linear acceleration data***********/
         /* variable used to read the linear accel x data */
         s16 linear_accel_data_x = BNO055_INIT_VALUE;
@@ -357,8 +374,6 @@ namespace periodics{
         comres += bno055_read_linear_accel_y(&linear_accel_data_y);
         comres += bno055_read_linear_accel_z(&linear_accel_data_z);
         comres += bno055_read_linear_accel_xyz(&linear_acce_xyz);
-
-
 
         /*****************read raw gravity sensor data****************/
         /* variable used to read the gravity x data */
@@ -409,8 +424,6 @@ namespace periodics{
         comres += bno055_convert_double_accel_xyz_msq(&d_accel_xyz);
         comres += bno055_convert_double_accel_xyz_mg(&d_accel_xyz);
 
-
-
         /******************read mag converted data********************/
         /* variable used to read the mag x data output as uT*/
         double d_mag_datax = BNO055_INIT_VALUE;
@@ -430,8 +443,6 @@ namespace periodics{
         comres += bno055_convert_double_mag_y_uT(&d_mag_datay);
         comres += bno055_convert_double_mag_z_uT(&d_mag_dataz);
         comres += bno055_convert_double_mag_xyz_uT(&d_mag_xyz);
-
-
 
         /*****************read gyro converted data************************/
         /* variable used to read the gyro x data output as dps or rps */
@@ -487,7 +498,6 @@ namespace periodics{
         comres += bno055_convert_double_euler_hpr_rad(&d_euler_hpr);
 
 
-
         /*********read linear acceleration converted data**********/
         /* variable used to read the linear accel x data output as m/s2*/
         double d_linear_accel_datax = BNO055_INIT_VALUE;
@@ -532,7 +542,6 @@ namespace periodics{
         
         return comres;
     }
-
 
     /**
     * \brief Writes data to the device over the I2C bus.
@@ -650,6 +659,8 @@ namespace periodics{
         bno055.delay_msec = BNO055_delay_msek;
         bno055.dev_addr = BNO055_I2C_ADDR2 << 1;
         // bno055.dev_addr = BNO055_I2C_ADDR1 << 1;
+
+        ThisThread::sleep_for(chrono::milliseconds(300));
     }
 
     /**
@@ -683,58 +694,81 @@ namespace periodics{
     void CImu::_run()
     {
         if(!m_isActive) return;
-        char buffer[256];
-        s32 comres = BNO055_SUCCESS;
+        
+        char buffer[one_byte];
+        s8 comres = BNO055_SUCCESS;
 
-        float converted_euler_h_deg = BNO055_INIT_VALUE;
-        float converted_euler_p_deg = BNO055_INIT_VALUE;
-        float converted_euler_r_deg = BNO055_INIT_VALUE;
+        s16 s16_euler_h_raw = BNO055_INIT_VALUE;
+        s16 s16_euler_p_raw = BNO055_INIT_VALUE;
+        s16 s16_euler_r_raw = BNO055_INIT_VALUE;
 
-        comres += bno055_convert_float_euler_h_deg(&converted_euler_h_deg);
+        s16 s16_linear_accel_x_raw = BNO055_INIT_VALUE;
+        s16 s16_linear_accel_y_raw = BNO055_INIT_VALUE;
+        s16 s16_linear_accel_z_raw = BNO055_INIT_VALUE;
 
-        comres += bno055_convert_float_euler_p_deg(&converted_euler_p_deg);
+        comres += bno055_read_euler_h(&s16_euler_h_raw);
 
-        comres += bno055_convert_float_euler_r_deg(&converted_euler_r_deg);
+        if(comres != BNO055_SUCCESS) return;
 
-        float converted_linear_accelX = BNO055_INIT_VALUE;
-        float converted_linear_accelY = BNO055_INIT_VALUE;
-        float converted_linear_accelZ = BNO055_INIT_VALUE;
+        comres += bno055_read_euler_p(&s16_euler_p_raw);
 
-        comres += bno055_convert_float_linear_accel_x_msq(&converted_linear_accelX);
+        if(comres != BNO055_SUCCESS) return;
 
-        comres += bno055_convert_float_linear_accel_y_msq(&converted_linear_accelY);
+        comres += bno055_read_euler_r(&s16_euler_r_raw);
 
-        comres += bno055_convert_float_linear_accel_z_msq(&converted_linear_accelZ);
+        if(comres != BNO055_SUCCESS) return;
 
-        if(converted_linear_accelX <= 0.09 && converted_linear_accelY <= 0.09)
+        s16 s16_euler_h_deg = (s16_euler_h_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
+        s16 s16_euler_p_deg = (s16_euler_p_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
+        s16 s16_euler_r_deg = (s16_euler_r_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
+
+        comres = bno055_read_linear_accel_x(&s16_linear_accel_x_raw);
+
+        if(comres != BNO055_SUCCESS) return;
+
+        comres = bno055_read_linear_accel_y(&s16_linear_accel_y_raw);
+
+        if(comres != BNO055_SUCCESS) return;
+
+        comres = bno055_read_linear_accel_z(&s16_linear_accel_z_raw);
+
+        if(comres != BNO055_SUCCESS) return;
+
+        s32 s16_linear_accel_x_msq = (s16_linear_accel_x_raw * precision_scaling_factor) / BNO055_LINEAR_ACCEL_DIV_MSQ_int;
+        s32 s16_linear_accel_y_msq = (s16_linear_accel_y_raw * precision_scaling_factor) / BNO055_LINEAR_ACCEL_DIV_MSQ_int;
+        s32 s16_linear_accel_z_msq = (s16_linear_accel_z_raw * precision_scaling_factor) / BNO055_LINEAR_ACCEL_DIV_MSQ_int;
+
+        if((-110 <= s16_linear_accel_x_msq && s16_linear_accel_x_msq <= 110) && (-110 <= s16_linear_accel_y_msq && s16_linear_accel_y_msq <= 110))
         {
-            m_velocityX += 0.0 * 0.1; // Δt = f_period * g_baseTick
-            m_velocityY += 0.0 * 0.1;
-            m_velocityZ += converted_linear_accelZ * 0.1;
+            m_velocityX += 0 * m_delta_time; // Δt = m_delta_time
+            m_velocityY += 0 * m_delta_time;
+            m_velocityZ += 0 * m_delta_time;
             m_velocityStationaryCounter += 1;
-            if (m_velocityStationaryCounter == 15)
+            if (m_velocityStationaryCounter == 10)
             {
-                m_velocityX = 0.0;
-                m_velocityY = 0.0;
-                m_velocityZ = 0.0;
+                m_velocityX = 0;
+                m_velocityY = 0;
+                m_velocityZ = 0;
                 m_velocityStationaryCounter = 0;
             }
             
         }
         else{
-            m_velocityX += converted_linear_accelX * 0.1; // Δt = f_period * g_baseTick
-            m_velocityY += converted_linear_accelY * 0.1;
-            m_velocityZ += converted_linear_accelZ * 0.1;
+            m_velocityX += (s16_linear_accel_x_msq * (uint16_t)m_delta_time) / 1000; // Δt = m_delta_time
+            m_velocityY += (s16_linear_accel_y_msq * (uint16_t)m_delta_time) / 1000;
+            m_velocityZ += (s16_linear_accel_z_msq * (uint16_t)m_delta_time) / 1000;
             m_velocityStationaryCounter = 0;
         }
 
-        if(comres != BNO055_SUCCESS)
-        {
-            return;
-        }
+        if(comres != BNO055_SUCCESS) return;
 
-        snprintf(buffer, sizeof(buffer), "@7:%.3f;%.3f;%.3f;%.3f;%.3f;%.3f;;\r\n",
-            converted_euler_r_deg, converted_euler_p_deg, converted_euler_h_deg, m_velocityX, m_velocityY, m_velocityZ);
+        snprintf(buffer, sizeof(buffer), "@imu:%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;;\r\n",
+            s16_euler_r_deg/1000, abs(s16_euler_r_deg%1000),
+            s16_euler_p_deg/1000, abs(s16_euler_p_deg%1000),
+            s16_euler_h_deg/1000, abs(s16_euler_h_deg%1000),
+            m_velocityX/1000, abs(m_velocityX%1000),
+            m_velocityY/1000, abs(m_velocityY%1000),
+            m_velocityZ/1000, abs(m_velocityZ%1000));
         m_serial.write(buffer,strlen(buffer));
     }
 

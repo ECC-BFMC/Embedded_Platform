@@ -28,39 +28,38 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
-#include <periodics/blinker.hpp>
+#ifndef GLOBALSV_HPP
+#define GLOBALSV_HPP
 
+#include <mbed.h>
+#include <vector>
+#include <algorithm>
+#include <cstdint>
 
-namespace periodics{
-    /** \brief  Class constructor
-     *
-     *  It initializes the task and the state of the led. 
-     *
-     *  \param f_period       Toggling period of LED
-     *  \param f_led          Digital output line to LED
-     */
-    CBlinker::CBlinker(
-            std::chrono::milliseconds            f_period, 
-            mbed::DigitalOut    f_led
-        ) 
-        : utils::CTask(f_period)
-        , m_led(f_led) 
-    {
-        m_led = 1;
-    }
+// TODO: Add your code here
 
-    /** @brief  CBlinker class destructor
-     */
-    CBlinker::~CBlinker()
-    {
-    };
+extern uint32_t uint32_globalsV_consumption_Total_mAmpsH;
+extern uint32_t uint32_globalsV_numberOfMiliseconds_Total;
+extern uint32_t uint32_globalsV_instant_mAmpsH;
+extern uint32_t uint32_globalsV_range_left_shutdown;
+extern uint32_t currentEMA; // Valoarea inițială EMA
 
-    /** \brief  Periodically applied method to change the LED's state
-     * 
-     */
-    void CBlinker::_run()
-    {
-        m_led = !m_led;
-    }
+extern uint16_t int_globalsV_battery_totalVoltage;
+extern uint16_t int_globalsV_instantConsumption_Avg_Total_mAmpsH;
+extern uint16_t uint16_globalsV_battery_mAmps_user;
+extern uint16_t readings[11]; // Buffer pentru ultimele citiri
 
-}; // namespace periodics
+extern uint8_t int_globalsV_value_of_kl;
+// Variabile pentru filtrare
+extern uint8_t alpha_scaled; // Coeficient pentru EMA
+extern uint8_t windowSize; // Dimensiunea ferestrei pentru filtrul de mediere
+extern uint8_t indexul; // Index pentru buffer
+
+extern bool bool_globalsV_imu_isActive;
+extern bool bool_globalsV_instant_isActive;
+extern bool bool_globalsV_battery_isActive;
+extern bool bool_globalsV_resource_isActive;
+extern bool bool_globalsV_ShuttedDown;
+extern bool bool_globalsV_warningFlag;
+
+#endif // GLOBALSV_HPP

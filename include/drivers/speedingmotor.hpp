@@ -44,8 +44,8 @@ namespace drivers
     class ISpeedingCommand
     {
         public:
-            virtual void setSpeed(float f_speed) = 0 ;
-            virtual bool inRange(float f_speed) = 0 ;
+            virtual void setSpeed(int f_speed) = 0 ;
+            virtual bool inRange(int f_speed) = 0 ;
             virtual void setBrake() = 0 ;
     };
 
@@ -61,15 +61,15 @@ namespace drivers
             /* Constructor */
             CSpeedingMotor(
                 PinName     f_pwm_pin,
-                float       f_inf_limit,
-                float       f_sup_limit
+                int       f_inf_limit,
+                int       f_sup_limit
             );
             /* Destructor */
             ~CSpeedingMotor();
             /* Set speed */
-            void setSpeed(float f_speed); 
+            void setSpeed(int f_speed); 
             /* Check speed is in range */
-            bool inRange(float f_speed);
+            bool inRange(int f_speed);
             /* Set brake */
             void setBrake(); 
 
@@ -77,27 +77,40 @@ namespace drivers
             /** @brief PWM output pin */
             PwmOut m_pwm_pin;
             /** @brief 0 default */
-            float zero_default = 0.074568;
+            uint16_t zero_default = 1491; //0.074568(7.4% duty cycle) * 20000µs(ms_period)
             /** @brief 0 default */
-            int8_t ms_period = 20;
+            uint8_t ms_period = 20; // 20000µs
             /** @brief step_value */
-            float step_value = 0.00051;
+            int16_t step_value = 102;  // 0.00051 * 20000µs(ms_period) * 10(scale factor)
             /** @brief Inferior limit */
-            const float m_inf_limit;
+            const int m_inf_limit;
             /** @brief Superior limit */
-            const float m_sup_limit;
+            const int m_sup_limit;
 
             /* interpolate the step value based on the speed value */
-            float interpolate(float speed, const float speedValuesP[], const float speedValuesN[], const float stepValues[], int size);
+            int16_t interpolate(int speed, const int speedValuesP[], const int speedValuesN[], const int stepValues[], int size);
 
-            // Predefined values for steering reference and interpolation
-            const float speedValuesP[25] = {4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 26.0, 30.0, 35.0, 40.0, 45.0, 50.0};
-            const float speedValuesN[25] = {-4.0, -5.0, -6.0, -7.0, -8.0, -9.0, -10.0, -11.0, -12.0, -13.0, -14.0, -15.0, -16.0, -17.0, -18.0, -19.0, -20.0, -21.0, -22.0, -26.0, -30.0, -35.0, -40.0, -45.0, -50.0};
-            const float stepValues[25] = {0.00107, 0.00088, 0.00076, 0.00067, 0.0006, 0.00055, 0.00051, 0.00047, 0.00043, 0.00041, 0.00039, 0.00037, 0.00035, 0.00034, 0.00033, 0.00032,
-                                          0.0003, 0.00029, 0.00028, 0.00025, 0.00024, 0.00021, 0.00019, 0.00018, 0.00017};
+            // Predefined values for speeding reference and interpolation
+            const int speedValuesP[25] = {
+                4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+                14, 15, 16, 17, 18, 19, 20, 21, 22, 26,
+                30, 35, 40, 45, 50
+            };
 
-            /* convert speed value to duty cycle for pwm signal */
-            float conversion(float f_speed); //angle to duty cycle
+            const int speedValuesN[25] = {
+                -4, -5, -6, -7, -8, -9, -10, -11, -12, -13,
+                -14, -15, -16, -17, -18, -19, -20, -21, -22, -26,
+                -30, -35, -40, -45, -50
+            };
+
+            // StepValues have a scale factor applied (*10)
+            const int stepValues[25] = {
+                214, 176, 152, 134, 120, 110, 102, 94, 86, 82,
+                78, 74, 70, 68, 66, 64, 60, 58, 56, 50,
+                48, 42, 38, 36, 34
+            };
+
+            int conversion(int f_speed); //angle to duty cycle
     }; // class CSpeedingMotor
 }; // namespace drivers
 

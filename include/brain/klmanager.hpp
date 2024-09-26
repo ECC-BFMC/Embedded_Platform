@@ -28,39 +28,57 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
-#include <periodics/blinker.hpp>
+#ifndef KLMANAGER_HPP
+#define KLMANAGER_HPP
 
+// TODO: Add your code here
 
-namespace periodics{
-    /** \brief  Class constructor
-     *
-     *  It initializes the task and the state of the led. 
-     *
-     *  \param f_period       Toggling period of LED
-     *  \param f_led          Digital output line to LED
-     */
-    CBlinker::CBlinker(
-            std::chrono::milliseconds            f_period, 
-            mbed::DigitalOut    f_led
-        ) 
-        : utils::CTask(f_period)
-        , m_led(f_led) 
+/* The mbed library */
+#include <mbed.h>
+#include <periodics/imu.hpp>
+#include <periodics/instantconsumption.hpp>
+#include <periodics/totalvoltage.hpp>
+#include <drivers/velocitycontrolduration.hpp>
+#include <drivers/resourcemonitor.hpp>
+#include <brain/globalsv.hpp>
+
+namespace brain
+{
+   /**
+    * @brief Class klmanager
+    *
+    */
+    class CKlmanager
     {
-        m_led = 1;
-    }
+        public:
+            /* Construnctor */
+            CKlmanager(
+                periodics::CImu& f_imu,
+                periodics::CInstantConsumption& f_instant,
+                periodics::CTotalVoltage& f_baterry,
+                drivers::CVelocityControlDuration& f_vcd,
+                drivers::CResourcemonitor& f_resourceM
+            );
+            /* Destructor */
+            ~CKlmanager();
 
-    /** @brief  CBlinker class destructor
-     */
-    CBlinker::~CBlinker()
-    {
-    };
+            void setKLValue(uint8_t value);
+            uint8_t  getKLValue();
 
-    /** \brief  Periodically applied method to change the LED's state
-     * 
-     */
-    void CBlinker::_run()
-    {
-        m_led = !m_led;
-    }
+            void serialCallbackKLCommand(const char* message, char* response);
 
-}; // namespace periodics
+            uint8_t m_klvalue;
+
+        private:
+            /* private variables & method member */
+
+            periodics::CImu& m_imu;
+            periodics::CInstantConsumption& m_instant;
+            periodics::CTotalVoltage& m_baterry;
+            drivers::CVelocityControlDuration& m_vcd;
+            drivers::CResourcemonitor& m_resourceM;
+
+    }; // class CKlmanager
+}; // namespace brain
+
+#endif // KLMANAGER_HPP

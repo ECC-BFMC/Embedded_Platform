@@ -37,6 +37,12 @@
 #include <mbed.h>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/task.hpp>
+#include <brain/globalsv.hpp>
+
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <chrono>
 
 namespace periodics
 {
@@ -49,7 +55,7 @@ namespace periodics
         public:
             /* Construnctor */
             CInstantConsumption(
-                uint32_t f_period, 
+                std::chrono::milliseconds f_period, 
                 mbed::AnalogIn f_pin, 
                 UnbufferedSerial& f_serial
             );
@@ -57,11 +63,12 @@ namespace periodics
             ~CInstantConsumption();
             /* Serial callback implementation */
             void InstantPublisherCommand(char const * a, char * b);
+
+            void void_InstantSafetyMeasure(uint16_t task_period);
         private:
             /* Run method */
             virtual void        _run();
 
-            float calculateAverageInstantConsumption(float newValue);
             /* ADC input pin for instand consume */
             mbed::AnalogIn      m_pin;    
             /** @brief Active flag  */
@@ -69,7 +76,7 @@ namespace periodics
             /* @brief Serial communication obj.  */
             UnbufferedSerial&          m_serial;
 
-            float m_median;
+            uint64_t m_period;
     }; // class CInstantConsumption
 }; // namespace periodics
 

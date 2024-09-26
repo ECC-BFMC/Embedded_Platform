@@ -40,6 +40,9 @@
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/taskmanager.hpp>
 
+#include <brain/globalsv.hpp>
+
+#include <chrono>
 
 namespace brain
 {
@@ -54,7 +57,7 @@ namespace brain
         public:
             /* Constructor */
             CRobotStateMachine(
-                uint32_t                      f_period, 
+                std::chrono::milliseconds                      f_period, 
                 UnbufferedSerial&             f_serialPort, 
                 drivers::ISteeringCommand&    f_steeringControl,
                 drivers::ISpeedingCommand&    f_speedingControl

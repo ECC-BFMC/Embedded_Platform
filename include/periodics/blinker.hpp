@@ -37,6 +37,7 @@
 #include <mbed.h>
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/task.hpp>
+#include <chrono>
 
 
 namespace periodics
@@ -50,7 +51,7 @@ namespace periodics
         public:
             /* Construnctor */
             CBlinker(
-                uint32_t            f_period, 
+                std::chrono::milliseconds            f_period, 
                 mbed::DigitalOut    f_led
             );
             /* Destructor */

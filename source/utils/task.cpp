@@ -40,9 +40,9 @@ namespace utils{
      *
      *  @param f_period      execution period
      */
-    CTask::CTask(uint32_t f_period) 
+    CTask::CTask(std::chrono::milliseconds f_period) 
         : m_period(f_period)
-        , m_ticks(0)
+        , m_ticks(std::chrono::milliseconds(0))
         , m_triggered(false) 
     {
     }
@@ -57,10 +57,10 @@ namespace utils{
     /** @brief  Timer callback */
     void CTask::timerCallback()
     {
-        m_ticks++;
+        m_ticks += std::chrono::milliseconds(1);
         if (m_ticks >= m_period)
         {
-            m_ticks = 0;
+            m_ticks = std::chrono::milliseconds(0);
             m_triggered = true;
         }
     }

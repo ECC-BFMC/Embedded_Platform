@@ -42,7 +42,7 @@ namespace drivers{
     CSerialMonitor::CSerialMonitor(
             UnbufferedSerial& f_serialPort,
             CSerialSubscriberMap f_serialSubscriberMap)
-        :utils::CTask(0)
+        :utils::CTask(std::chrono::milliseconds(0))
         , m_serialPort(f_serialPort)
         , m_RxBuffer()
         , m_TxBuffer()
@@ -51,7 +51,7 @@ namespace drivers{
         , m_serialSubscriberMap(f_serialSubscriberMap) 
         {
             m_serialPort.attach(mbed::callback(this,&CSerialMonitor::serialRxCallback), SerialBase::RxIrq); 
-            // m_serialPort.attach(mbed::callback(this,&CSerialMonitor::serialTxCallback), SerialBase::TxIrq); 
+            // m_serialPort.attach(mbed::callback(this,&CSerialMonitor::serialTxCallback), SerialBase::TxIrq);
         }
 
     /** @brief  CSerialMonitor class destructor
@@ -100,6 +100,7 @@ namespace drivers{
         if ((!m_RxBuffer.isEmpty()))
         {
             char l_c = m_RxBuffer.pop(); // Read the next character from buffer
+
             if ('#' == l_c) // Message starting special character
             {
                 m_parseIt = m_parseBuffer.begin();
@@ -113,16 +114,22 @@ namespace drivers{
                 {
                     if ((';' == m_parseIt[-3]) && (';' == m_parseIt[-2]) && ('\r' == m_parseIt[-1])) // Check the message ending
                     {
-                        char l_msgID[2];
-                        char l_msg[256];
+                        char l_msgID[64];
+                        char l_msg[64];
 
-                        uint32_t res = sscanf(m_parseBuffer.data(),"#%1s:%s;;",l_msgID,l_msg); //Parse the message to key and content
+                        // uint32_t res = sscanf(m_parseBuffer.data(),"#%s:%s;;",l_msgID,l_msg); //Parse the message to key and content
+
+                        //The first %[^:] sets reading until the : character is encountered and the second %[^;] until the ;; is encountered.
+                        // uint32_t res = sscanf(m_parseBuffer.data(), "#%[^:]:%[^;];;", l_msgID, l_msg);
+
+                        uint32_t res = sscanf(m_parseBuffer.data(), "#%[^:]:%[^\r\n]", l_msgID, l_msg);
+
                         if (res == 2) // Check the parsing
                         {
                             auto l_pair = m_serialSubscriberMap.find(l_msgID); // Search the key and gets the callback function pair
                             if (l_pair != m_serialSubscriberMap.end()) // Check the existence of key 
                             {
-                                char l_resp[256]; // Initial response message
+                                char l_resp[128]; // Initial response message
                                 l_pair->second(l_msg,l_resp); // Call the attached function with this parameters.
                                 char formattedResp[256];
                                 if (strlen(l_resp) == 0)

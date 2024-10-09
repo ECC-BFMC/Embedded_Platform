@@ -28,59 +28,66 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
-#ifndef KLMANAGER_HPP
-#define KLMANAGER_HPP
+#ifndef POWERMANAGER_HPP
+#define POWERMANAGER_HPP
 
 // TODO: Add your code here
-
-/* The mbed library */
 #include <mbed.h>
-#include <periodics/alerts.hpp>
-#include <periodics/imu.hpp>
-#include <periodics/instantconsumption.hpp>
-#include <periodics/totalvoltage.hpp>
-#include <brain/robotstatemachine.hpp>
-#include <periodics/resourcemonitor.hpp>
+/* Header file for the task manager library, which  applies periodically the fun function of it's children*/
+#include <utils/task.hpp>
 #include <brain/globalsv.hpp>
+#include <brain/klmanager.hpp>
+#include <periodics/totalvoltage.hpp>
+#include <periodics/instantconsumption.hpp>
+#include <periodics/alerts.hpp>
+#include <chrono>
 
-namespace brain
+namespace periodics
 {
    /**
-    * @brief Class klmanager
+    * @brief Class powermanager
     *
     */
-    class CKlmanager
+    class CPowermanager: public utils::CTask
     {
         public:
             /* Construnctor */
-            CKlmanager(
-                periodics::CAlerts& f_alerts,
-                periodics::CImu& f_imu,
-                periodics::CInstantConsumption& f_instant,
-                periodics::CTotalVoltage& f_baterry,
-                brain::CRobotStateMachine& f_robotStateMachine,
-                periodics::CResourcemonitor& f_resourceM
+            CPowermanager(
+                std::chrono::milliseconds f_period,
+                brain::CKlmanager& f_CKlmanager,
+                UnbufferedSerial& f_serial,
+                periodics::CTotalVoltage& f_totalVoltage,
+                periodics::CInstantConsumption& f_instantConsumption,
+                periodics::CAlerts& f_alerts
             );
             /* Destructor */
-            ~CKlmanager();
-
-            void setKLValue(uint8_t value);
-            uint8_t  getKLValue();
-
-            void serialCallbackKLCommand(const char* message, char* response);
-
-            uint8_t m_klvalue;
-
+            ~CPowermanager();
         private:
             /* private variables & method member */
-            periodics::CAlerts& m_alerts;
-            periodics::CImu& m_imu;
-            periodics::CInstantConsumption& m_instant;
-            periodics::CTotalVoltage& m_baterry;
-            brain::CRobotStateMachine& m_robotStateMachine;
-            periodics::CResourcemonitor& m_resourceM;
+            
+            /* Run method */
+            virtual void        _run();
 
-    }; // class CKlmanager
+            brain::CKlmanager& m_CKlmanager;
+
+            UnbufferedSerial& m_serial;
+
+            periodics::CTotalVoltage& m_totalVoltage;
+
+            periodics::CInstantConsumption& m_instantConsumption;
+
+            periodics::CAlerts& m_alerts;
+
+            uint16_t m_period;
+
+            PwmOut buzzer;
+
+            int current_step;
+            int step_counter;
+            bool tone_active;
+            bool warning_active;
+            int note_count;  // Indexul pentru notele din secvență
+    }; // class CPowermanager
 }; // namespace brain
 
-#endif // KLMANAGER_HPP
+#endif // POWERMANAGER_HPP

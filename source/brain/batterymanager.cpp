@@ -28,62 +28,36 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
+#include "brain/batterymanager.hpp"
 
-#include <utils/taskmanager.hpp>
+// TODO: Add your code here
+namespace brain
+{
+   /**
+    * @brief Class constructorbatterymanager
+    *
+    */
+    CBatterymanager::CBatterymanager(uint8_t dummy)
+    {
+        /* constructor behaviour */
+    }
 
-namespace utils{
-
-    /******************************************************************************/
-    /** \brief  CTask class constructor
-     *
-     *  It initializes the period and other private value of the task. 
-     *
-     *  @param f_period      execution period
+    /** @brief  CBatterymanager class destructor
      */
-    CTask::CTask(std::chrono::milliseconds f_period) 
-        : m_period(f_period)
-        , m_ticks(std::chrono::milliseconds(0))
-        , m_triggered(false) 
+    CBatterymanager::~CBatterymanager()
     {
-    }
+    };
 
-    /** \brief  CTask class destructor
-     *
-     */
-    CTask::~CTask() 
-    {
-    }
+    void CBatterymanager::batteryPublisherCommand(char const * a, char * b) {
+        uint16_t l_isActivate=0;
+        uint8_t l_res = sscanf(a,"%hd",&l_isActivate);
 
-    void CTask::setNewPeriod(uint16_t f_period)
-    {
-        m_period = std::chrono::milliseconds(f_period);
-        m_ticks = std::chrono::milliseconds(0);
-    }
-
-    /** @brief  Timer callback */
-    void CTask::timerCallback()
-    {
-        m_ticks += std::chrono::milliseconds(1);
-        if (m_ticks >= m_period)
-        {
-            m_ticks = std::chrono::milliseconds(0);
-            m_triggered = true;
+        if(l_res==1){
+            uint16_globalsV_battery_mAmps_user = l_isActivate;
+            sprintf(b,"ack");
+        }else{
+            sprintf(b,"syntax error");
         }
     }
 
-    /** \brief  Run method
-     *
-     *  It applies the '_run' method, which implements the task's functionality. It has to override in the derived class.  
-     *  
-     *  
-     */
-    void CTask::run()
-    {
-        if (m_triggered)
-        {
-            m_triggered = false;
-            _run();
-        }
-    }// namespace CTask
-
-}; // namespace utils
+}; // namespace periodics

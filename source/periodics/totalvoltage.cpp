@@ -69,7 +69,7 @@ namespace periodics{
      */
     void CTotalVoltage::TotalPublisherCommand(char const * a, char * b) {
         uint8_t l_isActivate=0;
-        uint8_t l_res = sscanf(a,"%d",&l_isActivate);
+        uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
 
         if(l_res==1){
             if(int_globalsV_value_of_kl == 15 || int_globalsV_value_of_kl == 30)
@@ -90,6 +90,7 @@ namespace periodics{
     {
         uint64_t l_rps = (m_pin.read_u16()*ref_A1_voltage_mV)/ref_A1_value_8925mV;
         int_globalsV_battery_totalVoltage = (uint16_t)l_rps;
+        int_globalsV_battery_totalVoltage = (uint16_t)7201;
     }
 
     /**

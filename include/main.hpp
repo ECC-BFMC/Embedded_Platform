@@ -32,6 +32,8 @@
 #include <mbed.h>
 // Header file for the microseconds functionality
 #include <chrono>
+/* Header file for the alerts functionality */
+#include <periodics/alerts.hpp>
 /* Header file for the blinker functionality */
 #include <periodics/blinker.hpp>
 /* Header file for the IMU functionality */
@@ -40,18 +42,16 @@
 #include <periodics/instantconsumption.hpp>
 /* Header file for the total voltage measurement functionality */
 #include <periodics/totalvoltage.hpp>
-/* Header file for the velocity control duration functionality */
-#include <drivers/velocitycontrolduration.hpp>
 /* Header file for the klmanager functionality */
 #include <brain/klmanager.hpp>
 /* Header file for the resourceMonitor functionality */
-#include <drivers/resourcemonitor.hpp>
+#include <periodics/resourcemonitor.hpp>
 /* Header file for the powermanager functionality */
-#include <brain/powermanager.hpp>
+#include <periodics/powermanager.hpp>
 /* Header file for global variables */
 #include <brain/globalsv.hpp>
 /* Header file for the battery manager functionality */
-#include <drivers/batterymanager.hpp>
+#include <brain/batterymanager.hpp>
 /* Header file for the serial communication functionality */
 #include <drivers/serialmonitor.hpp>
 /* Header file for the robot state machine, which deals with the cars movement (steering and speed) */

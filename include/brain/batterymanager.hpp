@@ -28,62 +28,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 */
 
+#ifndef BATTERYMANAGER_HPP
+#define BATTERYMANAGER_HPP
 
-#include <utils/taskmanager.hpp>
+// TODO: Add your code here
 
-namespace utils{
+#include <mbed.h>
+#include <brain/globalsv.hpp>
 
-    /******************************************************************************/
-    /** \brief  CTask class constructor
-     *
-     *  It initializes the period and other private value of the task. 
-     *
-     *  @param f_period      execution period
-     */
-    CTask::CTask(std::chrono::milliseconds f_period) 
-        : m_period(f_period)
-        , m_ticks(std::chrono::milliseconds(0))
-        , m_triggered(false) 
+namespace brain
+{
+   /**
+    * @brief Class batterymanager
+    *
+    */
+    class CBatterymanager
     {
-    }
+        public:
+            /* Construnctor */
+            CBatterymanager(
+                uint8_t dummy
+            );
+            /* Destructor */
+            ~CBatterymanager();
 
-    /** \brief  CTask class destructor
-     *
-     */
-    CTask::~CTask() 
-    {
-    }
+            void batteryPublisherCommand(char const * a, char * b);
 
-    void CTask::setNewPeriod(uint16_t f_period)
-    {
-        m_period = std::chrono::milliseconds(f_period);
-        m_ticks = std::chrono::milliseconds(0);
-    }
+        private:
+            /* private variables & method member */
+    }; // class CBatterymanager
+}; // namespace drivers
 
-    /** @brief  Timer callback */
-    void CTask::timerCallback()
-    {
-        m_ticks += std::chrono::milliseconds(1);
-        if (m_ticks >= m_period)
-        {
-            m_ticks = std::chrono::milliseconds(0);
-            m_triggered = true;
-        }
-    }
-
-    /** \brief  Run method
-     *
-     *  It applies the '_run' method, which implements the task's functionality. It has to override in the derived class.  
-     *  
-     *  
-     */
-    void CTask::run()
-    {
-        if (m_triggered)
-        {
-            m_triggered = false;
-            _run();
-        }
-    }// namespace CTask
-
-}; // namespace utils
+#endif // BATTERYMANAGER_HPP

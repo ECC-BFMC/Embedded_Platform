@@ -38,17 +38,19 @@ namespace brain
     *
     */
     CKlmanager::CKlmanager(
+        periodics::CAlerts& f_alerts,
         periodics::CImu& f_imu,
         periodics::CInstantConsumption& f_instant,
         periodics::CTotalVoltage& f_baterry,
-        drivers::CVelocityControlDuration& f_vcd,
-        drivers::CResourcemonitor& f_resourceM
+        brain::CRobotStateMachine& f_robotStateMachine,
+        periodics::CResourcemonitor& f_resourceM
     )
     : m_klvalue(0)
+    , m_alerts(f_alerts)
     , m_imu(f_imu)
     , m_instant(f_instant)
     , m_baterry(f_baterry)
-    , m_vcd(f_vcd)
+    , m_robotStateMachine(f_robotStateMachine)
     , m_resourceM(f_resourceM)
     {
         /* constructor behaviour */
@@ -64,7 +66,7 @@ namespace brain
     {
         uint8_t l_keyValue = 0;
 
-        (void)sscanf(a,"%d",&l_keyValue);
+        (void)sscanf(a,"%hhu",&l_keyValue);
 
         if(!bool_globalsV_ShuttedDown)
         {
@@ -83,10 +85,11 @@ namespace brain
                     ThisThread::sleep_for(chrono::milliseconds(50));
                     m_baterry.TotalPublisherCommand("0", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
-                    m_vcd.serialCallbackVCDCommand("0.0;0.0;0.2", response);
+                    m_robotStateMachine.serialCallbackVCDcommand("0;0;2", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
                     m_resourceM.resourceMonitorPublisherCommand("0", response);
                     int_globalsV_value_of_kl = 0;
+                    m_alerts.serialCallbackAlertsCommand("3", response);
                 }
                 if((l_keyValue == 15 || l_keyValue == 30) && (int_globalsV_value_of_kl != 15 && int_globalsV_value_of_kl != 30)) 
                 {
@@ -96,10 +99,12 @@ namespace brain
                     if(!bool_globalsV_instant_isActive) m_instant.InstantPublisherCommand("1", response);
                     if(!bool_globalsV_battery_isActive) m_baterry.TotalPublisherCommand("1", response);
                     if(!bool_globalsV_resource_isActive) m_resourceM.resourceMonitorPublisherCommand("1", response);
+                    m_alerts.serialCallbackAlertsCommand("4", response);
                 }
                 if(l_keyValue == 30){
                     sprintf(b,"%d",l_keyValue);
                     int_globalsV_value_of_kl = 30;
+                    m_alerts.serialCallbackAlertsCommand("2", response);
                 }
             }
             else{

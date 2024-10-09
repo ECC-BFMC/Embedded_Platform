@@ -57,8 +57,10 @@ namespace utils
         protected:
             /** @brief  main application logic - It's a pure function for application logic and has to override in the derivered class to implement the appl.*/
             virtual void _run() = 0;
+            /** @brief  Set new period */
+            void setNewPeriod(uint16_t f_period);
             /** @brief period of the task */
-            const std::chrono::milliseconds m_period;
+            std::chrono::milliseconds m_period;
             /** @brief  ticks */
             std::chrono::milliseconds m_ticks;
             /** @brief  trigger flag */

@@ -132,7 +132,7 @@ namespace drivers{
      */
     int CSpeedingMotor::conversion(int f_speed)
     {   
-        return ((step_value * f_speed)/10 + zero_default);
+        return ((step_value * f_speed)/100 + zero_default);
     };
 
     /**

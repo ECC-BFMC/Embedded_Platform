@@ -31,6 +31,8 @@
 
 #include <brain/robotstatemachine.hpp>
 
+#define scale_ds_to_ms 100
+
 namespace brain{
 
     /**
@@ -51,6 +53,9 @@ namespace brain{
         , m_serialPort(f_serialPort)
         , m_steeringControl(f_steeringControl)
         , m_speedingControl(f_speedingControl)
+        , m_ticksRun(0)
+        , m_targetTime(0)
+        , m_period((uint16_t)(f_period.count()))
     {
     }
 
@@ -64,7 +69,8 @@ namespace brain{
      * It has three main states: 
      *  - 1 - move state -> control the motor rotation speed by giving a speed reference, which is then converted to PWM
      *  - 2 - steering state -> trigger the steering of the motor
-     *  - 3 - Brake state -> make the motor enter into a brake state.          
+     *  - 3 - Brake state -> make the motor enter into a brake state. 
+     *  - 4 - State responsible for configuring the vehicle's speed and steering over a specified duration.         
      */
     void CRobotStateMachine::_run()
     {   
@@ -80,6 +86,23 @@ namespace brain{
 
             // Brake state
             case 3:
+                break;
+
+            // State responsible for configuring the vehicle's speed and steering over a specified duration.
+            case 4:
+                // If the accumulated ticks exceed the target time, stop the movement and deactivate the task.
+                if(m_ticksRun >= m_targetTime+m_period)
+                {
+                    m_speedingControl.setSpeed(0);
+                    m_steeringControl.setAngle(0);
+                    m_state = 1;
+                    m_serialPort.write("@vcd:0;0;0;;\r\n", 15);
+                }
+                else
+                {
+                    // Otherwise, increment the tick counter.
+                    m_ticksRun += m_period;
+                }
                 break;
         }
     }
@@ -178,7 +201,6 @@ namespace brain{
                 return;
             }
             
-            
             m_state = 3;
             m_steeringControl.setAngle(l_angle); // control the steering angle 
             m_speedingControl.setBrake();
@@ -187,6 +209,47 @@ namespace brain{
         else
         {
             sprintf(b,"syntax error");
+        }
+    }
+
+    /** \brief  Serial callback actions for brake command
+     *
+     * This method aims to change the state of controller to brake and sets the steering angle to the received value. 
+     *
+     * @param a                   string to read data 
+     * @param b                   string to write data
+     * 
+     */
+    void CRobotStateMachine::serialCallbackVCDcommand(char const * message, char * response)
+    {
+        int speed, steer;
+        uint8_t time_deciseconds;
+
+        uint8_t parsed = sscanf(message, "%d;%d;%hhu", &speed, &steer, &time_deciseconds);
+
+        if(int_globalsV_value_of_kl != 30){
+            sprintf(response,"kl 30 is required!!");
+            return;
+        }
+
+        m_targetTime = time_deciseconds;
+
+        if(parsed == 3 && speed <= 500 && speed >= -500 && steer <= 232 && steer >= -232)
+        {
+            sprintf(response, "%d;%d;%d", speed, steer, time_deciseconds);
+
+            m_ticksRun = 0;
+
+            m_targetTime = time_deciseconds * scale_ds_to_ms;
+
+            m_state = 4;
+
+            m_steeringControl.setAngle(steer);
+            m_speedingControl.setSpeed(-speed);
+        }
+        else
+        {
+            sprintf(response, "something went wrong");
         }
     }
 

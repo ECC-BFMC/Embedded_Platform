@@ -42,6 +42,8 @@ UnbufferedSerial g_rpi(USBTX, USBRX, 19200);
 // It's a task for blinking periodically the built-in led on the Nucleo board, signaling the code is uploaded on the nucleo.
 periodics::CBlinker g_blinker(g_baseTick * 500, LED1);
 
+periodics::CAlerts g_alerts(g_baseTick * 5000);
+
 // // It's a task for sending periodically the instant current consumption of the battery
 periodics::CInstantConsumption g_instantconsumption(g_baseTick * 1000, A2, g_rpi);
 
@@ -52,39 +54,36 @@ periodics::CTotalVoltage g_totalvoltage(g_baseTick*3000, A1, g_rpi);
 periodics::CImu g_imu(g_baseTick*100, g_rpi, I2C_SDA, I2C_SCL);
 
 //PIN for a motor speed in ms, inferior and superior limit
-drivers::CSpeedingMotor g_speedingDriver(D3, -50, 50); //speed in cm/s
+drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500); //speed in cm/s
 
 //PIN for angle in servo degrees, inferior and superior limit
 drivers::CSteeringMotor g_steeringDriver(D4, -250, 250);
 
-// Task responsible for configuring the vehicle's speed and steering over a specified duration.
-drivers::CVelocityControlDuration g_velocityControlDuration(g_baseTick*100, g_steeringDriver, g_speedingDriver, g_rpi);
-
 // Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface.
 brain::CRobotStateMachine g_robotstatemachine(g_baseTick * 100, g_rpi, g_steeringDriver, g_speedingDriver);
 
-drivers::CResourcemonitor g_resourceMonitor(g_baseTick * 5000, g_rpi);
+periodics::CResourcemonitor g_resourceMonitor(g_baseTick * 5000, g_rpi);
 
-brain::CKlmanager g_klmanager(g_imu, g_instantconsumption, g_totalvoltage, g_velocityControlDuration, g_resourceMonitor);
+brain::CKlmanager g_klmanager(g_alerts, g_imu, g_instantconsumption, g_totalvoltage, g_robotstatemachine, g_resourceMonitor);
 
-brain::CPowermanager g_powermanager(g_baseTick * 100, g_klmanager, g_rpi, g_totalvoltage, g_instantconsumption);
+periodics::CPowermanager g_powermanager(g_baseTick * 100, g_klmanager, g_rpi, g_totalvoltage, g_instantconsumption, g_alerts);
 
-drivers::CBatterymanager g_batteryManager(dummy_value);
+brain::CBatterymanager g_batteryManager(dummy_value);
 
 // Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
-    {"speed",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSPEEDcommand)},
-    {"steer",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackSTEERcommand)},
-    {"brake",mbed::callback(&g_robotstatemachine,&brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
+    {"speed",mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackSPEEDcommand)},
+    {"steer",mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackSTEERcommand)},
+    {"brake",mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
+    {"vcd",  mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackVCDcommand)},
     // {"4",mbed::callback(&g_motorCalibration,&periodics::CTotalVoltage::SpeedMotorCalibration)},
     {"battery",mbed::callback(&g_totalvoltage,&periodics::CTotalVoltage::TotalPublisherCommand)},
     {"instant",mbed::callback(&g_instantconsumption,&periodics::CInstantConsumption ::InstantPublisherCommand)},
     {"imu",mbed::callback(&g_imu,&periodics::CImu::ImuPublisherCommand)},
     // {"8",mbed::callback(&g_complexMoves, &drivers::CComplexMoves::serialCallbackComplexMovesCommand)},
-    {"vcd",mbed::callback(&g_velocityControlDuration, &drivers::CVelocityControlDuration::serialCallbackVCDCommand)},
     {"kl",mbed::callback(&g_klmanager, &brain::CKlmanager::serialCallbackKLCommand)},
-    {"batteryCapacity",mbed::callback(&g_batteryManager, &drivers::CBatterymanager::batteryPublisherCommand)},
-    {"resourceMonitor",mbed::callback(&g_resourceMonitor, &drivers::CResourcemonitor::resourceMonitorPublisherCommand)}
+    {"batteryCapacity",mbed::callback(&g_batteryManager, &brain::CBatterymanager::batteryPublisherCommand)},
+    {"resourceMonitor",mbed::callback(&g_resourceMonitor, &periodics::CResourcemonitor::resourceMonitorPublisherCommand),}
 };
 
 // Create the serial monitor object, which decodes, redirects the messages and transmits the responses.
@@ -97,10 +96,10 @@ utils::CTask* g_taskList[] = {
     &g_totalvoltage,
     &g_imu,
     &g_robotstatemachine,
-    &g_velocityControlDuration,
     &g_serialMonitor,
     &g_powermanager,
-    &g_resourceMonitor
+    &g_resourceMonitor,
+    &g_alerts
 }; 
 
 // Create the task manager, which applies periodically the tasks, miming a parallelism. It needs the list of task and the time base in seconds. 
@@ -146,7 +145,6 @@ uint32_t loop()
  */
 int main() 
 {   
-    g_rpi.write("#################\r\n", 19);
     uint32_t  l_errorLevel = setup();
 
     while(!l_errorLevel) 

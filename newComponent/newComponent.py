@@ -8,7 +8,7 @@ def create_component(category, component_name, project_root="."):
     last_backslash = str(os.getcwd())[::-1].index('\\')
     filename_Emb = path_EmbeddedPlatform[:len(path_EmbeddedPlatform)-last_backslash]
     filename_CMake = path_EmbeddedPlatform[:len(path_EmbeddedPlatform)-last_backslash] + "CMakeLists.txt"
-    
+
     if category not in existing_categories:
         last_include = -1
         last_source = -1
@@ -41,16 +41,51 @@ def create_component(category, component_name, project_root="."):
             f.write(f"#ifndef {component_name.upper()}_HPP\n")
             f.write(f"#define {component_name.upper()}_HPP\n\n")
             f.write(f"// TODO: Add your code here\n\n")
+            if "periodics" == category:
+                f.write(f"#include <chrono>\n")
+                f.write(f"#include <utils/task.hpp>\n\n")
             f.write(f"namespace {category}\n")
-            f.write('{\n' + '   /**\n')
-            f.write('    * @brief Class ' + component_name + '\n' + '    *\n' + '    */\n')
-            f.write(f'    class C{component_name.capitalize()}\n' + '    {\n' + '        public:\n' + '            /* Construnctor */\n' + f'            C{component_name.capitalize()}(\n')
-            f.write('                \n' + '            );\n' + '            /* Destructor */\n' + f'            ~C{component_name.capitalize()}();\n')
-            f.write('        private:\n' + '            /* private variables & method member */\n')
+            f.write('{\n')
+            f.write('   /**\n')
+            f.write('    * @brief Class ' + component_name + '\n')
+            f.write('    *\n')
+            f.write('    */\n')
+
+            if "periodics" == category:
+                f.write(f'    class C{component_name.capitalize()}: public utils::CTask\n')
+                f.write('    {\n')
+                f.write('        public:\n')
+                f.write('            /* Constructor */\n')
+                f.write(f'            C{component_name.capitalize()}(\n')
+                f.write('                std::chrono::milliseconds f_period\n')
+                f.write('            );\n')
+            else:
+                f.write(f'    class C{component_name.capitalize()}\n')
+                f.write('    {\n')
+                f.write('        public:\n')
+                f.write('            /* Constructor */\n')
+                f.write(f'            C{component_name.capitalize()}(\n\n')
+                f.write('            );\n')
+
+            f.write('            /* Destructor */\n')
+            f.write(f'            ~C{component_name.capitalize()}();\n')
+            f.write('        private:\n')
+            f.write('            /* private variables & method member */\n\n')
+
+            if "periodics" == category:
+                f.write(f'\n            /* Run method */\n')
+                f.write('            virtual void        _run();\n\n')
+                f.write('            /** @brief Active flag  */\n')
+                f.write('            bool m_isActive;\n\n')
+
             f.write('    }; // class ' + f'C{component_name.capitalize()}\n')
             f.write('}; // namespace '+ f'{category}\n\n')
             f.write(f"#endif // {component_name.upper()}_HPP\n")
+            
         print(f"Created: {header_file_path}")
+
+        with open(os.path.join(filename_Emb, "include", "main.hpp"), "a") as f:
+            f.write(f"#include <{category}/{component_name}.hpp>\n")
     else:
         print(f"File already exists: {header_file_path}")
 
@@ -62,11 +97,20 @@ def create_component(category, component_name, project_root="."):
             f.write(f"// TODO: Add your code here\n")
             f.write(f"namespace {category}\n")
             f.write('{\n' + '   /**\n')
-            f.write('    * @brief Class constructor' + component_name + '\n' + '    *\n' + '    */\n')
-            f.write(f'    C{component_name.capitalize()}::C{component_name.capitalize()}()\n' + '    {\n')
+            f.write('    * @brief Class constructor ' + component_name + '\n' + '    *\n' + '    */\n')
+            if "periodics" == category:
+                f.write(f'    C{component_name.capitalize()}::C{component_name.capitalize()}(\n' + '        std::chrono::milliseconds f_period\n' + '    )\n')
+                f.write('    : utils::CTask(f_period)\n' + '    {\n')
+            else:
+                f.write(f'    C{component_name.capitalize()}::C{component_name.capitalize()}()\n' + '    {\n')
             f.write('        /* constructor behaviour */\n' + '    }\n' + '\n')
             f.write(f'    /** @brief  C{component_name.capitalize()} class destructor\n' + '     */\n')
-            f.write(f'    C{component_name.capitalize()}::~C{component_name.capitalize()}()\n' + '    {\n' + '    };\n' + '\n' + '}; // namespace periodics')
+            f.write(f'    C{component_name.capitalize()}::~C{component_name.capitalize()}()\n' + '    {\n' + '    }\n')
+            if "periodics" == category:
+                f.write(f'\n    /* Run method */\n')
+                f.write(f'    void C{component_name.capitalize()}::_run()\n' + '    {\n')
+                f.write('        /* Run method behaviour */\n'+ '        if(!m_isActive) return;\n' + '    }\n')
+            f.write('\n' + '}; // namespace periodics')
         print(f"Created: {source_file_path}")
     else:
         print(f"File already exists: {source_file_path}")

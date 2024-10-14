@@ -79,32 +79,32 @@ namespace brain
                 if(l_keyValue == 0 && (int_globalsV_value_of_kl!=0))
                 {
                     sprintf(b,"%d",l_keyValue);
-                    m_imu.ImuPublisherCommand("0", response);
+                    m_imu.serialCallbackIMUcommand("0", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
-                    m_instant.InstantPublisherCommand("0", response);
+                    m_instant.serialCallbackINSTANTcommand("0", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
-                    m_baterry.TotalPublisherCommand("0", response);
+                    m_baterry.serialCallbackTOTALVcommand("0", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
                     m_robotStateMachine.serialCallbackVCDcommand("0;0;2", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
-                    m_resourceM.resourceMonitorPublisherCommand("0", response);
+                    m_resourceM.serialCallbackRESMONCommand("0", response);
                     int_globalsV_value_of_kl = 0;
-                    m_alerts.serialCallbackAlertsCommand("3", response);
+                    m_alerts.alertsCommand("3", response);
                 }
                 if((l_keyValue == 15 || l_keyValue == 30) && (int_globalsV_value_of_kl != 15 && int_globalsV_value_of_kl != 30)) 
                 {
                     sprintf(b,"%d",l_keyValue);
                     int_globalsV_value_of_kl = 15;
-                    if(!bool_globalsV_imu_isActive) m_imu.ImuPublisherCommand("1", response);
-                    if(!bool_globalsV_instant_isActive) m_instant.InstantPublisherCommand("1", response);
-                    if(!bool_globalsV_battery_isActive) m_baterry.TotalPublisherCommand("1", response);
-                    if(!bool_globalsV_resource_isActive) m_resourceM.resourceMonitorPublisherCommand("1", response);
-                    m_alerts.serialCallbackAlertsCommand("4", response);
+                    if(!bool_globalsV_imu_isActive) m_imu.serialCallbackIMUcommand("1", response);
+                    if(!bool_globalsV_instant_isActive) m_instant.serialCallbackINSTANTcommand("1", response);
+                    if(!bool_globalsV_battery_isActive) m_baterry.serialCallbackTOTALVcommand("1", response);
+                    if(!bool_globalsV_resource_isActive) m_resourceM.serialCallbackRESMONCommand("1", response);
+                    m_alerts.alertsCommand("4", response);
                 }
                 if(l_keyValue == 30){
                     sprintf(b,"%d",l_keyValue);
                     int_globalsV_value_of_kl = 30;
-                    m_alerts.serialCallbackAlertsCommand("2", response);
+                    m_alerts.alertsCommand("2", response);
                 }
             }
             else{

@@ -22,7 +22,7 @@ namespace periodics
             /* Destructor */
             ~CAlerts();
 
-            void serialCallbackAlertsCommand(char const * a, char * b);
+            void alertsCommand(char const * a, char * b);
         private:
             /* private variables & method member */
 

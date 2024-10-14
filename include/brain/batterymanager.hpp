@@ -52,7 +52,7 @@ namespace brain
             /* Destructor */
             ~CBatterymanager();
 
-            void batteryPublisherCommand(char const * a, char * b);
+            void serialCallbackBATTERYCommand(char const * a, char * b);
 
         private:
             /* private variables & method member */

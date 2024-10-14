@@ -72,18 +72,16 @@ brain::CBatterymanager g_batteryManager(dummy_value);
 
 // Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
-    {"speed",mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackSPEEDcommand)},
-    {"steer",mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackSTEERcommand)},
-    {"brake",mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
-    {"vcd",  mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackVCDcommand)},
-    // {"4",mbed::callback(&g_motorCalibration,&periodics::CTotalVoltage::SpeedMotorCalibration)},
-    {"battery",mbed::callback(&g_totalvoltage,&periodics::CTotalVoltage::TotalPublisherCommand)},
-    {"instant",mbed::callback(&g_instantconsumption,&periodics::CInstantConsumption ::InstantPublisherCommand)},
-    {"imu",mbed::callback(&g_imu,&periodics::CImu::ImuPublisherCommand)},
-    // {"8",mbed::callback(&g_complexMoves, &drivers::CComplexMoves::serialCallbackComplexMovesCommand)},
-    {"kl",mbed::callback(&g_klmanager, &brain::CKlmanager::serialCallbackKLCommand)},
-    {"batteryCapacity",mbed::callback(&g_batteryManager, &brain::CBatterymanager::batteryPublisherCommand)},
-    {"resourceMonitor",mbed::callback(&g_resourceMonitor, &periodics::CResourcemonitor::resourceMonitorPublisherCommand),}
+    {"speed",          mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackSPEEDcommand)},
+    {"steer",          mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackSTEERcommand)},
+    {"brake",          mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackBRAKEcommand)},
+    {"vcd",            mbed::callback(&g_robotstatemachine, &brain::CRobotStateMachine::serialCallbackVCDcommand)},
+    {"battery",        mbed::callback(&g_totalvoltage,      &periodics::CTotalVoltage::serialCallbackTOTALVcommand)},
+    {"instant",        mbed::callback(&g_instantconsumption,&periodics::CInstantConsumption::serialCallbackINSTANTcommand)},
+    {"imu",            mbed::callback(&g_imu,               &periodics::CImu::serialCallbackIMUcommand)},
+    {"kl",             mbed::callback(&g_klmanager,         &brain::CKlmanager::serialCallbackKLCommand)},
+    {"batteryCapacity",mbed::callback(&g_batteryManager,    &brain::CBatterymanager::serialCallbackBATTERYCommand)},
+    {"resourceMonitor",mbed::callback(&g_resourceMonitor,   &periodics::CResourcemonitor::serialCallbackRESMONCommand),}
 };
 
 // Create the serial monitor object, which decodes, redirects the messages and transmits the responses.

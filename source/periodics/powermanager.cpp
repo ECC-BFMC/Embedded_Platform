@@ -127,7 +127,7 @@ namespace periodics
                     snprintf(buffer, sizeof(buffer), "@warning:%hhu:%hhu:%hhu", h, m, s);
                     m_serial.write(buffer, strlen(buffer));
 
-                    m_alerts.serialCallbackAlertsCommand("1",buffer);
+                    m_alerts.alertsCommand("1",buffer);
                 }
             }
             else

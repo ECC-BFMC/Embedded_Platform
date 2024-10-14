@@ -201,7 +201,7 @@ namespace periodics{
      * @param b                   output reponse message
      * 
      */
-    void CImu::ImuPublisherCommand(char const * a, char * b) {
+    void CImu::serialCallbackIMUcommand(char const * a, char * b) {
         uint8_t l_isActivate=0;
         uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
 

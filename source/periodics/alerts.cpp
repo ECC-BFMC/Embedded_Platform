@@ -94,7 +94,7 @@
 namespace periodics
 {
    /**
-    * @brief Class constructoralerts
+    * @brief Class constructor alerts
     *
     */
     CAlerts::CAlerts(
@@ -119,7 +119,7 @@ namespace periodics
     {
     };
 
-    void CAlerts::serialCallbackAlertsCommand(char const * a, char * b) {
+    void CAlerts::alertsCommand(char const * a, char * b) {
         uint8_t l_isActivate=0;
         uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
 

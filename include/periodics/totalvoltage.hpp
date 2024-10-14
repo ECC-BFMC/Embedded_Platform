@@ -58,7 +58,7 @@ namespace periodics
             /* Destructor */
             ~CTotalVoltage();
             /* Serial callback implementation */
-            void TotalPublisherCommand(char const * a, char * b);
+            void serialCallbackTOTALVcommand(char const * a, char * b);
 
             void void_TotalSafetyMeasure();
         private:

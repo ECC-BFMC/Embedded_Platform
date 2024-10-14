@@ -74,7 +74,7 @@ namespace periodics{
      * @param b                   output reponse message
      * 
      */
-    void CInstantConsumption::InstantPublisherCommand(char const * a, char * b) {
+    void CInstantConsumption::serialCallbackINSTANTcommand(char const * a, char * b) {
         uint8_t l_isActivate=0;
         uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
 

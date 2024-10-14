@@ -48,7 +48,7 @@ namespace brain
     {
     };
 
-    void CBatterymanager::batteryPublisherCommand(char const * a, char * b) {
+    void CBatterymanager::serialCallbackBATTERYCommand(char const * a, char * b) {
         uint16_t l_isActivate=0;
         uint8_t l_res = sscanf(a,"%hd",&l_isActivate);
 

@@ -64,9 +64,6 @@ namespace brain
             /* Destructor */
             ~CKlmanager();
 
-            void setKLValue(uint8_t value);
-            uint8_t  getKLValue();
-
             void serialCallbackKLCommand(const char* message, char* response);
 
             uint8_t m_klvalue;

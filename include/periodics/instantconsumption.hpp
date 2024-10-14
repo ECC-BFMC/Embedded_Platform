@@ -62,7 +62,7 @@ namespace periodics
             /* Destructor */
             ~CInstantConsumption();
             /* Serial callback implementation */
-            void InstantPublisherCommand(char const * a, char * b);
+            void serialCallbackINSTANTcommand(char const * a, char * b);
 
             void void_InstantSafetyMeasure(uint16_t task_period);
         private:

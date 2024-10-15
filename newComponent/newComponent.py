@@ -85,6 +85,7 @@ def create_component(category, component_name, project_root="."):
         print(f"Created: {header_file_path}")
 
         with open(os.path.join(filename_Emb, "include", "main.hpp"), "a") as f:
+            f.write(f'/* Header file for the {component_name.capitalize()} functionality */\n')
             f.write(f"#include <{category}/{component_name}.hpp>\n")
     else:
         print(f"File already exists: {header_file_path}")
@@ -96,22 +97,53 @@ def create_component(category, component_name, project_root="."):
             f.write(f'#include "{category}/{component_name}.hpp"\n\n')
             f.write(f"// TODO: Add your code here\n")
             f.write(f"namespace {category}\n")
-            f.write('{\n' + '   /**\n')
-            f.write('    * @brief Class constructor ' + component_name + '\n' + '    *\n' + '    */\n')
+            f.write('{\n')
+            f.write('   /**\n')
+            f.write('    * @brief Class constructor ' + component_name + '\n')
+            f.write('    *\n')
+            f.write('    */\n')
+
             if "periodics" == category:
-                f.write(f'    C{component_name.capitalize()}::C{component_name.capitalize()}(\n' + '        std::chrono::milliseconds f_period\n' + '    )\n')
-                f.write('    : utils::CTask(f_period)\n' + '    {\n')
+                f.write(f'    C{component_name.capitalize()}::C{component_name.capitalize()}(\n')
+                f.write('        std::chrono::milliseconds f_period\n')
+                f.write('    )\n')
+                f.write('    : utils::CTask(f_period)\n')
+                f.write('    {\n')
             else:
-                f.write(f'    C{component_name.capitalize()}::C{component_name.capitalize()}()\n' + '    {\n')
-            f.write('        /* constructor behaviour */\n' + '    }\n' + '\n')
-            f.write(f'    /** @brief  C{component_name.capitalize()} class destructor\n' + '     */\n')
-            f.write(f'    C{component_name.capitalize()}::~C{component_name.capitalize()}()\n' + '    {\n' + '    }\n')
+                f.write(f'    C{component_name.capitalize()}::C{component_name.capitalize()}()\n')
+                f.write('    {\n')
+            
+            f.write('        /* constructor behaviour */\n')
+            f.write('    }\n\n')
+            f.write(f'    /** @brief  C{component_name.capitalize()} class destructor\n')
+            f.write('     */\n')
+            f.write(f'    C{component_name.capitalize()}::~C{component_name.capitalize()}()\n')
+            f.write('    {\n')
+            f.write('    }\n')
+
             if "periodics" == category:
                 f.write(f'\n    /* Run method */\n')
-                f.write(f'    void C{component_name.capitalize()}::_run()\n' + '    {\n')
-                f.write('        /* Run method behaviour */\n'+ '        if(!m_isActive) return;\n' + '    }\n')
-            f.write('\n' + '}; // namespace periodics')
+                f.write(f'    void C{component_name.capitalize()}::_run()\n')
+                f.write('    {\n')
+                f.write('        /* Run method behaviour */\n')
+                f.write('        if(!m_isActive) return;\n')
+                f.write('    }\n')
+                
+            f.write('\n}; // namespace ' + f'{category}')
+
         print(f"Created: {source_file_path}")
+
+        with open(os.path.join(filename_Emb, "source", "main.cpp"), "r") as f:
+            lines = f.readlines()
+
+        for i, line in enumerate(lines):
+            if '// Insert your new component below' in line:
+                lines.insert(i + 1, f'{category}::{component_name}(possible_argument);\n')
+                break
+        
+        with open(os.path.join(filename_Emb, "source", "main.cpp"), 'w') as file:
+            file.writelines(lines)
+
     else:
         print(f"File already exists: {source_file_path}")
 

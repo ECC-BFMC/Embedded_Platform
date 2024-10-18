@@ -85,6 +85,7 @@ namespace drivers
             const int m_inf_limit;
             /** @brief Superior limit */
             const int m_sup_limit;
+
             /* convert angle degree to duty cycle for pwm signal */
             int conversion(int f_angle); //angle to duty cycle
 
@@ -93,10 +94,10 @@ namespace drivers
 
             // Predefined values for steering reference and interpolation
             // All the values have a scale factor applied (*100)
-            const int steeringValueP[2] = {150, 200};
-            const int steeringValueN[2] = {-150, -200};
-            const int stepValues[2] = {1718, 1903};
-            const int zeroDefaultValues[2] = {154297, 153441};
+            const int steeringValueP[3] = {0, 150, 200};
+            const int steeringValueN[3] = {0, -150, -200};
+            const int stepValues[3] = {1901, 1718, 1903};
+            const int zeroDefaultValues[3] = {153441, 154297, 153441};
     }; // class ISteeringCommand
 }; // namespace drivers
 

@@ -30,6 +30,8 @@
 
 #include "brain/klmanager.hpp"
 
+#define _25_chars 25
+
 // TODO: Add your code here
 namespace brain
 {
@@ -74,9 +76,9 @@ namespace brain
             {
                 CKlmanager::m_klvalue = l_keyValue;
 
-                char response[50];
+                char response[_25_chars];
 
-                if(l_keyValue == 0 && (int_globalsV_value_of_kl!=0))
+                if(l_keyValue == 0 && (uint8_globalsV_value_of_kl!=0))
                 {
                     sprintf(b,"%d",l_keyValue);
                     m_imu.serialCallbackIMUcommand("0", response);
@@ -88,22 +90,24 @@ namespace brain
                     m_robotStateMachine.serialCallbackVCDcommand("0;0;2", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
                     m_resourceM.serialCallbackRESMONCommand("0", response);
-                    int_globalsV_value_of_kl = 0;
+                    uint8_globalsV_value_of_kl = 0;
                     m_alerts.alertsCommand("3", response);
                 }
-                if((l_keyValue == 15 || l_keyValue == 30) && (int_globalsV_value_of_kl != 15 && int_globalsV_value_of_kl != 30)) 
+                if((l_keyValue == 15 || l_keyValue == 30) && (uint8_globalsV_value_of_kl != 15)) 
                 {
                     sprintf(b,"%d",l_keyValue);
-                    int_globalsV_value_of_kl = 15;
+                    m_robotStateMachine.serialCallbackVCDcommand("0;0;2", response);
+                    uint8_globalsV_value_of_kl = 15;
                     if(!bool_globalsV_imu_isActive) m_imu.serialCallbackIMUcommand("1", response);
                     if(!bool_globalsV_instant_isActive) m_instant.serialCallbackINSTANTcommand("1", response);
                     if(!bool_globalsV_battery_isActive) m_baterry.serialCallbackTOTALVcommand("1", response);
                     if(!bool_globalsV_resource_isActive) m_resourceM.serialCallbackRESMONCommand("1", response);
                     m_alerts.alertsCommand("4", response);
                 }
-                if(l_keyValue == 30){
+                if(l_keyValue == 30 && (uint8_globalsV_value_of_kl != 30)){
                     sprintf(b,"%d",l_keyValue);
-                    int_globalsV_value_of_kl = 30;
+                    uint8_globalsV_value_of_kl = 30;
+                    m_robotStateMachine.serialCallbackVCDcommand("0;0;2", response);
                     m_alerts.alertsCommand("2", response);
                 }
             }

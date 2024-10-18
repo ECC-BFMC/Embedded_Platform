@@ -32,7 +32,7 @@
 
 #define miliseconds_in_h 3600000
 #define seconds_in_h 3600
-#define display_interval_miliseconds 30000
+#define display_interval_miliseconds 15000
 #define battery_mAmps 5500
 #define battery_cells 2
 #define battery_maxVoltage (4200 * battery_cells)
@@ -40,7 +40,8 @@
 #define battery_shutdownWarning 7200
 #define maxPercent 100
 #define zeroPercent 0
-#define one_byte 256
+#define _22_chars 22
+#define _1_char 1
 #define scale_factor 1000
 
 // TODO: Add your code here
@@ -83,16 +84,16 @@ namespace periodics
 
     void CPowermanager::_run()
     {
-        char buffer[one_byte];
+        char buffer[_22_chars];
         uint16_t battery_mAmps_var;
 
         m_totalVoltage.void_TotalSafetyMeasure();
         m_instantConsumption.void_InstantSafetyMeasure(m_period);
 
-        if(uint16_globalsV_battery_mAmps_user != 0.0) battery_mAmps_var = uint16_globalsV_battery_mAmps_user;
+        if(uint16_globalsV_battery_mAmps_user != 0) battery_mAmps_var = uint16_globalsV_battery_mAmps_user;
         else battery_mAmps_var = battery_mAmps;
 
-        int mAmps_actual = (int_globalsV_battery_totalVoltage * battery_mAmps_var) / battery_maxVoltage;
+        int mAmps_actual = (uint16_globalsV_battery_totalVoltage * battery_mAmps_var) / battery_maxVoltage;
 
         uint32_t temp_average = uint32_globalsV_consumption_Total_mAmpsH / uint32_globalsV_numberOfMiliseconds_Total;
 
@@ -110,7 +111,7 @@ namespace periodics
 
         bool_globalsV_ShuttedDown = false;
 
-        if(battery_shutdownVoltage < int_globalsV_battery_totalVoltage && int_globalsV_battery_totalVoltage <= battery_shutdownWarning)
+        if((battery_shutdownVoltage < uint16_globalsV_battery_totalVoltage) && (uint16_globalsV_battery_totalVoltage <= battery_shutdownWarning))
         {
             if((uint32_globalsV_numberOfMiliseconds_Total%display_interval_miliseconds == 0) && (uint32_globalsV_numberOfMiliseconds_Total > 0))
             {
@@ -124,7 +125,7 @@ namespace periodics
 
                     bool_globalsV_warningFlag = !bool_globalsV_warningFlag;
 
-                    snprintf(buffer, sizeof(buffer), "@warning:%hhu:%hhu:%hhu", h, m, s);
+                    snprintf(buffer, sizeof(buffer), "@warning:%hhu:%hhu:%hhu;;\r\n", h, m, s);
                     m_serial.write(buffer, strlen(buffer));
 
                     m_alerts.alertsCommand("1",buffer);
@@ -135,24 +136,24 @@ namespace periodics
                 bool_globalsV_warningFlag = !bool_globalsV_warningFlag;
             }   
         }
-        else if (int_globalsV_battery_totalVoltage <= battery_shutdownVoltage)
+        else if (uint16_globalsV_battery_totalVoltage <= battery_shutdownVoltage)
         {
-            return;
+            // return;
             if(uint32_globalsV_numberOfMiliseconds_Total%display_interval_miliseconds == 0)
             {
-                snprintf(buffer, sizeof(buffer), "@shutdown:ack");
+                snprintf(buffer, sizeof(buffer), "@shutdown:ack;;\r\n");
                 m_serial.write(buffer, strlen(buffer));
 
-                char buffer2[one_byte];
+                char buffer2[_1_char];
 
-                if(int_globalsV_value_of_kl!=0)
+                if(uint8_globalsV_value_of_kl!=0)
                 {
                     m_CKlmanager.serialCallbackKLCommand("0",buffer2);
                 }
                 
                 ThisThread::sleep_for(chrono::milliseconds(200));
                 bool_globalsV_ShuttedDown = true;
-                int_globalsV_value_of_kl = 0;
+                uint8_globalsV_value_of_kl = 0;
             }
         }
     }

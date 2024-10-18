@@ -53,6 +53,7 @@ namespace brain{
         , m_serialPort(f_serialPort)
         , m_steeringControl(f_steeringControl)
         , m_speedingControl(f_speedingControl)
+        , m_state(0)
         , m_ticksRun(0)
         , m_targetTime(0)
         , m_period((uint16_t)(f_period.count()))
@@ -123,7 +124,7 @@ namespace brain{
         uint32_t l_res = sscanf(a,"%d",&l_speed);
         if (1 == l_res)
         {
-            if(int_globalsV_value_of_kl == 30)
+            if(uint8_globalsV_value_of_kl == 30)
             {
                 if(!m_speedingControl.inRange(l_speed)){ // Check the received reference speed is within range
                     sprintf(b,"The reference speed command is too high");
@@ -160,7 +161,7 @@ namespace brain{
         uint32_t l_res = sscanf(a,"%d",&l_angle);
         if (1 == l_res)
         {
-            if(int_globalsV_value_of_kl == 30)
+            if(uint8_globalsV_value_of_kl == 30)
             {
                 if( !m_steeringControl.inRange(l_angle)){ // Check the received steering angle
                     sprintf(b,"The steering angle command is too high");
@@ -227,7 +228,7 @@ namespace brain{
 
         uint8_t parsed = sscanf(message, "%d;%d;%hhu", &speed, &steer, &time_deciseconds);
 
-        if(int_globalsV_value_of_kl != 30){
+        if(uint8_globalsV_value_of_kl != 30){
             sprintf(response,"kl 30 is required!!");
             return;
         }

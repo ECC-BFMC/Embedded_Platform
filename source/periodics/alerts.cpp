@@ -103,7 +103,7 @@ namespace periodics
     : utils::CTask(f_period)
     , m_isActive(false)
     , m_period((uint16_t)(f_period.count()))
-    , buzzer(PC_7)
+    , buzzer(PA_15)
     , current_step(0)
     , step_counter(0)
     , tone_active(false)
@@ -123,7 +123,7 @@ namespace periodics
         uint8_t l_isActivate=0;
         uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
 
-        if(l_res==1){
+        if(1 == l_res){
 
             m_isActive=(l_isActivate>=1);
             sprintf(b,"%hhu", l_isActivate);

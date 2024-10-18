@@ -50,9 +50,8 @@ namespace utils
             /* Constructor */ 
             CTaskManager(
                 utils::CTask** f_taskList,
-                uint32_t f_taskCount, 
-                std::chrono::milliseconds f_baseFreq, 
-                UnbufferedSerial& f_serial
+                uint8_t f_taskCount, 
+                std::chrono::milliseconds f_baseFreq
             );
             /* Destructor */
             virtual ~CTaskManager();
@@ -64,11 +63,10 @@ namespace utils
             /** @brief  List of tasks  */
             utils::CTask** m_taskList;
             /** @brief  number of tasks */
-            uint32_t m_taskCount;
+            uint8_t m_taskCount;
             /** @brief  Ticker for periodic applying the timer callback function  */
             Ticker m_ticker;
-
-            UnbufferedSerial&      m_serial;
+            
     }; // class CTaskManager
 
 }; // namespace utils

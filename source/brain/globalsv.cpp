@@ -36,12 +36,12 @@ uint32_t uint32_globalsV_instant_mAmpsH = 0;
 uint32_t uint32_globalsV_range_left_shutdown = 0;
 uint32_t currentEMA = 0; // Valoarea inițială EMA
 
-uint16_t int_globalsV_battery_totalVoltage = 0;
+uint16_t uint16_globalsV_battery_totalVoltage = 0;
 uint16_t int_globalsV_instantConsumption_Avg_Total_mAmpsH = 0;
 uint16_t uint16_globalsV_battery_mAmps_user = 0;
 uint16_t readings[11] = {0}; // Buffer pentru ultimele citiri
 
-uint8_t  int_globalsV_value_of_kl       = 0;
+uint8_t  uint8_globalsV_value_of_kl       = 0;
 // Variabile pentru filtrare
 uint8_t alpha_scaled = 25; // EMA coeficient scaled from 0.025
 uint8_t windowSize = 10; // Dimensiunea ferestrei pentru filtrul de mediere

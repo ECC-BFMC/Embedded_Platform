@@ -48,7 +48,7 @@ periodics::CAlerts g_alerts(g_baseTick * 5000);
 periodics::CInstantConsumption g_instantconsumption(g_baseTick * 1000, A2, g_rpi);
 
 // // It's a task for sending periodically the battery voltage, so to notice when discharging
-periodics::CTotalVoltage g_totalvoltage(g_baseTick*3000, A1, g_rpi);
+periodics::CTotalVoltage g_totalvoltage(g_baseTick*3000, A4, g_rpi);
 
 // It's a task for sending periodically the IMU values
 periodics::CImu g_imu(g_baseTick*100, g_rpi, I2C_SDA, I2C_SCL);
@@ -103,14 +103,14 @@ utils::CTask* g_taskList[] = {
 }; 
 
 // Create the task manager, which applies periodically the tasks, miming a parallelism. It needs the list of task and the time base in seconds. 
-utils::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(utils::CTask*), g_baseTick, g_rpi);
+utils::CTaskManager g_taskManager(g_taskList, sizeof(g_taskList)/sizeof(utils::CTask*), g_baseTick);
 
 /**
  * @brief Setup function for initializing some objects and transmitting a startup message through the serial. 
  * 
  * @return uint32_t Error level codes error's type.
  */
-uint32_t setup()
+uint8_t setup()
 {
     // g_rpi.format(
     //     /* bits */ 8,
@@ -124,6 +124,7 @@ uint32_t setup()
     g_rpi.write("#               #\r\n", 19);
     g_rpi.write("#################\r\n", 19);
     g_rpi.write("\r\n", 2);
+
     return 0;    
 }
 
@@ -132,7 +133,7 @@ uint32_t setup()
  * 
  * @return uint32_t Error level codes error's type.
  */
-uint32_t loop()
+uint8_t loop()
 {
     g_taskManager.mainCallback();
     return 0;
@@ -145,7 +146,7 @@ uint32_t loop()
  */
 int main() 
 {   
-    uint32_t  l_errorLevel = setup();
+    uint8_t  l_errorLevel = setup();
 
     while(!l_errorLevel) 
     {

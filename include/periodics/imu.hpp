@@ -75,7 +75,7 @@ namespace periodics
             /*I2C init routine */
             virtual void I2C_routine(void);
             /* This API is an example for reading sensor data */
-            s32 bno055_data_readout_template(void);
+            // s32 bno055_data_readout_template(void);
             /* Run method */
             virtual void    _run();
 

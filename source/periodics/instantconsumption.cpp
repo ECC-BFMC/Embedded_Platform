@@ -33,7 +33,7 @@
 #define g_baseTick 0.0001
 #define v_ref_ADC 3.3
 #define r_shunt 0.002
-#define one_byte 256
+#define _24_chars 24
 #define ref_A2_value_250mAmps 548
 #define ref_A2_current_mA 250
 #define miliseconds_in_H 3600000
@@ -78,8 +78,8 @@ namespace periodics{
         uint8_t l_isActivate=0;
         uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
 
-        if(l_res==1){
-            if(int_globalsV_value_of_kl == 15 || int_globalsV_value_of_kl == 30)
+        if(1 == l_res){
+            if(uint8_globalsV_value_of_kl == 15 || uint8_globalsV_value_of_kl == 30)
             {
                 m_isActive=(l_isActivate>=1);
                 bool_globalsV_instant_isActive = (l_isActivate>=1);
@@ -163,7 +163,7 @@ namespace periodics{
     {
         if(!m_isActive) return;
 
-        char buffer[one_byte];
+        char buffer[_24_chars];
 
         snprintf(buffer, sizeof(buffer), "@instant:%d;;\r\n", (int)((currentEMA*m_period)/miliseconds_in_H));
         m_serial.write(buffer,strlen(buffer));

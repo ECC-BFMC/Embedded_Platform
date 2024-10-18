@@ -133,7 +133,7 @@ namespace drivers{
     {
         std::pair<int, int> interpolationResult;
 
-        interpolationResult = interpolate(f_angle, steeringValueP, steeringValueN, stepValues, zeroDefaultValues, 2);
+        interpolationResult = interpolate(f_angle, steeringValueP, steeringValueN, stepValues, zeroDefaultValues, 3);
         // interpolationResult = interpolate(f_angle-2200, steeringValueP, steeringValueN, stepValues, zeroDefaultValues, 2);
         // interpolationResult = interpolate(f_angle-22.0, steeringValueP, steeringValueN, stepValues, zeroDefaultValues, 2);
         step_value = interpolationResult.first;

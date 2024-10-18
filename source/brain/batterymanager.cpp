@@ -52,7 +52,7 @@ namespace brain
         uint16_t l_isActivate=0;
         uint8_t l_res = sscanf(a,"%hd",&l_isActivate);
 
-        if(l_res==1){
+        if(1 == l_res){
             uint16_globalsV_battery_mAmps_user = l_isActivate;
             sprintf(b,"ack");
         }else{

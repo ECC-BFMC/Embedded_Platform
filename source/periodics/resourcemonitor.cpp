@@ -1,6 +1,6 @@
 #include "periodics/resourcemonitor.hpp"
 
-#define one_byte 256
+#define _50_chars 50
 #define max_percent_int 10000 // 100.00%
 
 // TODO: Add your code here
@@ -28,8 +28,8 @@ namespace periodics
         uint8_t l_isActivate=0;
         uint8_t l_res = sscanf(a,"%hhu",&l_isActivate);
 
-        if(l_res==1){
-            if(int_globalsV_value_of_kl == 15 || int_globalsV_value_of_kl == 30)
+        if(1 == l_res){
+            if(uint8_globalsV_value_of_kl == 15 || uint8_globalsV_value_of_kl == 30)
             {
                 m_isActive=(l_isActivate>=1);
                 bool_globalsV_resource_isActive = (l_isActivate>=1);
@@ -47,7 +47,7 @@ namespace periodics
     void CResourcemonitor::_run(){
         if(!m_isActive) return;
         
-        char buffer[one_byte];
+        char buffer[_50_chars];
 
         mbed_stats_heap_t heap_stats;
         mbed_stats_stack_t stack_stats;

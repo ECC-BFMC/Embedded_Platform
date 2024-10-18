@@ -44,12 +44,12 @@ extern uint32_t uint32_globalsV_instant_mAmpsH;
 extern uint32_t uint32_globalsV_range_left_shutdown;
 extern uint32_t currentEMA; // Valoarea inițială EMA
 
-extern uint16_t int_globalsV_battery_totalVoltage;
+extern uint16_t uint16_globalsV_battery_totalVoltage;
 extern uint16_t int_globalsV_instantConsumption_Avg_Total_mAmpsH;
 extern uint16_t uint16_globalsV_battery_mAmps_user;
 extern uint16_t readings[11]; // Buffer pentru ultimele citiri
 
-extern uint8_t int_globalsV_value_of_kl;
+extern uint8_t uint8_globalsV_value_of_kl;
 // Variabile pentru filtrare
 extern uint8_t alpha_scaled; // Coeficient pentru EMA
 extern uint8_t windowSize; // Dimensiunea ferestrei pentru filtrul de mediere

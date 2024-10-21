@@ -70,7 +70,9 @@ periodics::CPowermanager g_powermanager(g_baseTick * 100, g_klmanager, g_rpi, g_
 
 brain::CBatterymanager g_batteryManager(dummy_value);
 
-// Insert your new component below
+/* USER NEW COMPONENT BEGIN */
+
+/* USER NEW COMPONENT END */
 
 // Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {

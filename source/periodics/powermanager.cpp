@@ -107,8 +107,6 @@ namespace periodics
 
         uint32_globalsV_range_left_shutdown /= scale_factor;
 
-        // uint32_globalsV_range_left_shutdown = (((mAmps_actual - (battery_shutdownVoltage*battery_mAmps_var/battery_maxVoltage)))/(uint16_t)currentEMA)*3600;
-
         bool_globalsV_ShuttedDown = false;
 
         if((battery_shutdownVoltage < uint16_globalsV_battery_totalVoltage) && (uint16_globalsV_battery_totalVoltage <= battery_shutdownWarning))
@@ -138,7 +136,6 @@ namespace periodics
         }
         else if (uint16_globalsV_battery_totalVoltage <= battery_shutdownVoltage)
         {
-            // return;
             if(uint32_globalsV_numberOfMiliseconds_Total%display_interval_miliseconds == 0)
             {
                 snprintf(buffer, sizeof(buffer), "@shutdown:ack;;\r\n");

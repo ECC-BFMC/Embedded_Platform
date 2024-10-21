@@ -34,18 +34,18 @@ uint32_t uint32_globalsV_consumption_Total_mAmpsH = 0;
 uint32_t uint32_globalsV_numberOfMiliseconds_Total = 0;
 uint32_t uint32_globalsV_instant_mAmpsH = 0;
 uint32_t uint32_globalsV_range_left_shutdown = 0;
-uint32_t currentEMA = 0; // Valoarea inițială EMA
+uint32_t currentEMA = 0; // EMA initial value
 
 uint16_t uint16_globalsV_battery_totalVoltage = 0;
 uint16_t int_globalsV_instantConsumption_Avg_Total_mAmpsH = 0;
 uint16_t uint16_globalsV_battery_mAmps_user = 0;
-uint16_t readings[11] = {0}; // Buffer pentru ultimele citiri
+uint16_t readings[11] = {0}; // Buffer for the last 10 readings
 
 uint8_t  uint8_globalsV_value_of_kl       = 0;
-// Variabile pentru filtrare
-uint8_t alpha_scaled = 25; // EMA coeficient scaled from 0.025
-uint8_t windowSize = 10; // Dimensiunea ferestrei pentru filtrul de mediere
-uint8_t indexul = 0; // Index pentru buffer
+// Variables for filtering
+uint8_t alpha_scaled = 25; // EMA coefficient scaled from 0.025
+uint8_t windowSize = 10; // Window size for the averaging filter
+uint8_t indexul = 0; // buffer index
 
 bool bool_globalsV_imu_isActive     = false;
 bool bool_globalsV_instant_isActive = false;

@@ -38,7 +38,6 @@
 /* The mbed library */
 #include <mbed.h>
 #include <drivers/bno055.hpp>
-/* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/task.hpp>
 #include <brain/globalsv.hpp>
 #include <chrono>
@@ -53,8 +52,7 @@ namespace periodics
     class CImu : public utils::CTask
     {
         public:
-            /* Construnctor */
-            // brain::CKlmanager& f_klmanager
+            /* Constructor */
             CImu(
                 std::chrono::milliseconds    f_period, 
                 UnbufferedSerial& f_serial,
@@ -101,8 +99,6 @@ namespace periodics
 
             /* @brief Serial communication obj.  */
             UnbufferedSerial&      m_serial;
-
-            // brain::CKlmanager& m_klmanager;
 
             s32 m_velocityX;
             s32 m_velocityY;

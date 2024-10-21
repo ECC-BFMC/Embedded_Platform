@@ -90,7 +90,7 @@ namespace drivers
             /* interpolate the step value based on the speed value */
             int16_t interpolate(int speed, const int speedValuesP[], const int speedValuesN[], const int stepValues[], int size);
 
-            // Predefined values for speeding reference and interpolation
+            // Scaled predefined values for speeding reference and interpolation
             const int speedValuesP[25] = {
                  40, 50, 60, 70, 80, 90, 100, 110, 120, 130,
                 140, 150, 160, 170, 180, 190, 200, 210, 220, 260,

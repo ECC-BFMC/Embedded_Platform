@@ -157,15 +157,16 @@ namespace periodics
         if(!m_isActive) return;
 
         if(1 == alert_id){
+            // 1000000 = 1000000 µs = 1 s
             switch (current_step) {
                 case 0:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_B4);  // Setăm frecvența PWM pentru B4 în µs
+                        buzzer.period_us(1000000 / NOTE_B4);  // Set PWM for B4 in µs
                         buzzer.pulsewidth_us((1000000 / NOTE_B4)/2);  // 50% duty cycle
                         tone_active = true;
-                        step_counter = 0;  // Resetăm contorul
-                    } else if (step_counter >= 10) {  // 100 ms pentru tonul B4 si dupa..
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                        step_counter = 0;  // Reset the counter
+                    } else if (step_counter >= 10) {  // Let 100 ms for B4 and then..
+                        buzzer.pulsewidth_us(0);  // Stop the tone
                         step_counter = 0;
                         tone_active = false;
                         current_step++;
@@ -175,9 +176,9 @@ namespace periodics
                     break;
 
                 case 1:
-                    if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms si dupa..
-                        buzzer.period_us(1000000 / NOTE_B5);  // Setăm frecvența PWM pentru B5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_B5)/2);  // Activăm tonul
+                    if (!tone_active && step_counter >= 12) {  // Pause for 120 ms and then..
+                        buzzer.period_us(1000000 / NOTE_B5);  // Set PWM for B5 in µs
+                        buzzer.pulsewidth_us((1000000 / NOTE_B5)/2);  // 50% duty cycle
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -187,14 +188,14 @@ namespace periodics
                     break;
 
                 case 2:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul B5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {  // Let 100 ms for B5
+                        buzzer.pulsewidth_us(0);  // Stop the tone
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_FS5);  // Setăm frecvența PWM pentru FS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {  // Pause for 120 ms and then..
+                        buzzer.period_us(1000000 / NOTE_FS5);  // Set PWM for FS5 in µs
+                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);  // 50% duty cycle
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -204,14 +205,14 @@ namespace periodics
                     break;
 
                 case 3:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul FS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_DS5);  // Setăm frecvența PWM pentru DS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_DS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -221,14 +222,14 @@ namespace periodics
                     break;
 
                 case 4:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul DS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_FS5);  // Setăm frecvența PWM pentru FS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_FS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -238,14 +239,14 @@ namespace periodics
                     break;
 
                 case 5:
-                    if (tone_active && step_counter >= 12) {  // 120 ms pentru tonul FS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 12) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 20) {  // Pauza de 200 ms
-                        buzzer.period_us(1000000 / NOTE_DS5);  // Setăm frecvența PWM pentru DS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 20) {
+                        buzzer.period_us(1000000 / NOTE_DS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -255,14 +256,14 @@ namespace periodics
                     break;
 
                 case 6:
-                    if (tone_active && step_counter >= 15) {  // 150 ms pentru tonul DS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 15) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 25) {  // Pauza de 250 ms
-                        buzzer.period_us(1000000 / NOTE_C5);  // Setăm frecvența PWM pentru C5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_C5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 25) {
+                        buzzer.period_us(1000000 / NOTE_C5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_C5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -272,14 +273,14 @@ namespace periodics
                     break;
 
                 case 7:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul C5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_C6);  // Setăm frecvența PWM pentru C6 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_C6)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_C6);
+                        buzzer.pulsewidth_us((1000000 / NOTE_C6)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -289,14 +290,14 @@ namespace periodics
                     break;
 
                 case 8:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul C6
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_G5);  // Setăm frecvența PWM pentru G5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_G5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_G5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_G5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -306,14 +307,14 @@ namespace periodics
                     break;
 
                 case 9:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul G5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_E5);  // Setăm frecvența PWM pentru E5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_E5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_E5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_E5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -323,14 +324,14 @@ namespace periodics
                     break;
 
                 case 10:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul E5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_C6);  // Setăm frecvența PWM pentru C6 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_C6)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_C6);
+                        buzzer.pulsewidth_us((1000000 / NOTE_C6)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -340,14 +341,14 @@ namespace periodics
                     break;
 
                 case 11:
-                    if (tone_active && step_counter >= 12) {  // 120 ms pentru tonul C6
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 12) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 20) {  // Pauza de 200 ms
-                        buzzer.period_us(1000000 / NOTE_G5);  // Setăm frecvența PWM pentru G5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_G5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 20) {
+                        buzzer.period_us(1000000 / NOTE_G5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_G5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -357,14 +358,14 @@ namespace periodics
                     break;
 
                 case 12:
-                    if (tone_active && step_counter >= 15) {  // 150 ms pentru tonul G5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 15) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 25) {  // Pauza de 250 ms
-                        buzzer.period_us(1000000 / NOTE_B4);  // Setăm frecvența PWM pentru B4 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_B4)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 25) {
+                        buzzer.period_us(1000000 / NOTE_B4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_B4)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -374,14 +375,14 @@ namespace periodics
                     break;
 
                 case 13:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul B4
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_B5);  // Setăm frecvența PWM pentru B5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_B5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_B5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_B5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -391,14 +392,14 @@ namespace periodics
                     break;
 
                 case 14:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul B5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_FS5);  // Setăm frecvența PWM pentru FS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_FS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -408,14 +409,14 @@ namespace periodics
                     break;
 
                 case 15:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul FS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_DS5);  // Setăm frecvența PWM pentru DS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_DS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -425,14 +426,14 @@ namespace periodics
                     break;
 
                 case 16:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul DS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_B5);  // Setăm frecvența PWM pentru B5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_B5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_B5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_B5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -442,14 +443,14 @@ namespace periodics
                     break;
 
                 case 17:
-                    if (tone_active && step_counter >= 12) {  // 120 ms pentru tonul DS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 12) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 20) {  // Pauza de 200 ms
-                        buzzer.period_us(1000000 / NOTE_FS5);  // Setăm frecvența PWM pentru FS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 20) {
+                        buzzer.period_us(1000000 / NOTE_FS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -459,14 +460,14 @@ namespace periodics
                     break;
 
                 case 18:
-                    if (tone_active && step_counter >= 15) {  // 150 ms pentru tonul FS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 15) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 25) {  // Pauza de 250 ms
-                        buzzer.period_us(1000000 / NOTE_DS5);  // Setăm frecvența PWM pentru DS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 25) {
+                        buzzer.period_us(1000000 / NOTE_DS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -476,14 +477,14 @@ namespace periodics
                     break;
 
                 case 19:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul DS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_DS5);  // Setăm frecvența PWM pentru DS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_DS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_DS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -493,14 +494,14 @@ namespace periodics
                     break;
 
                 case 20:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul DS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_E5);  // Setăm frecvența PWM pentru E5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_E5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_E5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_E5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -510,14 +511,14 @@ namespace periodics
                     break;
 
                 case 21:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul E5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_F5);  // Setăm frecvența PWM pentru F5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_F5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_F5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_F5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -527,14 +528,14 @@ namespace periodics
                     break;
 
                 case 22:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul F5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_F5);  // Setăm frecvența PWM pentru F5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_F5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_F5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_F5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -544,14 +545,14 @@ namespace periodics
                     break;
 
                 case 23:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul F5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_FS5);  // Setăm frecvența PWM pentru FS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_FS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_FS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -561,14 +562,14 @@ namespace periodics
                     break;
 
                 case 24:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul FS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_G5);  // Setăm frecvența PWM pentru G5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_G5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_G5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_G5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -578,14 +579,14 @@ namespace periodics
                     break;
 
                 case 25:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul G5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_G5);  // Setăm frecvența PWM pentru G5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_G5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_G5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_G5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -595,14 +596,14 @@ namespace periodics
                     break;
 
                 case 26:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul G5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_GS5);  // Setăm frecvența PWM pentru GS5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_GS5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_GS5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_GS5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -612,14 +613,14 @@ namespace periodics
                     break;
 
                 case 27:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul GS5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_A5);  // Setăm frecvența PWM pentru A5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_A5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_A5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_A5)/2);
                         tone_active = true;
                         step_counter = 0;
                         current_step++;
@@ -629,261 +630,258 @@ namespace periodics
                     break;
 
                 case 28:
-                    if (tone_active && step_counter >= 10) {  // 100 ms pentru tonul A5
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    if (tone_active && step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
                         current_step++;
-                    } else if (!tone_active && step_counter >= 12) {  // Pauza de 120 ms
-                        buzzer.period_us(1000000 / NOTE_B5);  // Setăm frecvența PWM pentru B5 în µs
-                        buzzer.pulsewidth_us((1000000 / NOTE_B5)/2);  // Activăm tonul
+                    } else if (!tone_active && step_counter >= 12) {
+                        buzzer.period_us(1000000 / NOTE_B5);
+                        buzzer.pulsewidth_us((1000000 / NOTE_B5)/2);
                         tone_active = true;
                         step_counter = 0;
-                        current_step = 0;  // Repornește secvența
+                        current_step = 0;  // Restart the sequence
                     } else {
                         step_counter++;
                     }
                     break;
 
                 default:
-                    current_step = 0;  // Repornește secvența de la început
+                    current_step = 0;  // Restart the sequence
                     step_counter = 0;
                     tone_active = false;
-                    buzzer.pulsewidth_us(0);  // Ne asigurăm că buzzerul este oprit
+                    buzzer.pulsewidth_us(0);
                     break;
             }
         } else if(2 == alert_id){
 
             switch (current_step) {
-                case 0:  // Prima notă: C4 (Do) - 262 Hz
+                case 0:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_C4);  // Frecvența pentru C4 (262 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_C4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_C4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_C4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, trecem la următoarea notă
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
-                        current_step++;  // Trecem la următoarea notă
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 1:  // A doua notă: D4 (Re) - 294 Hz
+                case 1:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_D4);  // Frecvența pentru D4 (294 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_D4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_D4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_D4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, trecem la următoarea notă
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
-                        current_step++;  // Trecem la următoarea notă
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 2:  // A treia notă: E4 (Mi) - 330 Hz
+                case 2:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_E4);  // Frecvența pentru E4 (330 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_E4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_E4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_E4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, trecem la următoarea notă
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
-                        current_step++;  // Trecem la următoarea notă
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 3:  // A patra notă: G4 (Sol) - 392 Hz
+                case 3:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_G4);  // Frecvența pentru G4 (392 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_G4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_G4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_G4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, încheiem secvența
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
-                        current_step++;  // Trecem la finalul secvenței
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 4:  // Secvența de startup a fost completată
+                case 4:
                     buzzer.period_us(2);
-                    buzzer.pulsewidth_us(1);  // Asigurăm că tonul este oprit
+                    buzzer.pulsewidth_us(1);
                     
+                    current_step = 0;  // Reset the sequence
+                    tone_active = false;
+                    step_counter = 0;
+
+                    buzzer.pulsewidth_us(0);
+
                     alert_id = 0;
                     setNewPeriod(5000);
                     m_period = 5000;
-                    break;
-
-                default:
-                    current_step = 0;  // Resetăm secvența
-                    tone_active = false;
-                    step_counter = 0;
-                    buzzer.pulsewidth_us(0);  // Oprim tonul
                     break;
             }
         } else if(3 == alert_id){
 
             switch (current_step) {
-                case 0:  // Prima notă: E4
+                case 0:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_E4);  // Frecvența pentru C4 (262 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_E4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_E4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_E4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 50ms, trecem la următoarea notă
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
-                        current_step++;  // Trecem la următoarea notă
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 1:  // A doua notă: D4 (Re) - 294 Hz
+                case 1:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_D4);  // Frecvența pentru D4 (294 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_D4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_D4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_D4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, trecem la următoarea notă
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
-                        current_step++;  // Trecem la următoarea notă
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 2:  // A treia notă: C4
+                case 2:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_C4);  // Frecvența pentru E4 (330 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_C4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_C4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_C4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, trecem la următoarea notă
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
-                        current_step++;  // Trecem la următoarea notă
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 3:  // A patra notă: B3
+                case 3:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_B3);  // Frecvența pentru G4 (392 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_B3) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_B3);
+                        buzzer.pulsewidth_us((1000000 / NOTE_B3) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, încheiem secvența
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
-                        current_step++;  // Trecem la finalul secvenței
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 4:  // A cincea notă: A3
+                case 4:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_A3);  // Frecvența pentru G4 (392 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_A3) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_A3);
+                        buzzer.pulsewidth_us((1000000 / NOTE_A3) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, încheiem secvența
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
-                        current_step++;  // Trecem la finalul secvenței
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 5:  // Ultima notă: G3
+                case 5:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_G3);  // Frecvența pentru G4 (392 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_G3) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_G3);
+                        buzzer.pulsewidth_us((1000000 / NOTE_G3) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, încheiem secvența
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
-                        current_step++;  // Trecem la finalul secvenței
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 6:  // Secvența de startup a fost completată
+                case 6:
                     buzzer.period_us(2);
-                    buzzer.pulsewidth_us(1);  // Asigurăm că tonul este oprit
+                    buzzer.pulsewidth_us(1);
+
+                    current_step = 0;
+                    tone_active = false;
+                    step_counter = 0;
+                    buzzer.pulsewidth_us(0);
                     
                     alert_id = 0;
                     setNewPeriod(5000);
                     m_period = 5000;
                     break;
-
-                default:
-                    current_step = 0;  // Resetăm secvența
-                    tone_active = false;
-                    step_counter = 0;
-                    buzzer.pulsewidth_us(0);  // Oprim tonul
-                    break;
             }
         } else if(4 == alert_id){
 
             switch (current_step) {
-                case 0:  // Prima notă: E4
+                case 0:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_G4);  // Frecvența pentru C4 (262 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_G4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_G4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_G4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 50ms, trecem la următoarea notă
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
-                        current_step++;  // Trecem la următoarea notă
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 1:  // A doua notă: D4 (Re) - 294 Hz
+                case 1:
                     if (!tone_active) {
-                        buzzer.period_us(1000000 / NOTE_B4);  // Frecvența pentru D4 (294 Hz)
-                        buzzer.pulsewidth_us((1000000 / NOTE_B4) / 2);  // Activăm tonul
+                        buzzer.period_us(1000000 / NOTE_B4);
+                        buzzer.pulsewidth_us((1000000 / NOTE_B4) / 2);
                         tone_active = true;
                         step_counter = 0;
-                    } else if (step_counter >= 10) {  // După 100ms, trecem la următoarea notă
-                        buzzer.pulsewidth_us(0);  // Oprim tonul
+                    } else if (step_counter >= 10) {
+                        buzzer.pulsewidth_us(0);
                         tone_active = false;
                         step_counter = 0;
-                        current_step++;  // Trecem la următoarea notă
+                        current_step++;
                     } else {
                         step_counter++;
                     }
                     break;
 
-                case 2:  // A treia notă: C4
+                case 2:
                     buzzer.period_us(2);
-                    buzzer.pulsewidth_us(1);  // Asigurăm că tonul este oprit
+                    buzzer.pulsewidth_us(1);
                     
                     alert_id = 0;
                     setNewPeriod(5000);

@@ -137,7 +137,7 @@ def create_component(category, component_name, project_root="."):
             lines = f.readlines()
 
         for i, line in enumerate(lines):
-            if '// Insert your new component below' in line:
+            if '/* USER NEW COMPONENT BEGIN */' in line:
                 lines.insert(i + 1, f'{category}::{component_name}(possible_argument);\n')
                 break
         

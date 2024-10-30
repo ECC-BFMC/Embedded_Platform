@@ -37,7 +37,7 @@
 const std::chrono::milliseconds g_baseTick = std::chrono::milliseconds(1); // microseconds
 
 // Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART communication, the inputs have to be transmitter and receiver pins. 
-UnbufferedSerial g_rpi(USBTX, USBRX, 19200);
+UnbufferedSerial g_rpi(USBTX, USBRX, 115200);
 
 // It's a task for blinking periodically the built-in led on the Nucleo board, signaling the code is uploaded on the nucleo.
 periodics::CBlinker g_blinker(g_baseTick * 500, LED1);
@@ -51,7 +51,7 @@ periodics::CInstantConsumption g_instantconsumption(g_baseTick * 1000, A2, g_rpi
 periodics::CTotalVoltage g_totalvoltage(g_baseTick*3000, A4, g_rpi);
 
 // It's a task for sending periodically the IMU values
-periodics::CImu g_imu(g_baseTick*100, g_rpi, I2C_SDA, I2C_SCL);
+periodics::CImu g_imu(g_baseTick*150, g_rpi, I2C_SDA, I2C_SCL);
 
 //PIN for a motor speed in ms, inferior and superior limit
 drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500); //speed in cm/s
@@ -60,7 +60,7 @@ drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500); //speed in cm/s
 drivers::CSteeringMotor g_steeringDriver(D4, -250, 250);
 
 // Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface.
-brain::CRobotStateMachine g_robotstatemachine(g_baseTick * 100, g_rpi, g_steeringDriver, g_speedingDriver);
+brain::CRobotStateMachine g_robotstatemachine(g_baseTick * 50, g_rpi, g_steeringDriver, g_speedingDriver);
 
 periodics::CResourcemonitor g_resourceMonitor(g_baseTick * 5000, g_rpi);
 
@@ -101,7 +101,10 @@ utils::CTask* g_taskList[] = {
     &g_serialMonitor,
     &g_powermanager,
     &g_resourceMonitor,
-    &g_alerts
+    &g_alerts,
+    // USER NEW PERIODICS BEGIN -
+    
+    // USER NEW PERIODICS END
 }; 
 
 // Create the task manager, which applies periodically the tasks, miming a parallelism. It needs the list of task and the time base in seconds. 

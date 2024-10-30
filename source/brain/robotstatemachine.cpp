@@ -57,6 +57,8 @@ namespace brain{
         , m_ticksRun(0)
         , m_targetTime(0)
         , m_period((uint16_t)(f_period.count()))
+        , m_speed(0)
+        , m_steering(0)
     {
     }
 
@@ -75,18 +77,32 @@ namespace brain{
      */
     void CRobotStateMachine::_run()
     {   
+        char buffer[100];
         switch(m_state)
         {
             // speed state - control the dc motor rotation speed and the steering angle. 
             case 1:
+                m_speedingControl.setSpeed(-m_speed); // Set the reference speed
+                snprintf(buffer, sizeof(buffer), "@speed:%d;;\r\n", m_speed);
+                m_serialPort.write(buffer, strlen(buffer));
+                m_state = 0;
                 break;
 
             // Steering state
             case 2:
+                m_steeringControl.setAngle(m_steering); // control the steering angle
+                snprintf(buffer, sizeof(buffer), "@steer:%d;;\r\n", m_steering);
+                m_serialPort.write(buffer, strlen(buffer));
+                m_state = 0;
                 break;
 
             // Brake state
             case 3:
+                m_steeringControl.setAngle(m_steering); // control the steering angle 
+                m_speedingControl.setBrake();
+                snprintf(buffer, sizeof(buffer), "@brake:1;;\r\n");
+                m_serialPort.write(buffer, strlen(buffer));
+                m_state = 0;
                 break;
 
             // State responsible for configuring the vehicle's speed and steering over a specified duration.
@@ -96,7 +112,7 @@ namespace brain{
                 {
                     m_speedingControl.setSpeed(0);
                     m_steeringControl.setAngle(0);
-                    m_state = 1;
+                    m_state = 0;
                     m_serialPort.write("@vcd:0;0;0;;\r\n", 15);
                 }
                 else
@@ -133,8 +149,7 @@ namespace brain{
 
                 m_state = 1;
 
-                m_speedingControl.setSpeed(-l_speed); // Set the reference speed
-                sprintf(b,"%d",l_speed);
+                m_speed = l_speed;
             }
             else{
                 sprintf(b,"kl 30 is required!!");
@@ -170,8 +185,7 @@ namespace brain{
 
                 m_state = 2;
 
-                m_steeringControl.setAngle(l_angle); // control the steering angle 
-                sprintf(b,"%d", l_angle);
+                m_steering = l_angle;
             }
             else{
                 sprintf(b,"kl 30 is required!!");
@@ -203,9 +217,8 @@ namespace brain{
             }
             
             m_state = 3;
-            m_steeringControl.setAngle(l_angle); // control the steering angle 
-            m_speedingControl.setBrake();
-            sprintf(b,"%d", l_angle);           
+
+            m_steering = l_angle;           
         }
         else
         {

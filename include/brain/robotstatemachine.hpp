@@ -90,6 +90,9 @@ namespace brain
             uint16_t m_targetTime;
 
             uint16_t m_period;
+
+            int m_speed;
+            int m_steering;
         
     }; // class CRobotStateMachine
 }; // namespace brain

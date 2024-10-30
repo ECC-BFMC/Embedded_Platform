@@ -129,18 +129,15 @@ namespace drivers{
                             auto l_pair = m_serialSubscriberMap.find(l_msgID); // Search the key and gets the callback function pair
                             if (l_pair != m_serialSubscriberMap.end()) // Check the existence of key 
                             {
-                                char l_resp[128]; // Initial response message
+                                char l_resp[128] = {0}; // Initial response message
+
                                 l_pair->second(l_msg,l_resp); // Call the attached function with this parameters.
                                 char formattedResp[256];
-                                if (strlen(l_resp) == 0)
-                                {
-                                    snprintf(formattedResp, sizeof(formattedResp), "%s", "no response given");
-                                }
-                                else
+                                if (strlen(l_resp) > 0)
                                 {
                                     snprintf(formattedResp, sizeof(formattedResp), "@%s:%s;;\r\n", l_msgID, l_resp);
+                                    m_serialPort.write(formattedResp,strlen(formattedResp)); // Create the response message
                                 }
-                                m_serialPort.write(formattedResp,strlen(formattedResp)); // Create the response message
                                 
                                 // m_serialPort.write("@%s:%s\r\n",l_msgID,l_resp); // Create the response message
                             }

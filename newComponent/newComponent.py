@@ -136,9 +136,18 @@ def create_component(category, component_name, project_root="."):
         with open(os.path.join(filename_Emb, "source", "main.cpp"), "r") as f:
             lines = f.readlines()
 
+        # print(lines)
+
         for i, line in enumerate(lines):
             if '/* USER NEW COMPONENT BEGIN */' in line:
-                lines.insert(i + 1, f'{category}::{component_name}(possible_argument);\n')
+                if "periodics" == category:
+                    lines.insert(i + 1, f'{category}::{component_name} g_{component_name.lower()}(g_baseTick * NO_OF_MILISECONDS);\n')
+                else:
+                    lines.insert(i + 1, f'{category}::{component_name} g_{component_name.lower()}(possible_argument);\n')
+
+            if '// USER NEW PERIODICS BEGIN' in line and "periodics" == category:
+                print("Periodics")
+                lines.insert(i + 1, f'    &g_{component_name.lower()},\n')
                 break
         
         with open(os.path.join(filename_Emb, "source", "main.cpp"), 'w') as file:

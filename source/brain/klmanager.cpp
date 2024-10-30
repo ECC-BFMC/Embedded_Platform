@@ -87,7 +87,8 @@ namespace brain
                     ThisThread::sleep_for(chrono::milliseconds(50));
                     m_baterry.serialCallbackTOTALVcommand("0", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
-                    m_robotStateMachine.serialCallbackVCDcommand("0;0;2", response);
+                    // m_robotStateMachine.serialCallbackVCDcommand("0;0;2", response);
+                    m_robotStateMachine.serialCallbackBRAKEcommand("0", response);
                     ThisThread::sleep_for(chrono::milliseconds(50));
                     m_resourceM.serialCallbackRESMONCommand("0", response);
                     uint8_globalsV_value_of_kl = 0;

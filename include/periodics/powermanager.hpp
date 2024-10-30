@@ -80,13 +80,8 @@ namespace periodics
 
             uint16_t m_period;
 
-            PwmOut buzzer;
+            uint8_t m_warningCounter;
 
-            int current_step;
-            int step_counter;
-            bool tone_active;
-            bool warning_active;
-            int note_count;  // Indexul pentru notele din secvență
     }; // class CPowermanager
 }; // namespace brain
 

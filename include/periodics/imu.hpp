@@ -105,6 +105,7 @@ namespace periodics
             s32 m_velocityZ;
             uint8_t m_velocityStationaryCounter;
             uint64_t m_delta_time;
+            uint8_t m_period;
     }; // class CImu
 
 }; // namespace utils

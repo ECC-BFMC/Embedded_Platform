@@ -103,7 +103,7 @@ namespace periodics
     : utils::CTask(f_period)
     , m_isActive(false)
     , m_period((uint16_t)(f_period.count()))
-    , buzzer(PA_15)
+    , buzzer(PB_7)
     , current_step(0)
     , step_counter(0)
     , tone_active(false)

@@ -81,6 +81,7 @@ namespace periodics
             uint16_t m_period;
 
             uint8_t m_warningCounter;
+            uint8_t m_shutdownCounter;
 
     }; // class CPowermanager
 }; // namespace brain

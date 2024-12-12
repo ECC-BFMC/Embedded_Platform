@@ -44,6 +44,7 @@
 #define _1_char 1
 #define scale_factor 1000
 #define counter_target 250
+#define counter_shutdown 15
 
 // TODO: Add your code here
 namespace periodics
@@ -68,6 +69,7 @@ namespace periodics
     , m_alerts(f_alerts)
     , m_period((uint16_t)(f_period.count()))
     , m_warningCounter(0)
+    , m_shutdownCounter(0)
     {
         /* constructor behaviour */
     }
@@ -108,8 +110,6 @@ namespace periodics
         if((battery_shutdownVoltage < uint16_globalsV_battery_totalVoltage) && (uint16_globalsV_battery_totalVoltage <= battery_shutdownWarning))
         {
             m_warningCounter += 1;
-            snprintf(buffer, sizeof(buffer), "@m_warningCounter:%hhu;;\r\n", m_warningCounter);
-            m_serial.write(buffer, strlen(buffer));
 
             if((m_warningCounter == counter_target) && (uint32_globalsV_numberOfMiliseconds_Total > 0))
             {
@@ -135,9 +135,10 @@ namespace periodics
             }   
         }
         else if (uint16_globalsV_battery_totalVoltage <= battery_shutdownVoltage)
-        {
-            return;
-            if(uint32_globalsV_numberOfMiliseconds_Total%display_interval_miliseconds == 0)
+        {   
+            m_shutdownCounter += 1;
+
+            if(m_shutdownCounter == counter_shutdown)
             {
                 snprintf(buffer, sizeof(buffer), "@shutdown:ack;;\r\n");
                 m_serial.write(buffer, strlen(buffer));

@@ -165,7 +165,7 @@ namespace periodics{
 
         char buffer[_24_chars];
 
-        snprintf(buffer, sizeof(buffer), "@instant:%d;;\r\n", (int)((currentEMA*m_period)/miliseconds_in_H));
+        snprintf(buffer, sizeof(buffer), "@instant:%d;;\r\n", currentEMA);
         m_serial.write(buffer,strlen(buffer));
     }
 

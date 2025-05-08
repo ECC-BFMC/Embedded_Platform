@@ -54,6 +54,7 @@ namespace periodics{
         , m_pin(f_pin)
         , m_serial(f_serial)
         , m_isActive(false)
+        , m_adcCounter(0)
     {
     }
 
@@ -92,6 +93,8 @@ namespace periodics{
 
     void CTotalVoltage::void_TotalSafetyMeasure()
     {
+        if(m_adcCounter < 10) {m_adcCounter++; return;}
+
         uint64_t l_rps = m_pin.read_u16();
 
         l_rps *= scale_factor;

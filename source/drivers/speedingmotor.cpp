@@ -66,7 +66,14 @@ namespace drivers{
      */
     void CSpeedingMotor::setSpeed(int f_speed)
     {
+        // char buffer[100];
+        // snprintf(buffer, sizeof(buffer), "Initial value, Step Value: %d\r\n", step_value);
+        // m_serial.write(buffer, strlen(buffer));
+
         step_value = interpolate(-f_speed, speedValuesP, speedValuesN, stepValues, 25);
+
+        // snprintf(buffer, sizeof(buffer), "Speed requested: %d mm/s, Step Value: %d\n", f_speed, step_value);
+        // m_serial.write(buffer, strlen(buffer));
 
         m_pwm_pin.pulsewidth_us(conversion(f_speed));
     };
@@ -91,39 +98,80 @@ namespace drivers{
     * @param size The size of the arrays.
     * @return The new value for the step value
     */
+    // int16_t CSpeedingMotor::interpolate(int speed, const int speedValuesP[], const int speedValuesN[], const int stepValues[], int size)
+    // {
+    //     if(speed <= speedValuesP[0]){
+    //         if (speed >= speedValuesN[0])
+    //         {
+    //             return stepValues[0];
+    //         }
+    //         else{
+    //             for(uint8_t i=1; i<size; i++)
+    //             {
+    //                 if (speed >= speedValuesN[i])
+    //                 {
+    //                     int slope = (stepValues[i] - stepValues[i-1]) / (speedValuesN[i] - speedValuesN[i-1]);
+    //                     return stepValues[i-1] + slope * (speed - speedValuesN[i-1]);
+    //                 }
+    //             }
+    //         }
+            
+    //     } 
+    //     if(speed >= speedValuesP[size-1]) return stepValues[size-1];
+    //     if(speed <= speedValuesN[size-1]) return stepValues[size-1];
+
+    //     for(uint8_t i=1; i<size; i++)
+    //     {
+    //         if (speed <= speedValuesP[i])
+    //         {
+    //             int slope = (stepValues[i] - stepValues[i-1]) / (speedValuesP[i] - speedValuesP[i-1]);
+    //             return stepValues[i-1] + slope * (speed - speedValuesP[i-1]);
+    //         }
+    //     }
+
+    //     return -1;
+    // }
     int16_t CSpeedingMotor::interpolate(int speed, const int speedValuesP[], const int speedValuesN[], const int stepValues[], int size)
     {
+        const int SCALE = 1000; // Factor de scalare pentru precizie
+        // Pentru valorile negative
         if(speed <= speedValuesP[0]){
             if (speed >= speedValuesN[0])
             {
                 return stepValues[0];
             }
-            else{
-                for(uint8_t i=1; i<size; i++)
+            else {
+                for(uint8_t i = 1; i < size; i++)
                 {
                     if (speed >= speedValuesN[i])
                     {
-                        int slope = (stepValues[i] - stepValues[i-1]) / (speedValuesN[i] - speedValuesN[i-1]);
-                        return stepValues[i-1] + slope * (speed - speedValuesN[i-1]);
+                        int deltaStep = (stepValues[i] - stepValues[i-1]) * SCALE;
+                        int deltaSpeed = speedValuesN[i] - speedValuesN[i-1];
+                        int slope = deltaStep / deltaSpeed; // Calculăm panta în format fixed-point
+                        int interpFixed = stepValues[i-1] * SCALE + slope * (speed - speedValuesN[i-1]);
+                        return (int16_t)(interpFixed / SCALE);
                     }
                 }
             }
-            
-        } 
+        }
         if(speed >= speedValuesP[size-1]) return stepValues[size-1];
         if(speed <= speedValuesN[size-1]) return stepValues[size-1];
 
-        for(uint8_t i=1; i<size; i++)
+        // Pentru valorile pozitive
+        for(uint8_t i = 1; i < size; i++)
         {
             if (speed <= speedValuesP[i])
             {
-                int slope = (stepValues[i] - stepValues[i-1]) / (speedValuesP[i] - speedValuesP[i-1]);
-                return stepValues[i-1] + slope * (speed - speedValuesP[i-1]);
+                int deltaStep = (stepValues[i] - stepValues[i-1]) * SCALE;
+                int deltaSpeed = speedValuesP[i] - speedValuesP[i-1];
+                int slope = deltaStep / deltaSpeed; // Panta în fixed-point
+                int interpFixed = stepValues[i-1] * SCALE + slope * (speed - speedValuesP[i-1]);
+                return (int16_t)(interpFixed / SCALE);
             }
         }
-
         return -1;
     }
+
 
     /** @brief  It converts speed reference to duty cycle for pwm signal. 
      * 

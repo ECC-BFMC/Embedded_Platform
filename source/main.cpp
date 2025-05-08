@@ -54,7 +54,7 @@ periodics::CTotalVoltage g_totalvoltage(g_baseTick*3000, A4, g_rpi);
 periodics::CImu g_imu(g_baseTick*150, g_rpi, I2C_SDA, I2C_SCL);
 
 //PIN for a motor speed in ms, inferior and superior limit
-drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500); //speed in cm/s
+drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500); //speed in mm/s
 
 //PIN for angle in servo degrees, inferior and superior limit
 drivers::CSteeringMotor g_steeringDriver(D4, -250, 250);

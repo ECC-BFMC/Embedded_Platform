@@ -70,6 +70,8 @@ namespace periodics
             UnbufferedSerial&          m_serial;
             /** @brief Active flag  */
             bool                m_isActive;
+            /* @brief ADC counter */
+            uint8_t            m_adcCounter;
             
     }; // class CTotalVoltage
 }; // namespace periodics

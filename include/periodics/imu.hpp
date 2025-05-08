@@ -54,7 +54,7 @@ namespace periodics
         public:
             /* Constructor */
             CImu(
-                std::chrono::milliseconds    f_period, 
+                std::chrono::milliseconds    f_period,
                 UnbufferedSerial& f_serial,
                 PinName SDA,
                 PinName SCL

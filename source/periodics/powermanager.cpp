@@ -140,6 +140,8 @@ namespace periodics
 
             if(m_shutdownCounter == counter_shutdown)
             {
+                return;
+                
                 snprintf(buffer, sizeof(buffer), "@shutdown:ack;;\r\n");
                 m_serial.write(buffer, strlen(buffer));
 

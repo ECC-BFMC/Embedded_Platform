@@ -37,6 +37,7 @@
 #define ref_A1_value_8925mV_scaled (ref_A1_value_8925mV*scale_factor)
 #define ref_A1_voltage_mV_scaled (ref_A1_voltage_mV*scale_factor)
 #define adc_to_voltage_ratio ref_A1_value_8925mV_scaled/ref_A1_voltage_mV
+#define no_battery_connected_value 6099
 
 namespace periodics{
     /** \brief  Class constructor
@@ -96,6 +97,12 @@ namespace periodics{
         if(m_adcCounter < 10) {m_adcCounter++; return;}
 
         uint64_t l_rps = m_pin.read_u16();
+
+        if(l_rps <= no_battery_connected_value)
+        {
+            uint16_globalsV_battery_totalVoltage = 0;
+            return;
+        }
 
         l_rps *= scale_factor;
         l_rps /= adc_to_voltage_ratio;

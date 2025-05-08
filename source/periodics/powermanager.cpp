@@ -134,14 +134,12 @@ namespace periodics
                 bool_globalsV_warningFlag = !bool_globalsV_warningFlag;
             }   
         }
-        else if (uint16_globalsV_battery_totalVoltage <= battery_shutdownVoltage)
+        else if ((uint16_globalsV_battery_totalVoltage <= battery_shutdownVoltage) && (uint16_globalsV_battery_totalVoltage > 0))
         {   
             m_shutdownCounter += 1;
 
             if(m_shutdownCounter == counter_shutdown)
-            {
-                return;
-                
+            {   
                 snprintf(buffer, sizeof(buffer), "@shutdown:ack;;\r\n");
                 m_serial.write(buffer, strlen(buffer));
 

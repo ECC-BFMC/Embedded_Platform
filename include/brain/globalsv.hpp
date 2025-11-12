@@ -38,22 +38,22 @@
 
 // TODO: Add your code here
 
+extern uint64_t uint64_globalsV_instant_mAmpsH;
+
 extern uint32_t uint32_globalsV_consumption_Total_mAmpsH;
 extern uint32_t uint32_globalsV_numberOfMiliseconds_Total;
-extern uint32_t uint32_globalsV_instant_mAmpsH;
 extern uint32_t uint32_globalsV_range_left_shutdown;
 extern uint32_t currentEMA;
 
 extern uint16_t uint16_globalsV_battery_totalVoltage;
-extern uint16_t int_globalsV_instantConsumption_Avg_Total_mAmpsH;
 extern uint16_t uint16_globalsV_battery_mAmps_user;
 extern uint16_t readings[11]; 
 
 extern uint8_t uint8_globalsV_value_of_kl;
 
-extern uint8_t alpha_scaled;
-extern uint8_t windowSize; 
-extern uint8_t indexul; 
+extern uint8_t uint8_globalsV_alpha_scaled;
+extern uint8_t uint8_globalsV_windowSize; 
+extern uint8_t uint8_globalsV_index; 
 
 extern bool bool_globalsV_imu_isActive;
 extern bool bool_globalsV_instant_isActive;

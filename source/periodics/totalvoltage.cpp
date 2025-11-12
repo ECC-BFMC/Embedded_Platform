@@ -31,13 +31,13 @@
 #include <periodics/totalvoltage.hpp>
 
 #define _18_chars 256
-#define ref_A1_value_8925mV 53000
-#define ref_A1_voltage_mV 8000
+#define ref_A1_value_8925mV 40601
+#define ref_A1_voltage_mV 8925
 #define scale_factor 1000
 #define ref_A1_value_8925mV_scaled (ref_A1_value_8925mV*scale_factor)
-#define ref_A1_voltage_mV_scaled (ref_A1_voltage_mV*scale_factor)
 #define adc_to_voltage_ratio ref_A1_value_8925mV_scaled/ref_A1_voltage_mV
-#define no_battery_connected_value 6099
+#define no_battery_connected_value 27300
+#define two_seconds_in_task_calls 20
 
 namespace periodics{
     /** \brief  Class constructor
@@ -94,7 +94,7 @@ namespace periodics{
 
     void CTotalVoltage::void_TotalSafetyMeasure()
     {
-        if(m_adcCounter < 10) {m_adcCounter++; return;}
+        if(m_adcCounter < two_seconds_in_task_calls) {m_adcCounter++; return;}
 
         uint64_t l_rps = m_pin.read_u16();
 
@@ -105,7 +105,7 @@ namespace periodics{
         }
 
         l_rps *= scale_factor;
-        l_rps /= adc_to_voltage_ratio;
+        l_rps /= (adc_to_voltage_ratio);
 
         uint16_globalsV_battery_totalVoltage = (uint16_t)l_rps;
     }

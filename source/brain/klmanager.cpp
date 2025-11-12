@@ -103,6 +103,7 @@ namespace brain
                     if(!bool_globalsV_instant_isActive) m_instant.serialCallbackINSTANTcommand("1", response);
                     if(!bool_globalsV_battery_isActive) m_baterry.serialCallbackTOTALVcommand("1", response);
                     if(!bool_globalsV_resource_isActive) m_resourceM.serialCallbackRESMONCommand("1", response);
+                    m_robotStateMachine.serialCallbackBRAKEcommand("0", response);
                     m_alerts.alertsCommand("4", response);
                 }
                 if(l_keyValue == 30 && (uint8_globalsV_value_of_kl != 30)){

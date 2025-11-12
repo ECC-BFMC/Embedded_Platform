@@ -38,6 +38,8 @@
 #include <climits>
 #include <chrono>
 
+#include <brain/globalsv.hpp>
+
 namespace drivers
 {
     /**
@@ -48,7 +50,11 @@ namespace drivers
     {
         public:
             virtual void setAngle(int f_angle) = 0 ;
-            virtual bool inRange(int f_angle) = 0 ;
+            virtual int inRange(int f_angle) = 0 ;
+            virtual int get_upper_limit() = 0 ;
+            virtual int get_lower_limit() = 0 ;
+
+            int16_t pwm_value = 0;
     };
 
 
@@ -72,33 +78,40 @@ namespace drivers
             /* Set angle */
             void setAngle(int f_angle); 
             /* Check if angle in range */
-            bool inRange(int f_angle);
+            int inRange(int f_angle);
+            int get_upper_limit();
+            int get_lower_limit();
         private:
             /** @brief PWM output pin */
             PwmOut m_pwm_pin;
             /** @brief 0 default */
-            int zero_default = 153441; //0.07672070(7.6% duty cycle) * 20000µs(ms_period) * 100(scale factor)
+            int zero_default = 1500; //0.075(7.5% duty cycle) * 20000µs(ms_period)
             /** @brief ms_period */
             int8_t ms_period = 20; // 20000µs
-            /** @brief step_value */
-            int step_value = 1901; // 0.0009505 * 20000µs(ms_period) * 100(scale factor)
+            
             /** @brief Inferior limit */
             const int m_inf_limit;
             /** @brief Superior limit */
             const int m_sup_limit;
 
             /* convert angle degree to duty cycle for pwm signal */
-            int conversion(int f_angle); //angle to duty cycle
+            int computePWMPolynomial(int steering); //angle to duty cycle
 
-            /* interpolate the step value and the zero default based on the steering value */
-            std::pair<int, int> interpolate(int steering, const int steeringValueP[], const int steeringValueN[], const int stepValues[], const int zeroDefaultValues[], int size);
+            /* interpolate the pwm value and the zero default based on the steering value */
+            int16_t interpolate(int steering, const int steeringValueP[], const int steeringValueN[], const int pwmValuesP[], const int pwmValuesN[], int size);
 
             // Predefined values for steering reference and interpolation
-            // All the values have a scale factor applied (*100)
             const int steeringValueP[3] = {0, 150, 200};
             const int steeringValueN[3] = {0, -150, -200};
-            const int stepValues[3] = {1901, 1718, 1903};
-            const int zeroDefaultValues[3] = {153441, 154297, 153441};
+
+            const int pwmValuesP[3] = {
+                1500, 1801, 1914
+            };
+
+            const int pwmValuesN[3] = {
+                1500, 1285, 1154
+            };
+
     }; // class ISteeringCommand
 }; // namespace drivers
 

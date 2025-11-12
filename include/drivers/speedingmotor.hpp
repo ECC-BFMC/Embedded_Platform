@@ -34,6 +34,7 @@
 
 /* The mbed library */
 #include <mbed.h>
+#include <brain/globalsv.hpp>
 
 namespace drivers
 {
@@ -45,8 +46,12 @@ namespace drivers
     {
         public:
             virtual void setSpeed(int f_speed) = 0 ;
-            virtual bool inRange(int f_speed) = 0 ;
+            virtual int inRange(int f_speed) = 0 ;
             virtual void setBrake() = 0 ;
+            virtual int get_upper_limit() = 0 ;
+            virtual int get_lower_limit() = 0 ;
+            
+            int16_t pwm_value = 0; 
     };
 
     /**  
@@ -69,10 +74,11 @@ namespace drivers
             /* Set speed */
             void setSpeed(int f_speed); 
             /* Check speed is in range */
-            bool inRange(int f_speed);
+            int inRange(int f_speed);
             /* Set brake */
-            void setBrake(); 
-
+            void setBrake();
+            int get_upper_limit();
+            int get_lower_limit();
         private:
             /** @brief PWM output pin */
             PwmOut m_pwm_pin;
@@ -80,15 +86,16 @@ namespace drivers
             uint16_t zero_default = 1491; //0.074568(7.4% duty cycle) * 20000µs(ms_period)
             /** @brief 0 default */
             uint8_t ms_period = 20; // 20000µs
-            /** @brief step_value */
-            int16_t step_value = 102;  // 0.00051 * 20000µs(ms_period) * 10(scale factor)
+            
             /** @brief Inferior limit */
             const int m_inf_limit;
             /** @brief Superior limit */
             const int m_sup_limit;
 
-            /* interpolate the step value based on the speed value */
-            int16_t interpolate(int speed, const int speedValuesP[], const int speedValuesN[], const int stepValues[], int size);
+            /* interpolate the pwm value based on the speed value */
+            int16_t interpolate(int speed, const int speedValuesP[], const int speedValuesN[], const int pwmValuesP[], const int pwmValuesN[], int size);
+
+            int computePWMPolynomial(int speed); //angle to duty cycle
 
             // Scaled predefined values for speeding reference and interpolation
             const int speedValuesP[25] = {
@@ -103,14 +110,18 @@ namespace drivers
                 -300, -350, -400, -450, -500
             };
 
-            // StepValues have a scale factor applied (*10)
-            const int stepValues[25] = {
-                214, 176, 152, 134, 120, 110, 102, 94, 86, 82,
-                78, 74, 70, 68, 66, 64, 60, 58, 56, 50,
-                48, 42, 38, 36, 34
+            const int pwmValuesP[25] = {
+                1576, 1579, 1582, 1584, 1587, 1590, 1593, 1594, 1594, 1597,
+                1600, 1602, 1603, 1606, 1609, 1612, 1611, 1612, 1614, 1621,
+                1635, 1638, 1643, 1653, 1661
             };
 
-            int conversion(int f_speed); //angle to duty cycle
+            const int pwmValuesN[25] = {
+                1405, 1403, 1399, 1397, 1395, 1392, 1389, 1387, 1387, 1384,
+                1381, 1380, 1379, 1375, 1372, 1369, 1371, 1369, 1367, 1361,
+                1347, 1344, 1339, 1329, 1321
+            };
+
     }; // class CSpeedingMotor
 }; // namespace drivers
 

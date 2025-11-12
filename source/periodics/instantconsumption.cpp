@@ -30,14 +30,10 @@
 
 #include <periodics/instantconsumption.hpp>
 
-#define g_baseTick 0.0001
-#define v_ref_ADC 3.3
-#define r_shunt 0.002
 #define _24_chars 24
-#define ref_A2_value_250mAmps 548
-#define ref_A2_current_mA 250
-#define miliseconds_in_H 3600000
 #define scaleFactor 1000
+#define ADC_OFFSET_0A_SCALED_1000  6553500
+#define adc_steps_per_1000mAmps_scaled_1000 524280
 
 namespace periodics{
     /** \brief  Class constructor
@@ -97,7 +93,7 @@ namespace periodics{
     * @brief Measures and filters the instantaneous current consumption, updating global tracking variables.
     * 
     * This function reads an analog input value representing current consumption, scales it to milliamps, and stores it in a circular buffer.
-    * A moving average of the last `windowSize` readings is computed to smooth out short-term fluctuations. Additionally, an Exponential Moving Average (EMA)
+    * A moving average of the last `uint8_globalsV_windowSize` readings is computed to smooth out short-term fluctuations. Additionally, an Exponential Moving Average (EMA)
     * is updated to provide a weighted average of the current consumption over time. The total consumption and elapsed time are accumulated for further processing.
     *
     * The function is called periodically according to the task period (in milliseconds). It calculates both the raw instantaneous current and the smoothed
@@ -106,14 +102,14 @@ namespace periodics{
     * @param task_period The interval (in milliseconds) between each call to the function, used to accumulate total elapsed time.
     * 
     * Global Variables:
-    * - `uint32_globalsV_instant_mAmpsH`: Stores the most recent instantaneous current value, scaled in milliamps.
+    * - `uint64_globalsV_instant_mAmpsH`: Stores the most recent instantaneous current value, scaled in milliamps.
     * - `uint32_globalsV_consumption_Total_mAmpsH`: Accumulates the total current consumption in milliamps over time.
     * - `uint32_globalsV_numberOfMiliseconds_Total`: Accumulates the total time passed (in milliseconds) for consumption calculations.
     * 
     * Steps:
     * 1. Read the current sensor (pin_value) and scale the result to milliamps.
-    * 2. Store the current value in a circular buffer (size = `windowSize`).
-    * 3. Calculate the moving average (mean) over the last `windowSize` readings.
+    * 2. Store the current value in a circular buffer (size = `uint8_globalsV_windowSize`).
+    * 3. Calculate the moving average (mean) over the last `uint8_globalsV_windowSize` readings.
     * 4. Update the Exponential Moving Average (EMA) to smooth fluctuations over time.
     * 5. Accumulate total current consumption and elapsed time for further analysis.
     */
@@ -121,21 +117,37 @@ namespace periodics{
     {
         uint16_t pin_value = m_pin.read_u16();
 
-        uint32_globalsV_instant_mAmpsH  = (pin_value*ref_A2_current_mA/ref_A2_value_250mAmps);
+        // char buffer[_24_chars];
 
-        readings[indexul % windowSize] = (uint16_t)uint32_globalsV_instant_mAmpsH;
-        indexul++;
+        uint64_globalsV_instant_mAmpsH = pin_value * scaleFactor; // Scale for fix-point arithmetic
+
+        if (uint64_globalsV_instant_mAmpsH <= ADC_OFFSET_0A_SCALED_1000) {
+            uint64_globalsV_instant_mAmpsH = 0; // Ensure no negative values
+        } else {
+            uint64_globalsV_instant_mAmpsH -= ADC_OFFSET_0A_SCALED_1000;
+        }
+
+        if (uint64_globalsV_instant_mAmpsH <= 0) {
+            uint64_globalsV_instant_mAmpsH = 0; // Ensure no negative values
+        } else {
+            uint64_globalsV_instant_mAmpsH *= scaleFactor; // Scale to mAmpsH
+
+            uint64_globalsV_instant_mAmpsH /= adc_steps_per_1000mAmps_scaled_1000;
+        }
+
+        readings[uint8_globalsV_index % uint8_globalsV_windowSize] = (uint16_t)uint64_globalsV_instant_mAmpsH;
+        uint8_globalsV_index++;
 
         int sum = 0;
-        for (uint8_t i = 0; i < windowSize; i++) {
+        for (uint8_t i = 0; i < uint8_globalsV_windowSize; i++) {
             sum += readings[i];
         }
         
-        int medianCurrent = sum / windowSize;
+        int medianCurrent = sum / uint8_globalsV_windowSize;
 
-        currentEMA = ((alpha_scaled * medianCurrent) + ((scaleFactor - alpha_scaled) * currentEMA))/scaleFactor;
+        currentEMA = ((uint8_globalsV_alpha_scaled * medianCurrent) + ((scaleFactor - uint8_globalsV_alpha_scaled) * currentEMA))/scaleFactor;
 
-        uint32_globalsV_consumption_Total_mAmpsH += uint32_globalsV_instant_mAmpsH;
+        uint32_globalsV_consumption_Total_mAmpsH += uint64_globalsV_instant_mAmpsH;
         uint32_globalsV_numberOfMiliseconds_Total += task_period;
     }
 
@@ -165,7 +177,7 @@ namespace periodics{
 
         char buffer[_24_chars];
 
-        snprintf(buffer, sizeof(buffer), "@instant:%d;;\r\n", currentEMA);
+        snprintf(buffer, sizeof(buffer), "@instant:%lu;;\r\n", currentEMA);
         m_serial.write(buffer,strlen(buffer));
     }
 

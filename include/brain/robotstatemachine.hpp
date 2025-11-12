@@ -72,6 +72,12 @@ namespace brain
             void serialCallbackBRAKEcommand(char const * a, char * b);
             /* Serial callback method for vcd */
             void serialCallbackVCDcommand(char const * message, char * response);
+            /* Serial callback method for vcd calib */
+            void serialCallbackVCDCalibcommand(char const * message, char * response);
+            /* Serial callback method for steer limits */
+            void serialCallbackSteerLimitscommand(char const * message, char * response);
+            /* Serial callback method for alive */
+            void serialCallbackAlivecommand(char const * message, char * response);
 
         private:
             /* Contains the state machine, which control the lower level drivers (motor and steering) based the current state. */
@@ -93,6 +99,8 @@ namespace brain
 
             int m_speed;
             int m_steering;
+
+            bool m_calibON;
         
     }; // class CRobotStateMachine
 }; // namespace brain

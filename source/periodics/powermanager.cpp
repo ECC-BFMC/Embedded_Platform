@@ -30,16 +30,12 @@
 
 #include "periodics/powermanager.hpp"
 
-#define miliseconds_in_h 3600000
 #define seconds_in_h 3600
-#define display_interval_miliseconds 15000
-#define battery_mAmps 5500
+#define battery_mAmps 6000
 #define battery_cells 2
 #define battery_maxVoltage (4200 * battery_cells)
-#define battery_shutdownVoltage 7100
+#define battery_shutdownVoltage 7000
 #define battery_shutdownWarning 7200
-#define maxPercent 100
-#define zeroPercent 0
 #define _22_chars 22
 #define _1_char 1
 #define scale_factor 1000
@@ -93,10 +89,6 @@ namespace periodics
 
         int mAmps_actual = (uint16_globalsV_battery_totalVoltage * battery_mAmps_var) / battery_maxVoltage;
 
-        uint32_t temp_average = uint32_globalsV_consumption_Total_mAmpsH / uint32_globalsV_numberOfMiliseconds_Total;
-
-        int_globalsV_instantConsumption_Avg_Total_mAmpsH = (uint16_t)temp_average;
-
         uint32_globalsV_range_left_shutdown = (mAmps_actual - (battery_shutdownVoltage*battery_mAmps_var/battery_maxVoltage))*scale_factor;
 
         uint32_globalsV_range_left_shutdown /= (uint16_t)currentEMA;
@@ -110,6 +102,7 @@ namespace periodics
         if((battery_shutdownVoltage < uint16_globalsV_battery_totalVoltage) && (uint16_globalsV_battery_totalVoltage <= battery_shutdownWarning))
         {
             m_warningCounter += 1;
+            m_shutdownCounter = 0;
 
             if((m_warningCounter == counter_target) && (uint32_globalsV_numberOfMiliseconds_Total > 0))
             {

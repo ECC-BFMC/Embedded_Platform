@@ -59,6 +59,7 @@ namespace brain{
         , m_period((uint16_t)(f_period.count()))
         , m_speed(0)
         , m_steering(0)
+        , m_calibON(false)
     {
     }
 
@@ -82,7 +83,7 @@ namespace brain{
         {
             // speed state - control the dc motor rotation speed and the steering angle. 
             case 1:
-                m_speedingControl.setSpeed(-m_speed); // Set the reference speed
+                m_speedingControl.setSpeed(m_speed); // Set the reference speed
                 snprintf(buffer, sizeof(buffer), "@speed:%d;;\r\n", m_speed);
                 m_serialPort.write(buffer, strlen(buffer));
                 m_state = 0;
@@ -113,7 +114,13 @@ namespace brain{
                     m_speedingControl.setSpeed(0);
                     m_steeringControl.setAngle(0);
                     m_state = 0;
-                    m_serialPort.write("@vcd:0;0;0;;\r\n", 15);
+
+                    if(!m_calibON) m_serialPort.write("@vcd:0;0;0;;\r\n", 15);
+                    else{
+                       m_serialPort.write("@vcdCalib:0;0;;\r\n", 18);
+                       m_calibON = false;
+                    } 
+                    
                 }
                 else
                 {
@@ -142,14 +149,18 @@ namespace brain{
         {
             if(uint8_globalsV_value_of_kl == 30)
             {
-                if(!m_speedingControl.inRange(l_speed)){ // Check the received reference speed is within range
-                    sprintf(b,"The reference speed command is too high");
-                    return;
-                }
+                // if(!m_speedingControl.inRange(l_speed)){ // Check the received reference speed is within range
+                //     sprintf(b,"The reference speed command is too high/low");
+                //     return;
+                // }
+
+                // m_state = 1;
+
+                // m_speed = l_speed;
 
                 m_state = 1;
+                m_speed = m_speedingControl.inRange(l_speed);
 
-                m_speed = l_speed;
             }
             else{
                 sprintf(b,"kl 30 is required!!");
@@ -178,14 +189,17 @@ namespace brain{
         {
             if(uint8_globalsV_value_of_kl == 30)
             {
-                if( !m_steeringControl.inRange(l_angle)){ // Check the received steering angle
-                    sprintf(b,"The steering angle command is too high");
-                    return;
-                }
+                // if( !m_steeringControl.inRange(l_angle)){ // Check the received steering angle
+                //     sprintf(b,"The steering angle command is too high/low");
+                //     return;
+                // }
+
+                // m_state = 2;
+
+                // m_steering = l_angle;
 
                 m_state = 2;
-
-                m_steering = l_angle;
+                m_steering = m_steeringControl.inRange(l_angle);
             }
             else{
                 sprintf(b,"kl 30 is required!!");
@@ -211,14 +225,18 @@ namespace brain{
         uint32_t l_res = sscanf(a,"%d",&l_angle);
         if(1 == l_res)
         {
-            if(!m_steeringControl.inRange(l_angle)){
-                sprintf(b,"The steering angle command is too high");
-                return;
-            }
+            // if(!m_steeringControl.inRange(l_angle)){
+            //     sprintf(b,"The steering angle command is too high/low");
+            //     return;
+            // }
+            
+            // m_state = 3;
+
+            // m_steering = l_angle;
             
             m_state = 3;
+            m_steering = m_steeringControl.inRange(l_angle);
 
-            m_steering = l_angle;           
         }
         else
         {
@@ -248,7 +266,7 @@ namespace brain{
 
         m_targetTime = time_deciseconds;
 
-        if(parsed == 3 && speed <= 500 && speed >= -500 && steer <= 232 && steer >= -232)
+        if(parsed == 3 && speed < 501 && speed > -501 && steer < 233 && steer > -233)
         {
             sprintf(response, "%d;%d;%d", speed, steer, time_deciseconds);
 
@@ -259,12 +277,73 @@ namespace brain{
             m_state = 4;
 
             m_steeringControl.setAngle(steer);
-            m_speedingControl.setSpeed(-speed);
+            m_speedingControl.setSpeed(speed);
         }
         else
         {
             sprintf(response, "something went wrong");
         }
+    }
+
+    /** \brief  Serial callback actions for brake command
+     *
+     * This method aims to change the state of controller to brake and sets the steering angle to the received value. 
+     *
+     * @param a                   string to read data 
+     * @param b                   string to write data
+     * 
+     */
+    void CRobotStateMachine::serialCallbackVCDCalibcommand(char const * message, char * response)
+    {
+        int speed, steer;
+        uint8_t time_deciseconds;
+
+        uint8_t parsed = sscanf(message, "%d;%d;%hhu", &speed, &steer, &time_deciseconds);
+
+        if(uint8_globalsV_value_of_kl != 30){
+            sprintf(response,"kl 30 is required!!");
+            return;
+        }
+
+        m_targetTime = time_deciseconds;
+
+        if(parsed == 3 && speed < 501 && speed > -501 && steer < 273 && steer > -273)
+        {
+            m_ticksRun = 0;
+
+            m_targetTime = time_deciseconds * scale_ds_to_ms;
+
+            m_state = 4;
+
+            m_steeringControl.setAngle(steer);
+            m_speedingControl.setSpeed(speed);
+
+            sprintf(response, "%d;%d", m_speedingControl.pwm_value, m_steeringControl.pwm_value);
+
+            m_calibON = true;
+        }
+        else
+        {
+            sprintf(response, "something went wrong");
+        }
+    }
+
+    void CRobotStateMachine::serialCallbackSteerLimitscommand(char const * message, char * response)
+    {
+        uint8_t msg = 0;
+
+        (void)sscanf(message,"%hhu",&msg);
+
+        sprintf(response, "%d;%d", m_steeringControl.get_lower_limit(), m_steeringControl.get_upper_limit());
+    }
+
+    void CRobotStateMachine::serialCallbackAlivecommand(char const * message, char * response)
+    {
+        uint8_t alive = 0;
+
+        (void)sscanf(message,"%hhu",&alive);
+
+        sprintf(response,"1");
     }
 
 }; // namespace brain

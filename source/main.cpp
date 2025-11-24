@@ -33,8 +33,8 @@
 
 #define dummy_value 15
 
-// Base sample time for the task manager. The measurement unit of base sample time is second.
-const std::chrono::milliseconds g_baseTick = std::chrono::milliseconds(1); // microseconds
+// Base sample time for the task manager. The measurement unit of base sample time is milliseconds.
+const std::chrono::milliseconds g_baseTick = std::chrono::milliseconds(1);
 
 // Serial interface with the another device(like single board computer). It's an built-in class of mbed based on the UART communication, the inputs have to be transmitter and receiver pins. 
 UnbufferedSerial g_rpi(USBTX, USBRX, 115200);
@@ -65,7 +65,7 @@ drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500); //speed in mm/s
 drivers::CSteeringMotor g_steeringDriver(D4, -250, 250);
 
 // Create the motion controller, which controls the robot states and the robot moves based on the transmitted command over the serial interface.
-brain::CRobotStateMachine g_robotstatemachine(g_baseTick * 50, g_rpi, g_steeringDriver, g_speedingDriver);
+brain::CRobotStateMachine g_robotstatemachine(g_baseTick * 1, g_rpi, g_steeringDriver, g_speedingDriver);
 
 periodics::CResourcemonitor g_resourceMonitor(g_baseTick * 5000, g_rpi);
 

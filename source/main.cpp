@@ -76,6 +76,11 @@ periodics::CPowermanager g_powermanager(g_baseTick * 100, g_klmanager, g_rpi, g_
 brain::CBatterymanager g_batteryManager(dummy_value);
 
 /* USER NEW COMPONENT BEGIN */
+periodics::CLineSensor g_lineSensor(g_baseTick * 100, A0, 0.5f); // Check sensor every 100ms, pin A0, threshold 0.5
+drivers::CSpeaker g_speaker(PA_8, PA_9);
+g_speaker.setVolume(0.2); // Set initial volume to 20%
+g_speaker.playSong();
+
 
 /* USER NEW COMPONENT END */
 
@@ -111,7 +116,7 @@ utils::CTask* g_taskList[] = {
     &g_resourceMonitor,
     &g_alerts,
     // USER NEW PERIODICS BEGIN
-    
+    &g_lineSensor,
     // USER NEW PERIODICS END
 }; 
 

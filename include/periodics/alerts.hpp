@@ -23,6 +23,10 @@ namespace periodics
             ~CAlerts();
 
             void alertsCommand(char const * a, char * b);
+
+            /* Beep control */
+            void startBeep();
+            void stopBeep();
         private:
             /* private variables & method member */
 
@@ -43,7 +47,7 @@ namespace periodics
 
             uint8_t alert_id;
 
-    }; // class CAlerts
+            bool m_beep;
 }; // namespace periodics
 
 #endif // ALERTS_HPP

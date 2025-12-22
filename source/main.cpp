@@ -47,7 +47,7 @@ auto dummy = []() {
 // It's a task for blinking periodically the built-in led on the Nucleo board, signaling the code is uploaded on the nucleo.
 periodics::CBlinker g_blinker(g_baseTick * 500, LED1);
 
-periodics::CAlerts g_alerts(g_baseTick * 5000);
+periodics::CAlerts g_alerts(g_baseTick * 100);
 
 // // It's a task for sending periodically the instant current consumption of the battery
 periodics::CInstantConsumption g_instantconsumption(g_baseTick * 1000, A2, g_rpi);
@@ -76,8 +76,9 @@ periodics::CPowermanager g_powermanager(g_baseTick * 100, g_klmanager, g_rpi, g_
 brain::CBatterymanager g_batteryManager(dummy_value);
 
 /* USER NEW COMPONENT BEGIN */
-periodics::CLineSensor g_lineSensor(g_baseTick * 100, A0, 0.5f); // Check sensor every 100ms, pin A0, threshold 0.5
-drivers::CSpeaker g_speaker(PA_8, PA_9);
+DigitalOut g_PC7(PC_7, 1); // Configure PC_7 as output and drive it high
+periodics::CLineSensor g_lineSensor(g_baseTick * 100, PA_8); // Check sensor every 100ms, pin A0, threshold 0.5
+// drivers::CSpeaker g_speaker(PA_8, PA_9);
 
 /* USER NEW COMPONENT END */
 
@@ -141,8 +142,8 @@ uint8_t setup()
     g_rpi.write("\r\n", 2);
 
     // Start the speaker playing on startup
-    g_speaker.setVolume(0.2f);
-    g_speaker.playSong();
+    // g_speaker.setVolume(0.2f);
+    // g_speaker.playSong();
 
     return 0;    
 }

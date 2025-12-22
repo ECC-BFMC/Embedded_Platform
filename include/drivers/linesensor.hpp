@@ -22,16 +22,14 @@ namespace periodics
             /* Constructor */
             CLineSensor(
                 std::chrono::milliseconds f_period,
-                PinName f_sensor_pin,
-                float f_threshold
+                PinName f_sensor_pin
             );
             /* Destructor */
             ~CLineSensor();
 
         private:
             /* private variables & method member */
-            AnalogIn m_sensor;
-            float m_threshold;
+            DigitalIn m_sensor;
 
             /* Run method */
             virtual void _run();

@@ -8,12 +8,12 @@ namespace periodics
     * @brief Class constructor linesensor
     *
     */
-    CLineSensor::CLineSensor(std::chrono::milliseconds f_period, PinName f_sensor_pin, float f_threshold)
+    CLineSensor::CLineSensor(std::chrono::milliseconds f_period, PinName f_sensor_pin)
     : utils::CTask(f_period),
-      m_sensor(f_sensor_pin),
-      m_threshold(f_threshold)
+      m_sensor(f_sensor_pin)
     {
-        /* constructor behaviour */
+        /* configure internal pull to avoid floating reads */
+        m_sensor.mode(PullUp);
     }
 
     /** @brief  CLineSensor class destructor
@@ -24,7 +24,7 @@ namespace periodics
 
     void CLineSensor::_run()
     {
-        if (m_sensor.read() > m_threshold) {
+        if (m_sensor.read() == 0) {
             g_alerts.startBeep();
         } else {
             g_alerts.stopBeep();

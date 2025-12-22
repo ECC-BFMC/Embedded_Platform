@@ -7,6 +7,7 @@
 #include <chrono>
 #include <utils/task.hpp>
 
+namespace periodics { class CAlerts; }
 extern periodics::CAlerts g_alerts;
 
 namespace periodics
@@ -36,6 +37,6 @@ namespace periodics
             virtual void _run();
 
     }; // class CLineSensor
-}; // namespace periodics
+} // namespace periodics
 
 #endif // LINESENSOR_HPP

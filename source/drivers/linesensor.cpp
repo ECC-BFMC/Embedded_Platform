@@ -1,3 +1,4 @@
+#include "periodics/alerts.hpp"
 #include "drivers/linesensor.hpp"
 
 // TODO: Add your code here

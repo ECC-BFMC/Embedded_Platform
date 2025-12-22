@@ -78,9 +78,6 @@ brain::CBatterymanager g_batteryManager(dummy_value);
 /* USER NEW COMPONENT BEGIN */
 periodics::CLineSensor g_lineSensor(g_baseTick * 100, A0, 0.5f); // Check sensor every 100ms, pin A0, threshold 0.5
 drivers::CSpeaker g_speaker(PA_8, PA_9);
-g_speaker.setVolume(0.2); // Set initial volume to 20%
-g_speaker.playSong();
-
 
 /* USER NEW COMPONENT END */
 
@@ -142,6 +139,10 @@ uint8_t setup()
     g_rpi.write("#               #\r\n", 19);
     g_rpi.write("#################\r\n", 19);
     g_rpi.write("\r\n", 2);
+
+    // Start the speaker playing on startup
+    g_speaker.setVolume(0.2f);
+    g_speaker.playSong();
 
     return 0;    
 }

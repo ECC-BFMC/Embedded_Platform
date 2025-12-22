@@ -48,6 +48,7 @@ namespace periodics
             uint8_t alert_id;
 
             bool m_beep;
-}; // namespace periodics
+    };
+} // namespace periodics
 
 #endif // ALERTS_HPP

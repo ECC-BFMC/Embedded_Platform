@@ -78,7 +78,6 @@ brain::CBatterymanager g_batteryManager(dummy_value);
 /* USER NEW COMPONENT BEGIN */
 DigitalOut g_PC7(PC_7, 1); // Configure PC_7 as output and drive it high
 periodics::CLineSensor g_stopLineSensor(g_baseTick * 100, PA_8, g_rpi, "stopLine"); // Check sensor every 100ms, pin A0, threshold 0.5
-// drivers::CSpeaker g_speaker(PA_8, PA_9);
 
 /* USER NEW COMPONENT END */
 
@@ -141,10 +140,6 @@ uint8_t setup()
     g_rpi.write("#               #\r\n", 19);
     g_rpi.write("#################\r\n", 19);
     g_rpi.write("\r\n", 2);
-
-    // Start the speaker playing on startup
-    // g_speaker.setVolume(0.2f);
-    // g_speaker.playSong();
 
     return 0;    
 }

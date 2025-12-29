@@ -109,6 +109,7 @@ namespace periodics
     , tone_active(false)
     , warning_active(false)
     , alert_id(0)
+    , m_beep(false)
     {
         /* constructor behaviour */
     }
@@ -152,9 +153,28 @@ namespace periodics
         }
     }
 
+    void CAlerts::startBeep()
+    {
+        m_beep = true;
+    }
+
+    void CAlerts::stopBeep()
+    {
+        m_beep = false;
+    }
+
     void CAlerts::_run()
     {
-        if(!m_isActive) return;
+        if (m_beep) {
+            buzzer.period(0.001f); // 1kHz beep
+            buzzer.write(0.5f);
+            return;
+        }
+
+        if(!m_isActive) {
+            buzzer.write(0.0f);
+            return;
+        }
 
         if(1 == alert_id){
             // 1000000 = 1000000 µs = 1 s

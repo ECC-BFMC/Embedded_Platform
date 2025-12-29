@@ -47,7 +47,7 @@ auto dummy = []() {
 // It's a task for blinking periodically the built-in led on the Nucleo board, signaling the code is uploaded on the nucleo.
 periodics::CBlinker g_blinker(g_baseTick * 500, LED1);
 
-periodics::CAlerts g_alerts(g_baseTick * 100);
+periodics::CAlerts g_alerts(g_baseTick * 5000);
 
 // // It's a task for sending periodically the instant current consumption of the battery
 periodics::CInstantConsumption g_instantconsumption(g_baseTick * 1000, A2, g_rpi);
@@ -77,7 +77,7 @@ brain::CBatterymanager g_batteryManager(dummy_value);
 
 /* USER NEW COMPONENT BEGIN */
 DigitalOut g_PC7(PC_7, 1); // Configure PC_7 as output and drive it high
-periodics::CLineSensor g_lineSensor(g_baseTick * 100, PA_8); // Check sensor every 100ms, pin A0, threshold 0.5
+periodics::CLineSensor g_stopLineSensor(g_baseTick * 100, PA_8, g_rpi, "stopLine"); // Check sensor every 100ms, pin A0, threshold 0.5
 // drivers::CSpeaker g_speaker(PA_8, PA_9);
 
 /* USER NEW COMPONENT END */
@@ -97,6 +97,7 @@ drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"kl",             mbed::callback(&g_klmanager,         &brain::CKlmanager::serialCallbackKLCommand)},
     {"batteryCapacity",mbed::callback(&g_batteryManager,    &brain::CBatterymanager::serialCallbackBATTERYCommand)},
     {"resourceMonitor",mbed::callback(&g_resourceMonitor,   &periodics::CResourcemonitor::serialCallbackRESMONCommand)},
+    {g_stopLineSensor.m_name, mbed::callback(&g_stopLineSensor,       &periodics::CLineSensor::serialCallbackLINEcommand)},
 };
 
 // Create the serial monitor object, which decodes, redirects the messages and transmits the responses.
@@ -114,7 +115,7 @@ utils::CTask* g_taskList[] = {
     &g_resourceMonitor,
     &g_alerts,
     // USER NEW PERIODICS BEGIN
-    &g_lineSensor,
+    &g_stopLineSensor,
     // USER NEW PERIODICS END
 }; 
 

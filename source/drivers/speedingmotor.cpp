@@ -30,7 +30,7 @@
 
 #include <drivers/speedingmotor.hpp>
 
-#define calibrated 0
+#define calibrated 1
 #define calib_sup_limit 500
 #define calib_inf_limit -500
 
@@ -46,11 +46,13 @@ namespace drivers{
     CSpeedingMotor::CSpeedingMotor(
             PinName f_pwm_pin, 
             int f_inf_limit, 
-            int f_sup_limit
+            int f_sup_limit,
+            UnbufferedSerial& f_serial
         )
         : m_pwm_pin(f_pwm_pin)
         , m_inf_limit(f_inf_limit)
         , m_sup_limit(f_sup_limit)
+        , m_serial(f_serial)
     {
         // Set the ms_period on the pwm_pin
         m_pwm_pin.period_ms(ms_period); 
@@ -95,6 +97,48 @@ namespace drivers{
         int64_t y=zero_default;
         // POLYNOMIAL CODE START
 
+        // Cubic spline evaluation with 10 segments
+        static const int64_t knots[11] = {-561, -408, -351, -193, -102, 0, 106, 196, 359, 438, 599};
+        static const int64_t coeffs[10][4] = { 
+            {0LL, 0LL, -117159LL, 1741684736LL},
+            {-2LL, -122LL, -135767LL, 1722810368LL},
+            {3LL, -457LL, -168345LL, 1714421760LL},
+            {-29LL, 1090LL, -68157LL, 1689255936LL},
+            {23LL, -6811LL, -586947LL, 1670381568LL},
+            {18LL, 367LL, -1249039LL, 1563426816LL},
+            {-27LL, 6183LL, -550730LL, 1456472064LL},
+            {3LL, -969LL, -84648LL, 1437597696LL},
+            {-4LL, 657LL, -135606LL, 1412431872LL},
+            {0LL, -182LL, -97917LL, 1404043264LL}
+        };
+        
+        // Find the correct segment
+        int segment = -1;
+        for (int i = 0; i < 10; i++) {
+            if (speed >= knots[i] && speed <= knots[i + 1]) {
+                segment = i;
+                break;
+            }
+        }
+        
+        // Clamp to boundary segments if out of range
+        if (segment == -1) {
+            if (speed < knots[0]) segment = 0;
+            else segment = 10 - 1;
+        }
+        
+        // Evaluate cubic polynomial for this segment: a*(x-xi)^3 + b*(x-xi)^2 + c*(x-xi) + d
+        int64_t dx = speed - knots[segment];
+        int64_t dx2 = dx * dx;
+        int64_t dx3 = dx2 * dx;
+        
+        y = (coeffs[segment][0] * dx3 + coeffs[segment][1] * dx2 + 
+             coeffs[segment][2] * dx + coeffs[segment][3]) / 1048576LL;
+        
+        /* Cubic spline interpolation with 10 segments
+         * Each segment is defined by: a*(x-xi)^3 + b*(x-xi)^2 + c*(x-xi) + d
+         * Coefficients are scaled by 1048576 for integer arithmetic
+         */
         // POLYNOMIAL CODE END
         return (int)y;
     }
@@ -186,21 +230,4 @@ namespace drivers{
         }
 
     };
-
-    int CSpeedingMotor::get_upper_limit(){
-        if(calibrated == 1){
-            return calib_sup_limit;
-        } else{
-            return m_sup_limit;
-        }
-    };
-
-    int CSpeedingMotor::get_lower_limit(){
-        if(calibrated == 1){
-            return calib_inf_limit;
-        } else{
-            return m_inf_limit;
-        }
-    };
-
 }; // namespace hardware::drivers

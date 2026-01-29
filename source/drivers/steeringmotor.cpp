@@ -32,9 +32,9 @@
 
 #define scaling_factor_1 10
 #define scaling_factor_2 100
-#define calibrated 0
-#define calib_sup_limit 0
-#define calib_inf_limit 0
+#define calibrated 1
+#define calib_sup_limit 203
+#define calib_inf_limit -185
 
 namespace drivers{
     /**
@@ -48,16 +48,18 @@ namespace drivers{
     CSteeringMotor::CSteeringMotor(
             PinName f_pwm_pin, 
             int f_inf_limit, 
-            int f_sup_limit
+            int f_sup_limit,
+            UnbufferedSerial& f_serial
         )
         :m_pwm_pin(f_pwm_pin)
         ,m_inf_limit(f_inf_limit)
         ,m_sup_limit(f_sup_limit)
+        , m_serial(f_serial)
     {
         // Wait for Nucleo startup stabilization to prevent erratic motor 
         // behavior caused by power-on reset cycles affecting PWM signals
         // potentially resulting in chaotic left/right motor oscillations. 
-        ThisThread::sleep_for(chrono::milliseconds(11000));
+        ThisThread::sleep_for(chrono::milliseconds(10000));
 
         m_pwm_pin.pulsewidth_us(zero_default);
     };
@@ -152,6 +154,46 @@ namespace drivers{
         int64_t y=zero_default;
         // POLYNOMIAL CODE START
 
+        // Cubic spline evaluation with 8 segments
+        static const int64_t knots[9] = {-163, -99, -59, -21, 0, 66, 125, 178, 220};
+        static const int64_t coeffs[8][4] = { 
+            {-27LL, 0LL, 2245676LL, 1210056704LL},
+            {94LL, -5255LL, 1907232LL, 1347420160LL},
+            {-107LL, 6117LL, 1941962LL, 1421869056LL},
+            {174LL, -5814LL, 1953275LL, 1497366528LL},
+            {-54LL, 5633LL, 1949301LL, 1539309568LL},
+            {29LL, -5081LL, 1985956LL, 1677721600LL},
+            {90LL, -47LL, 1684932LL, 1782579200LL},
+            {-117LL, 14583LL, 2468469LL, 1887436800LL}
+        };
+        
+        // Find the correct segment
+        int segment = -1;
+        for (int i = 0; i < 8; i++) {
+            if (steering >= knots[i] && steering <= knots[i + 1]) {
+                segment = i;
+                break;
+            }
+        }
+        
+        // Clamp to boundary segments if out of range
+        if (segment == -1) {
+            if (steering < knots[0]) segment = 0;
+            else segment = 8 - 1;
+        }
+        
+        // Evaluate cubic polynomial for this segment: a*(x-xi)^3 + b*(x-xi)^2 + c*(x-xi) + d
+        int64_t dx = steering - knots[segment];
+        int64_t dx2 = dx * dx;
+        int64_t dx3 = dx2 * dx;
+        
+        y = (coeffs[segment][0] * dx3 + coeffs[segment][1] * dx2 + 
+             coeffs[segment][2] * dx + coeffs[segment][3]) / 1048576LL;
+        
+        /* Cubic spline interpolation with 8 segments
+         * Each segment is defined by: a*(x-xi)^3 + b*(x-xi)^2 + c*(x-xi) + d
+         * Coefficients are scaled by 1048576 for integer arithmetic
+         */
         // POLYNOMIAL CODE END
         return (int)y;
     }
@@ -176,21 +218,4 @@ namespace drivers{
         }
 
     };
-
-    int CSteeringMotor::get_upper_limit(){
-        if(calibrated == 1){
-            return calib_sup_limit;
-        } else{
-            return m_sup_limit;
-        }
-    };
-
-    int CSteeringMotor::get_lower_limit(){
-        if(calibrated == 1){
-            return calib_inf_limit;
-        } else{
-            return m_inf_limit;
-        }
-    };
-
 }; // namespace hardware::drivers

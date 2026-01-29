@@ -32,9 +32,10 @@
 #include <periodics/imu.hpp>
 #include "imu.hpp"
 
-#define _100_chars                      100
+#define _100_chars                      150
 #define BNO055_EULER_DIV_DEG_int        16
 #define BNO055_LINEAR_ACCEL_DIV_MSQ_int 100
+#define BNO055_GYRO_DIV_DPS_int         16
 #define precision_scaling_factor        1000
 
 namespace periodics{
@@ -711,6 +712,10 @@ namespace periodics{
         s16 s16_linear_accel_y_raw = BNO055_INIT_VALUE;
         s16 s16_linear_accel_z_raw = BNO055_INIT_VALUE;
 
+        s16 s16_gyro_x_raw = BNO055_INIT_VALUE;
+        s16 s16_gyro_y_raw = BNO055_INIT_VALUE;
+        s16 s16_gyro_z_raw = BNO055_INIT_VALUE;
+
         comres += bno055_read_euler_h(&s16_euler_h_raw);
 
         if(comres != BNO055_SUCCESS) return;
@@ -743,6 +748,22 @@ namespace periodics{
         s32 s16_linear_accel_y_msq = (s16_linear_accel_y_raw * precision_scaling_factor) / BNO055_LINEAR_ACCEL_DIV_MSQ_int;
         s32 s16_linear_accel_z_msq = (s16_linear_accel_z_raw * precision_scaling_factor) / BNO055_LINEAR_ACCEL_DIV_MSQ_int;
 
+        comres = bno055_read_gyro_x(&s16_gyro_x_raw);
+
+        if(comres != BNO055_SUCCESS) return;
+
+        comres = bno055_read_gyro_y(&s16_gyro_y_raw);
+
+        if(comres != BNO055_SUCCESS) return;
+
+        comres = bno055_read_gyro_z(&s16_gyro_z_raw);
+
+        if(comres != BNO055_SUCCESS) return;
+
+        s16 s16_gyro_x_dps = (s16_gyro_x_raw * precision_scaling_factor) / BNO055_GYRO_DIV_DPS_int;
+        s16 s16_gyro_y_dps = (s16_gyro_y_raw * precision_scaling_factor) / BNO055_GYRO_DIV_DPS_int;
+        s16 s16_gyro_z_dps = (s16_gyro_z_raw * precision_scaling_factor) / BNO055_GYRO_DIV_DPS_int;
+
         if((-110 <= s16_linear_accel_x_msq && s16_linear_accel_x_msq <= 110) && (-110 <= s16_linear_accel_y_msq && s16_linear_accel_y_msq <= 110))
         {
             m_velocityX += 0 * m_delta_time; // Δt = m_delta_time
@@ -767,13 +788,19 @@ namespace periodics{
 
         if(comres != BNO055_SUCCESS) return;
 
-        snprintf(buffer, sizeof(buffer), "@imu:%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;;\r\n",
+        snprintf(buffer, sizeof(buffer), "@imu:%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;;\r\n",
             s16_euler_r_deg/1000, abs(s16_euler_r_deg%1000),
             s16_euler_p_deg/1000, abs(s16_euler_p_deg%1000),
             s16_euler_h_deg/1000, abs(s16_euler_h_deg%1000),
             m_velocityX/1000, abs(m_velocityX%1000),
             m_velocityY/1000, abs(m_velocityY%1000),
-            m_velocityZ/1000, abs(m_velocityZ%1000));
+            m_velocityZ/1000, abs(m_velocityZ%1000),
+            s16_linear_accel_x_msq/1000, abs(s16_linear_accel_x_msq%1000),
+            s16_linear_accel_y_msq/1000, abs(s16_linear_accel_y_msq%1000),
+            s16_linear_accel_z_msq/1000, abs(s16_linear_accel_z_msq%1000),
+            s16_gyro_x_dps/1000, abs(s16_gyro_x_dps%1000),
+            s16_gyro_y_dps/1000, abs(s16_gyro_y_dps%1000),
+            s16_gyro_z_dps/1000, abs(s16_gyro_z_dps%1000));
         m_serial.write(buffer,strlen(buffer));
     }
 

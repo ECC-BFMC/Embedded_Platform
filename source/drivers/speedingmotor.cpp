@@ -46,13 +46,11 @@ namespace drivers{
     CSpeedingMotor::CSpeedingMotor(
             PinName f_pwm_pin, 
             int f_inf_limit, 
-            int f_sup_limit,
-            UnbufferedSerial& f_serial
+            int f_sup_limit
         )
         : m_pwm_pin(f_pwm_pin)
         , m_inf_limit(f_inf_limit)
         , m_sup_limit(f_sup_limit)
-        , m_serial(f_serial)
     {
         // Set the ms_period on the pwm_pin
         m_pwm_pin.period_ms(ms_period); 
@@ -66,9 +64,22 @@ namespace drivers{
     {
     };
 
-    /** @brief  It modifies the speed reference of the brushless motor, which controls the speed of the wheels. 
-     *
-     *  @param f_speed      speed in mm/s, where the positive value means forward direction and negative value the backward direction. 
+    /** @brief  It modifies the speed reference of the brushless motor, which controls the speed of the wheels. */
+
+    int CSpeedingMotor::get_upper_limit()
+    {
+        if (calibrated == 1) return calib_sup_limit;
+        return m_sup_limit;
+    }
+
+    int CSpeedingMotor::get_lower_limit()
+    {
+        if (calibrated == 1) return calib_inf_limit;
+        return m_inf_limit;
+    }
+
+    /** @brief  Set the motor speed.
+     *  @param f_speed speed in mm/s, positive => forward, negative => backward
      */
     void CSpeedingMotor::setSpeed(int f_speed)
     {

@@ -48,13 +48,11 @@ namespace drivers{
     CSteeringMotor::CSteeringMotor(
             PinName f_pwm_pin, 
             int f_inf_limit, 
-            int f_sup_limit,
-            UnbufferedSerial& f_serial
+            int f_sup_limit
         )
         :m_pwm_pin(f_pwm_pin)
         ,m_inf_limit(f_inf_limit)
         ,m_sup_limit(f_sup_limit)
-        , m_serial(f_serial)
     {
         // Wait for Nucleo startup stabilization to prevent erratic motor 
         // behavior caused by power-on reset cycles affecting PWM signals
@@ -218,4 +216,15 @@ namespace drivers{
         }
 
     };
+    int CSteeringMotor::get_upper_limit()
+    {
+        if (calibrated == 1) return calib_sup_limit;
+        return m_sup_limit;
+    }
+
+    int CSteeringMotor::get_lower_limit()
+    {
+        if (calibrated == 1) return calib_inf_limit;
+        return m_inf_limit;
+    }
 }; // namespace hardware::drivers

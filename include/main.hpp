@@ -61,4 +61,6 @@
 /* Header file for the task manager library, which  applies periodically the fun function of it's children*/
 #include <utils/task.hpp>
 /* Header file for the Linesensor functionality */
-#include <drivers/linesensor.hpp>
+#include <drivers/linesensor.hpp>/* Header file for the Tofsensor functionality */
+/* Header file for the Tofsensor functionality */
+#include <periodics/tofsensor.hpp>

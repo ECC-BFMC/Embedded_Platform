@@ -59,7 +59,7 @@ periodics::CTotalVoltage g_totalvoltage(g_baseTick*3000, A4, g_rpi);
 periodics::CImu g_imu(g_baseTick*150, g_rpi, I2C_SDA, I2C_SCL);
 
 //PIN for a motor speed in ms, inferior and superior limit
-drivers::CSpeedingMotor g_speedingDriver(D3, -500, 500); //speed in mm/s
+drivers::CSpeedingMotor g_speedingDriver(D5, -500, 500); //speed in mm/s
 
 //PIN for angle in servo degrees, inferior and superior limit scaled by 10 for precision (250 = 25.0°)
 drivers::CSteeringMotor g_steeringDriver(D4, -250, 250);
@@ -69,17 +69,21 @@ brain::CRobotStateMachine g_robotstatemachine(g_baseTick * 1, g_rpi, g_steeringD
 
 periodics::CResourcemonitor g_resourceMonitor(g_baseTick * 5000, g_rpi);
 
-brain::CKlmanager g_klmanager(g_alerts, g_imu, g_instantconsumption, g_totalvoltage, g_robotstatemachine, g_resourceMonitor);
+/* USER NEW COMPONENT BEGIN */
+// TOF sensors on I2C2 (PB_3=SDA, PB_10=SCL) - ACTIVATE rightSide FIRST, then leftSide!
+periodics::CTofsensor g_tofsensorRight(g_baseTick * 25, PB_6, PB_3, PB_10, g_rpi, "rightSide", 0x30, 300); // address changed to 0x30
+periodics::CTofsensor g_tofsensorLeft(g_baseTick * 500, PB_5, PB_3, PB_10, g_rpi, "leftSide", 0x29, 300);  // default address 0x29
+
+DigitalOut g_PC7(PC_7, 1); // Configure PC_7 as output and drive it high (D9 high for imu vcc)
+DigitalOut g_PA9(PA_9, 1); // Configure PA_9 as output and drive it high (D8 high for tof vcc)
+periodics::CLineSensor g_stopLineSensor(g_baseTick * 10, PA_8, g_rpi, "stopLine"); // Check sensor every 100ms, pin A0, threshold 0.5
+/* USER NEW COMPONENT END */
+
+brain::CKlmanager g_klmanager(g_alerts, g_imu, g_instantconsumption, g_totalvoltage, g_robotstatemachine, g_resourceMonitor, g_stopLineSensor, g_tofsensorRight, g_tofsensorLeft);
 
 periodics::CPowermanager g_powermanager(g_baseTick * 100, g_klmanager, g_rpi, g_totalvoltage, g_instantconsumption, g_alerts);
 
 brain::CBatterymanager g_batteryManager(dummy_value);
-
-/* USER NEW COMPONENT BEGIN */
-DigitalOut g_PC7(PC_7, 1); // Configure PC_7 as output and drive it high
-periodics::CLineSensor g_stopLineSensor(g_baseTick * 100, PA_8, g_rpi, "stopLine"); // Check sensor every 100ms, pin A0, threshold 0.5
-
-/* USER NEW COMPONENT END */
 
 // Map for redirecting messages with the key and the callback functions. If the message key equals to one of the enumerated keys, than it will be applied the paired callback function.
 drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
@@ -97,6 +101,8 @@ drivers::CSerialMonitor::CSerialSubscriberMap g_serialMonitorSubscribers = {
     {"batteryCapacity",mbed::callback(&g_batteryManager,    &brain::CBatterymanager::serialCallbackBATTERYCommand)},
     {"resourceMonitor",mbed::callback(&g_resourceMonitor,   &periodics::CResourcemonitor::serialCallbackRESMONCommand)},
     {g_stopLineSensor.m_name, mbed::callback(&g_stopLineSensor,       &periodics::CLineSensor::serialCallbackLINEcommand)},
+    {g_tofsensorRight.m_name, mbed::callback(&g_tofsensorRight, &periodics::CTofsensor::serialCallbackTofsensorCommand)},
+    {g_tofsensorLeft.m_name, mbed::callback(&g_tofsensorLeft, &periodics::CTofsensor::serialCallbackTofsensorCommand)}
 };
 
 // Create the serial monitor object, which decodes, redirects the messages and transmits the responses.
@@ -114,6 +120,8 @@ utils::CTask* g_taskList[] = {
     &g_resourceMonitor,
     &g_alerts,
     // USER NEW PERIODICS BEGIN
+    &g_tofsensorRight,
+    &g_tofsensorLeft,
     &g_stopLineSensor,
     // USER NEW PERIODICS END
 }; 

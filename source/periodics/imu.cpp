@@ -32,7 +32,7 @@
 #include <periodics/imu.hpp>
 #include "imu.hpp"
 
-#define _100_chars                      150
+#define _100_chars                      200
 #define BNO055_EULER_DIV_DEG_int        16
 #define BNO055_LINEAR_ACCEL_DIV_MSQ_int 100
 #define BNO055_GYRO_DIV_DPS_int         16
@@ -748,17 +748,20 @@ namespace periodics{
         s32 s16_linear_accel_y_msq = (s16_linear_accel_y_raw * precision_scaling_factor) / BNO055_LINEAR_ACCEL_DIV_MSQ_int;
         s32 s16_linear_accel_z_msq = (s16_linear_accel_z_raw * precision_scaling_factor) / BNO055_LINEAR_ACCEL_DIV_MSQ_int;
 
-        comres = bno055_read_gyro_x(&s16_gyro_x_raw);
+        if (bno055_read_gyro_x(&s16_gyro_x_raw) != BNO055_SUCCESS)
+        {
+            s16_gyro_x_raw = 0;
+        }
 
-        if(comres != BNO055_SUCCESS) return;
+        if (bno055_read_gyro_y(&s16_gyro_y_raw) != BNO055_SUCCESS)
+        {
+            s16_gyro_y_raw = 0;
+        }
 
-        comres = bno055_read_gyro_y(&s16_gyro_y_raw);
-
-        if(comres != BNO055_SUCCESS) return;
-
-        comres = bno055_read_gyro_z(&s16_gyro_z_raw);
-
-        if(comres != BNO055_SUCCESS) return;
+        if (bno055_read_gyro_z(&s16_gyro_z_raw) != BNO055_SUCCESS)
+        {
+            s16_gyro_z_raw = 0;
+        }
 
         s16 s16_gyro_x_dps = (s16_gyro_x_raw * precision_scaling_factor) / BNO055_GYRO_DIV_DPS_int;
         s16 s16_gyro_y_dps = (s16_gyro_y_raw * precision_scaling_factor) / BNO055_GYRO_DIV_DPS_int;
@@ -786,9 +789,7 @@ namespace periodics{
             m_velocityStationaryCounter = 0;
         }
 
-        if(comres != BNO055_SUCCESS) return;
-
-        snprintf(buffer, sizeof(buffer), "@imu:%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;;\r\n",
+        int message_len = snprintf(buffer, sizeof(buffer), "@imu:%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;;\r\n",
             s16_euler_r_deg/1000, abs(s16_euler_r_deg%1000),
             s16_euler_p_deg/1000, abs(s16_euler_p_deg%1000),
             s16_euler_h_deg/1000, abs(s16_euler_h_deg%1000),
@@ -801,7 +802,12 @@ namespace periodics{
             s16_gyro_x_dps/1000, abs(s16_gyro_x_dps%1000),
             s16_gyro_y_dps/1000, abs(s16_gyro_y_dps%1000),
             s16_gyro_z_dps/1000, abs(s16_gyro_z_dps%1000));
-        m_serial.write(buffer,strlen(buffer));
+        if (message_len <= 0 || message_len >= static_cast<int>(sizeof(buffer)))
+        {
+            return;
+        }
+
+        m_serial.write(buffer, message_len);
     }
 
 }; // namespace periodics

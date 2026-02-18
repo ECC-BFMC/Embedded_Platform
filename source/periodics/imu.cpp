@@ -37,6 +37,8 @@
 #define BNO055_LINEAR_ACCEL_DIV_MSQ_int 100
 #define BNO055_GYRO_DIV_DPS_int         16
 #define precision_scaling_factor        1000
+/* Scale 100 for Euler and gyro so values fit in s16 (full range ±180° etc.); print 2 decimal places */
+#define BNO055_EULER_GYRO_SCALE         100
 
 namespace periodics{
     /** \brief  Class constructor
@@ -728,9 +730,9 @@ namespace periodics{
 
         if(comres != BNO055_SUCCESS) return;
 
-        s16 s16_euler_h_deg = (s16_euler_h_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
-        s16 s16_euler_p_deg = (s16_euler_p_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
-        s16 s16_euler_r_deg = (s16_euler_r_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
+        s16 s16_euler_h_deg = (s16_euler_h_raw * BNO055_EULER_GYRO_SCALE) / BNO055_EULER_DIV_DEG_int;
+        s16 s16_euler_p_deg = (s16_euler_p_raw * BNO055_EULER_GYRO_SCALE) / BNO055_EULER_DIV_DEG_int;
+        s16 s16_euler_r_deg = (s16_euler_r_raw * BNO055_EULER_GYRO_SCALE) / BNO055_EULER_DIV_DEG_int;
 
         comres = bno055_read_linear_accel_x(&s16_linear_accel_x_raw);
 
@@ -763,9 +765,9 @@ namespace periodics{
             s16_gyro_z_raw = 0;
         }
 
-        s16 s16_gyro_x_dps = (s16_gyro_x_raw * precision_scaling_factor) / BNO055_GYRO_DIV_DPS_int;
-        s16 s16_gyro_y_dps = (s16_gyro_y_raw * precision_scaling_factor) / BNO055_GYRO_DIV_DPS_int;
-        s16 s16_gyro_z_dps = (s16_gyro_z_raw * precision_scaling_factor) / BNO055_GYRO_DIV_DPS_int;
+        s16 s16_gyro_x_dps = (s16_gyro_x_raw * BNO055_EULER_GYRO_SCALE) / BNO055_GYRO_DIV_DPS_int;
+        s16 s16_gyro_y_dps = (s16_gyro_y_raw * BNO055_EULER_GYRO_SCALE) / BNO055_GYRO_DIV_DPS_int;
+        s16 s16_gyro_z_dps = (s16_gyro_z_raw * BNO055_EULER_GYRO_SCALE) / BNO055_GYRO_DIV_DPS_int;
 
         if((-110 <= s16_linear_accel_x_msq && s16_linear_accel_x_msq <= 110) && (-110 <= s16_linear_accel_y_msq && s16_linear_accel_y_msq <= 110))
         {
@@ -789,19 +791,23 @@ namespace periodics{
             m_velocityStationaryCounter = 0;
         }
 
-        int message_len = snprintf(buffer, sizeof(buffer), "@imu:%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;;\r\n",
-            s16_euler_r_deg/1000, abs(s16_euler_r_deg%1000),
-            s16_euler_p_deg/1000, abs(s16_euler_p_deg%1000),
-            s16_euler_h_deg/1000, abs(s16_euler_h_deg%1000),
-            m_velocityX/1000, abs(m_velocityX%1000),
-            m_velocityY/1000, abs(m_velocityY%1000),
-            m_velocityZ/1000, abs(m_velocityZ%1000),
-            s16_linear_accel_x_msq/1000, abs(s16_linear_accel_x_msq%1000),
-            s16_linear_accel_y_msq/1000, abs(s16_linear_accel_y_msq%1000),
-            s16_linear_accel_z_msq/1000, abs(s16_linear_accel_z_msq%1000),
-            s16_gyro_x_dps/1000, abs(s16_gyro_x_dps%1000),
-            s16_gyro_y_dps/1000, abs(s16_gyro_y_dps%1000),
-            s16_gyro_z_dps/1000, abs(s16_gyro_z_dps%1000));
+        /* Euler and gyro: scale 100, 2 decimals. Others: scale 1000, 3 decimals. _FMT_SIGN avoids losing sign for small negatives. */
+        #define _FMT_SIGN(v, div)  (((v) < 0 && (v) / (div) == 0) ? "-" : "")
+        int message_len = snprintf(buffer, sizeof(buffer),
+            "@imu:%s%d.%02d;%s%d.%02d;%s%d.%02d;%s%d.%03d;%s%d.%03d;%s%d.%03d;%s%d.%03d;%s%d.%03d;%s%d.%03d;%s%d.%02d;%s%d.%02d;%s%d.%02d;;\r\n",
+            _FMT_SIGN(s16_euler_r_deg, 100),  s16_euler_r_deg/100, abs(s16_euler_r_deg%100),
+            _FMT_SIGN(s16_euler_p_deg, 100),  s16_euler_p_deg/100, abs(s16_euler_p_deg%100),
+            _FMT_SIGN(s16_euler_h_deg, 100),  s16_euler_h_deg/100, abs(s16_euler_h_deg%100),
+            _FMT_SIGN(m_velocityX, 1000),     m_velocityX/1000, abs(m_velocityX%1000),
+            _FMT_SIGN(m_velocityY, 1000),     m_velocityY/1000, abs(m_velocityY%1000),
+            _FMT_SIGN(m_velocityZ, 1000),     m_velocityZ/1000, abs(m_velocityZ%1000),
+            _FMT_SIGN(s16_linear_accel_x_msq, 1000), s16_linear_accel_x_msq/1000, abs(s16_linear_accel_x_msq%1000),
+            _FMT_SIGN(s16_linear_accel_y_msq, 1000), s16_linear_accel_y_msq/1000, abs(s16_linear_accel_y_msq%1000),
+            _FMT_SIGN(s16_linear_accel_z_msq, 1000), s16_linear_accel_z_msq/1000, abs(s16_linear_accel_z_msq%1000),
+            _FMT_SIGN(s16_gyro_x_dps, 100),   s16_gyro_x_dps/100, abs(s16_gyro_x_dps%100),
+            _FMT_SIGN(s16_gyro_y_dps, 100),   s16_gyro_y_dps/100, abs(s16_gyro_y_dps%100),
+            _FMT_SIGN(s16_gyro_z_dps, 100),   s16_gyro_z_dps/100, abs(s16_gyro_z_dps%100));
+        #undef _FMT_SIGN
         if (message_len <= 0 || message_len >= static_cast<int>(sizeof(buffer)))
         {
             return;

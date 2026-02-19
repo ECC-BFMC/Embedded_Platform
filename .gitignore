@@ -1,8 +1,9 @@
+# Build
 .mbedbuild
-cmake_build/*
-!cmake_build/NUCLEO_F401RE/
-!cmake_build/NUCLEO_F401RE/develop/
-!cmake_build/NUCLEO_F401RE/develop/GCC_ARM/
-!cmake_build/NUCLEO_F401RE/develop/GCC_ARM/robot_car.bin
+cmake_build/
+
+# Dependencies
 mbed-os/
+
+# IDE
 .vscode

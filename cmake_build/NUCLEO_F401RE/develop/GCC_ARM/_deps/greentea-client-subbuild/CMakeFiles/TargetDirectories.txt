@@ -1,3 +1,0 @@
-C:/Users/trieu/Documents/Gitlab/Embedded_Platform_DaDas/cmake_build/NUCLEO_F401RE/develop/GCC_ARM/_deps/greentea-client-subbuild/CMakeFiles/greentea-client-populate.dir
-C:/Users/trieu/Documents/Gitlab/Embedded_Platform_DaDas/cmake_build/NUCLEO_F401RE/develop/GCC_ARM/_deps/greentea-client-subbuild/CMakeFiles/edit_cache.dir
-C:/Users/trieu/Documents/Gitlab/Embedded_Platform_DaDas/cmake_build/NUCLEO_F401RE/develop/GCC_ARM/_deps/greentea-client-subbuild/CMakeFiles/rebuild_cache.dir

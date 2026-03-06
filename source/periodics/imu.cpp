@@ -723,9 +723,9 @@ namespace periodics{
 
         if(comres != BNO055_SUCCESS) return;
 
-        s16 s16_euler_h_deg = (s16_euler_h_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
-        s16 s16_euler_p_deg = (s16_euler_p_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
-        s16 s16_euler_r_deg = (s16_euler_r_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
+        s32 s32_euler_h_deg = (s16_euler_h_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
+        s32 s32_euler_p_deg = (s16_euler_p_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
+        s32 s32_euler_r_deg = (s16_euler_r_raw * precision_scaling_factor) / BNO055_EULER_DIV_DEG_int;
 
         comres = bno055_read_linear_accel_x(&s16_linear_accel_x_raw);
 
@@ -768,9 +768,9 @@ namespace periodics{
         if(comres != BNO055_SUCCESS) return;
 
         snprintf(buffer, sizeof(buffer), "@imu:%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;%d.%03d;;\r\n",
-            s16_euler_r_deg/1000, abs(s16_euler_r_deg%1000),
-            s16_euler_p_deg/1000, abs(s16_euler_p_deg%1000),
-            s16_euler_h_deg/1000, abs(s16_euler_h_deg%1000),
+            s32_euler_r_deg/1000, abs(s32_euler_r_deg%1000),
+            s32_euler_p_deg/1000, abs(s32_euler_p_deg%1000),
+            s32_euler_h_deg/1000, abs(s32_euler_h_deg%1000),
             m_velocityX/1000, abs(m_velocityX%1000),
             m_velocityY/1000, abs(m_velocityY%1000),
             m_velocityZ/1000, abs(m_velocityZ%1000));

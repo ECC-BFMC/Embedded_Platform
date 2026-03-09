@@ -40,6 +40,8 @@ namespace periodics
             UnbufferedSerial& m_serial;
             /** @brief Active flag for serial publishing */
             bool m_isActive;
+            private:
+            int m_lastState;
 
             /* Run method */
             virtual void _run();

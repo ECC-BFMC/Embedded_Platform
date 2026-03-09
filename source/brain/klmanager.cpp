@@ -46,9 +46,7 @@ namespace brain
         periodics::CTotalVoltage& f_baterry,
         brain::CRobotStateMachine& f_robotStateMachine,
         periodics::CResourcemonitor& f_resourceM,
-        periodics::CLineSensor& f_lineSensor,
-        periodics::CTofsensor& f_tofSensorRight,
-        periodics::CTofsensor& f_tofSensorLeft
+        periodics::CTofsensor& f_tofSensorRight
     )
     : m_klvalue(0)
     , m_alerts(f_alerts)
@@ -57,9 +55,7 @@ namespace brain
     , m_baterry(f_baterry)
     , m_robotStateMachine(f_robotStateMachine)
     , m_resourceM(f_resourceM)
-    , m_lineSensor(f_lineSensor)
     , m_tofSensorRight(f_tofSensorRight)
-    , m_tofSensorLeft(f_tofSensorLeft)
     {
         /* constructor behaviour */
     }
@@ -116,12 +112,7 @@ namespace brain
                     sprintf(b,"%d",l_keyValue);
                     uint8_globalsV_value_of_kl = 30;
                     m_robotStateMachine.serialCallbackVCDcommand("0;0;2", response);
-                    m_lineSensor.serialCallbackLINEcommand("1", response);
-                    // Activate RIGHT sensor FIRST (changes address to 0x30)
                     m_tofSensorRight.serialCallbackTofsensorCommand("1", response);
-                    ThisThread::sleep_for(chrono::milliseconds(100));
-                    // Then activate LEFT sensor (uses default 0x29)
-                    m_tofSensorLeft.serialCallbackTofsensorCommand("1", response);
                     m_alerts.alertsCommand("2", response);
                 }
             }

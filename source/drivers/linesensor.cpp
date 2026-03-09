@@ -12,8 +12,9 @@ namespace periodics
         : utils::CTask(f_period),
             m_sensor(f_sensor_pin),
             m_serial(f_serial),
+            m_name(f_name),
             m_isActive(false),
-            m_name(f_name)
+            m_lastState(0)
     {
         /* configure internal pull to avoid floating reads */
         m_sensor.mode(PullUp);
@@ -25,33 +26,30 @@ namespace periodics
     {
     };
 
-    void CLineSensor::serialCallbackLINEcommand(char const * a, char * b)
-    {
-        uint8_t l_isActivate = 0;
-        uint8_t l_res = sscanf(a, "%hhu", &l_isActivate);
-        if (1 == l_res) {
-            m_isActive = (l_isActivate >= 1);
-            sprintf(b, "%hhu", l_isActivate);
-        } else {
-            sprintf(b, "syntax error");
-        }
-    }
+   void CLineSensor::serialCallbackLINEcommand(char const * a, char * b) {
+       uint8_t l_isActivate = 0;
+       uint8_t l_res = sscanf(a, "%hhu", &l_isActivate);
+       
+       if(1 == l_res) {
+           m_isActive = (l_isActivate >= 1);
+           sprintf(b, "1");
+       } else {
+           sprintf(b, "syntax error");
+       }
+   }
 
-    void CLineSensor::_run()
-    {
-        int val = !m_sensor.read();
-        // if (val == 1) {
-        //     g_alerts.startBeep();
-        // } else {
-        //     g_alerts.stopBeep();
-        // }
-
-        if (!m_isActive) return;
-
-        /* Print the current line sensor value over serial in the project's message format */
-        char buf[64];
-        snprintf(buf, sizeof(buf), "@%s:%d;;\r\n", m_name.c_str(), val);
-        m_serial.write(buf, strlen(buf));
-    }
+     void CLineSensor::_run() {
+       if (!m_isActive) return;
+       
+       bool currentState = (m_sensor.read() == 0);  // true = line detected
+       
+       if (currentState != m_lastState) {
+           char buffer[32];
+           snprintf(buffer, sizeof(buffer), "@stopLine:%d;;\r\n", currentState ? 1 : 0);
+           m_serial.write(buffer, strlen(buffer));
+           
+           m_lastState = currentState;
+       }
+   }
 
 }; // namespace periodics

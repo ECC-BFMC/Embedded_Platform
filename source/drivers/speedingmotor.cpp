@@ -103,7 +103,7 @@ namespace drivers{
      */
     void CSpeedingMotor::setBrake()
     {
-        m_pwm_pin.write(zero_default);
+        m_pwm_pin.pulsewidth_us(zero_default);
     };
 
     /**
